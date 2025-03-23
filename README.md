@@ -75,3 +75,9 @@ if __name__ == "__main__":
 [Langchain.js MCP Adapter](https://www.linkedin.com/posts/langchain_mcp-adapters-released-introducing-our-activity-7308925375160467457-_BPL/?utm_source=share&utm_medium=member_android&rcm=ACoAAA5jTp0BX-JuOkof3Ak56U3VlXjQVT43NzQ)
 
 [LangChain MCP Adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
+
+[MCP with LangChain](https://tirendazacademy.medium.com/mcp-with-langchain-cabd6199e0ac)
+
+[Using LangChain With Model Context Protocol (MCP)(https://cobusgreyling.medium.com/using-langchain-with-model-context-protocol-mcp-e89b87ee3c4c)
+
+  
