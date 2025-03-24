@@ -10,6 +10,8 @@ pip install langchain-mcp-adapters
 
 ## Hello World
 
+간단한 MCP server와 client를 [MCP with LangChain](https://tirendazacademy.medium.com/mcp-with-langchain-cabd6199e0ac)와 [Using LangChain With Model Context Protocol (MCP)](https://cobusgreyling.medium.com/using-langchain-with-model-context-protocol-mcp-e89b87ee3c4c)에 따라 아래와 같이 재구성하였습니다. 
+
 ### Server
 
 [mcp-server.py](./mcp-hello-world/mcp-server.py)와 같이 MCP 서버를 구성할 수 있습니다. 
@@ -131,8 +133,5 @@ if __name__ == "__main__":
 [Langchain.js MCP Adapter](https://www.linkedin.com/posts/langchain_mcp-adapters-released-introducing-our-activity-7308925375160467457-_BPL/?utm_source=share&utm_medium=member_android&rcm=ACoAAA5jTp0BX-JuOkof3Ak56U3VlXjQVT43NzQ)
 
 
-[MCP with LangChain](https://tirendazacademy.medium.com/mcp-with-langchain-cabd6199e0ac)
-
-[Using LangChain With Model Context Protocol (MCP)](https://cobusgreyling.medium.com/using-langchain-with-model-context-protocol-mcp-e89b87ee3c4c)
 
   
