@@ -102,6 +102,6 @@ if __name__ == "__main__":
 
 [MCP with LangChain](https://tirendazacademy.medium.com/mcp-with-langchain-cabd6199e0ac)
 
-[Using LangChain With Model Context Protocol (MCP)(https://cobusgreyling.medium.com/using-langchain-with-model-context-protocol-mcp-e89b87ee3c4c)
+[Using LangChain With Model Context Protocol (MCP)](https://cobusgreyling.medium.com/using-langchain-with-model-context-protocol-mcp-e89b87ee3c4c)
 
   
