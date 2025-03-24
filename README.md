@@ -8,7 +8,11 @@ MCP(Model Context Protocal)은 Anthropic에서 기여하고 있는 오픈소스 
 pip install langchain-mcp-adapters
 ```
 
-### Build Your Own Server
+## Hello World
+
+### Server
+
+[mcp-server.py](./mcp-hello-world/mcp-server.py]와 같이 MCP 서버를 구성할 수 있습니다. 
 
 ```python
 # Build an MCP server
@@ -30,10 +34,31 @@ if __name__ == "__main__":
   mcp.run(transwhaport="stdio")
 ```
 
-### Build Your Own Client
+이후 아래와 같이 실행합니다.
+
+```text
+python mcp-server.py
+```
+
+### Client
+
+[mcp-client.py](./mcp-hello-world/mcp-client.py)를 아래와 같이 준비합니다. 
+
 
 ```python
+import asyncio
+import info
+import boto3
+
 from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langgraph.prebuilt import create_react_agent
+from langchain_aws import ChatBedrock
+from botocore.config import Config
+
+model = get_chat(extended_thinking="Disable")
 
 server_params = StdioServerParameters(
   command="python",
@@ -64,7 +89,13 @@ if __name__ == "__main__":
   print(result)
 ```
 
-### MCP Servers
+이제 아래와 같이 실행할 수 있습니다.
+
+![image](https://github.com/user-attachments/assets/2123c337-3f52-44fc-813c-e3a19cdea26e)
+
+
+
+## MCP Servers의 활용
 
 [Model Context Protocol servers](https://github.com/modelcontextprotocol/servers)에서 쓸만한 서버군을 찾아봅니다. 
 
