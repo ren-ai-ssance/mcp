@@ -79,9 +79,16 @@ if __name__ == "__main__":
 
 [MCP From Scratch](https://mirror-feeling-d80.notion.site/MCP-From-Scratch-1b9808527b178040b5baf83a991ed3b2)
 
+
 [Understanding MCP From Scratch](https://www.youtube.com/watch?v=CDjjaTALI68)
 
 [LangChain MCP Adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
+
+
+["Vibe Coding" LangGraph apps with llms.txt and MCP](https://www.youtube.com/watch?v=fk2WEVZfheI)
+
+[MCP LLMS-TXT Documentation Server](https://github.com/langchain-ai/mcpdoc)
+
 
 
 [MCP - For Server Developers](https://modelcontextprotocol.io/quickstart/server)
