@@ -64,6 +64,14 @@ if __name__ == "__main__":
   print(result)
 ```
 
+### MCP Servers
+
+[Model Context Protocol servers](https://github.com/modelcontextprotocol/servers)에서 쓸만한 서버군을 찾아봅니다. 
+
+- [Perplexity Ask MCP Server](https://github.com/ppl-ai/modelcontextprotocol)
+- [Riza MCP Server](https://github.com/riza-io/riza-mcp)
+- [Tavily MCP Server](https://github.com/tavily-ai/tavily-mcp)
+
 
 ## Reference 
 
@@ -71,10 +79,16 @@ if __name__ == "__main__":
 
 [Model Context Protocol (MCP) and Amazon Bedrock](https://community.aws/content/2uFvyCPQt7KcMxD9ldsJyjZM1Wp/model-context-protocol-mcp-and-amazon-bedrock)
 
+[Using MCP with LangGraph agents](https://www.youtube.com/watch?v=OX89LkTvNKQ)
+
+[Understanding MCP From Scratch](https://www.youtube.com/watch?v=CDjjaTALI68)
+
+[LangChain MCP Adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
+
+[Model Context Protocol servers](https://github.com/modelcontextprotocol/servers)
 
 [Langchain.js MCP Adapter](https://www.linkedin.com/posts/langchain_mcp-adapters-released-introducing-our-activity-7308925375160467457-_BPL/?utm_source=share&utm_medium=member_android&rcm=ACoAAA5jTp0BX-JuOkof3Ak56U3VlXjQVT43NzQ)
 
-[LangChain MCP Adapters](https://github.com/langchain-ai/langchain-mcp-adapters)
 
 [MCP with LangChain](https://tirendazacademy.medium.com/mcp-with-langchain-cabd6199e0ac)
 
