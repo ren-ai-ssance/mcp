@@ -12,7 +12,7 @@ pip install langchain-mcp-adapters
 
 ### Server
 
-[mcp-server.py](./mcp-hello-world/mcp-server.py]와 같이 MCP 서버를 구성할 수 있습니다. 
+[mcp-server.py](./mcp-hello-world/mcp-server.py)와 같이 MCP 서버를 구성할 수 있습니다. 
 
 ```python
 # Build an MCP server
