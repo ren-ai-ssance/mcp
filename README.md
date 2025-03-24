@@ -75,6 +75,8 @@ if __name__ == "__main__":
 
 ## Reference 
 
+[MCP From Scratch](https://mirror-feeling-d80.notion.site/MCP-From-Scratch-1b9808527b178040b5baf83a991ed3b2)
+
 [MCP - For Server Developers](https://modelcontextprotocol.io/quickstart/server)
 
 [Model Context Protocol (MCP) and Amazon Bedrock](https://community.aws/content/2uFvyCPQt7KcMxD9ldsJyjZM1Wp/model-context-protocol-mcp-and-amazon-bedrock)
