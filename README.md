@@ -96,6 +96,15 @@ if __name__ == "__main__":
 ![image](https://github.com/user-attachments/assets/2123c337-3f52-44fc-813c-e3a19cdea26e)
 
 
+### MCP inspector
+
+```text
+pip install 'mcp[cli]'
+```
+
+```text
+mcp dev mcp-server.py
+```
 
 ## MCP Servers의 활용
 
