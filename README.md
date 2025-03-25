@@ -33,7 +33,7 @@ def multiply(a: int, b: int) -> int:
 
 if __name__ == "__main__":
   # Start a process that communicates via standard input/output
-  mcp.run(transwhaport="stdio")
+  mcp.run(transport="stdio")
 ```
 
 이후 아래와 같이 실행합니다.
