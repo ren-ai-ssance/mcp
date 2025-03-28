@@ -109,7 +109,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       description: 'The endpoint of opensearch correction',
     });
 
-    const encPolicyName = `encription-${projectName}-${region}`
+    const encPolicyName = `encription-${projectName}`
     const encPolicy = new opensearchserverless.CfnSecurityPolicy(this, `opensearch-encription-policy-for-${projectName}`, {
       name: encPolicyName,
       type: "encryption",
@@ -119,7 +119,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     });
     OpenSearchCollection.addDependency(encPolicy);
 
-    const netPolicyName = `network-${projectName}-${region}`
+    const netPolicyName = `network-${projectName}`
     const netPolicy = new opensearchserverless.CfnSecurityPolicy(this, `opensearch-network-policy-for-${projectName}`, {
       name: netPolicyName,
       type: 'network',    
