@@ -89,7 +89,7 @@ model = get_chat(extended_thinking="Disable")
 
 server_params = StdioServerParameters(
   command="python",
-  args=["mcp-server.py"],
+  args=["rag-server.py"],
 )
 
 from mcp.client.stdio import stdio_client
@@ -100,17 +100,48 @@ async def run_agent():
     async with ClientSession(read, write) as session:
       # Initialize the session.
       await session.initialize()
+      
       # Load tools
       tools = await load_mcp_tools(session)
       print(f"tools: {tools}")
-      # Create a ReAct agent.
+      
       agent = create_react_agent(model, tools)
+      
       # Run the agent.
+      #agent_response = await agent.ainvoke({"messages": "What is the capital of France?"})
       agent_response = await agent.ainvoke({"messages": "what's (4 + 6) x 14?"})
+      # agent_response = await agent.ainvoke({"messages": "AWS의 스토리지 서비스의 종류에 대해 설명해주세요."})
       print(f"agent_response: {agent_response}")
+
       # Return the response.
       return agent_response["messages"][3].content
 
 if __name__ == "__main__":
   result = asyncio.run(run_agent())
-  print(result)
+  print(f"result: {result}")
+
+
+
+# from langchain_mcp_adapters.client import MultiServerMCPClient
+
+# async def run_multi_server():
+#     async with MultiServerMCPClient(
+#         {
+#             # "RAG": {
+#             #     "command": "python",
+#             #     "args": ["/Users/ksdyb/Documents/src/mcp/mcp-rag-server/rag-server.py"],
+#             #     "transport": "stdio",
+#             # },
+#             "RAG": {
+#                 "url": "http://localhost:5173/sse",
+#                 "transport": "sse",
+#             }
+#         }
+#     ) as client:
+#         agent = create_react_agent(model, client.get_tools())
+#         # math_response = await agent.ainvoke({"messages": "what's (3 + 5) x 12?"})
+#         weather_response = await agent.ainvoke({"messages": "AWS의 스토리지 서비스의 종류는?"})
+#         print(f"weather_response: {weather_response}")
+
+# if __name__ == "__main__":
+#     asyncio.run(run_multi_server())
