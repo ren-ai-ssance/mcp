@@ -10,6 +10,7 @@ import info
 import PyPDF2
 import csv
 import utils
+import asyncio
 
 from io import BytesIO
 from PIL import Image
@@ -26,7 +27,16 @@ from pydantic.v1 import BaseModel, Field
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langgraph.prebuilt import ToolNode
+from typing import Literal
+from langgraph.graph import START, END, StateGraph
+from typing_extensions import Annotated, TypedDict
+from langgraph.graph.message import add_messages
 
 logger = utils.CreateLogger("chat")
 
@@ -1176,18 +1186,142 @@ def run_rag_with_knowledge_base(query, st):
 # Bedrock Agent (Multi agent collaboration)
 ############################################################# 
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-from langchain_mcp_adapters.tools import load_mcp_tools
-from langchain_mcp_adapters.tools import load_mcp_tools
-from langgraph.prebuilt import create_react_agent
+def create_agent(tools, st):
+    tool_node = ToolNode(tools)
+    #tool_classes = list(tool_node.tools_by_name.values())
+    #logger.info(f"tool_classes: {tool_classes}")
+
+    chatModel = get_chat(extended_thinking="Disable")
+    model = chatModel.bind_tools(tools)
+
+    class State(TypedDict):
+        messages: Annotated[list, add_messages]
+
+    def call_model(state: State, config):
+        logger.info(f"###### call_model ######")
+        logger.info(f"state: {state['messages']}")
+
+        if isKorean(state["messages"][0].content)==True:
+            system = (
+                "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
+                "상황에 맞는 구체적인 세부 정보를 충분히 제공합니다."
+                "모르는 질문을 받으면 솔직히 모른다고 말합니다."
+                "한국어로 답변하세요."
+            )
+        else: 
+            system = (            
+                "You are a conversational AI designed to answer in a friendly way to a question."
+                "If you don't know the answer, just say that you don't know, don't try to make up an answer."
+            )
+
+        for attempt in range(3):   
+            logger.info(f"attempt: {attempt}")
+            try:
+                prompt = ChatPromptTemplate.from_messages(
+                    [
+                        ("system", system),
+                        MessagesPlaceholder(variable_name="messages"),
+                    ]
+                )
+                chain = prompt | model
+                    
+                response = chain.invoke(state["messages"])
+                logger.info(f"call_model response: {response}")
+
+                if isinstance(response.content, list):            
+                    for re in response.content:
+                        if "type" in re:
+                            if re['type'] == 'text':
+                                logger.info(f"--> {re['type']}: {re['text']}")
+
+                                status = re['text']
+                                logger.info(f"status: {status}")
+                                
+                                status = status.replace('`','')
+                                status = status.replace('\"','')
+                                status = status.replace("\'",'')
+                                
+                                logger.info(f"status: {status}")
+                                if status.find('<thinking>') != -1:
+                                    logger.info(f"Remove <thinking> tag.")
+                                    status = status[status.find('<thinking>')+11:status.find('</thinking>')]
+                                    logger.info(f"status without tag: {status}")
+
+                                # if debug_mode=="Enable":
+                                #     utils.status(st, status)
+                                
+                            elif re['type'] == 'tool_use':                
+                                logger.info(f"--> {re['type']}: {re['name']}, {re['input']}")
+
+                                # if debug_mode=="Enable":
+                                #     utils.status(st, f"{re['type']}: {re['name']}, {re['input']}")
+                            else:
+                                logger.info(re)
+                        else: # answer
+                            logger.info(response.content)
+                break
+            except Exception:
+                response = AIMessage(content="답변을 찾지 못하였습니다.")
+
+                err_msg = traceback.format_exc()
+                logger.info(f"error message: {err_msg}")
+                # raise Exception ("Not able to request to LLM")
+
+        return {"messages": [response]}
+
+    def should_continue(state: State) -> Literal["continue", "end"]:
+        logger.info(f"###### should_continue ######")
+
+        logger.info(f"state: {state}")
+        messages = state["messages"]    
+
+        last_message = messages[-1]
+        logger.info(f"last_message: {last_message}")
+
+        if isinstance(last_message, AIMessage) and last_message.tool_calls:
+            logger.info(f"{last_message.content}")
+
+            for message in last_message.tool_calls:
+                args = message['args']
+                if debug_mode=='Enable': 
+                    if "code" in args:                    
+                        state_msg = f"tool name: {message['name']}"
+                        logger.info(f"state_msg: {state_msg}")
+                        logger.info(f"args: {args}")
+
+            logger.info(f"--- CONTINUE: {last_message.tool_calls[-1]['name']} ---")
+            return "continue"
+        
+        else:
+            logger.info(f"--- END ---")
+            return "end"
+
+    def buildChatAgent():
+        workflow = StateGraph(State)
+
+        workflow.add_node("agent", call_model)
+        workflow.add_node("action", tool_node)
+        workflow.add_edge(START, "agent")
+        workflow.add_conditional_edges(
+            "agent",
+            should_continue,
+            {
+                "continue": "action",
+                "end": END,
+            },
+        )
+        workflow.add_edge("action", "agent")
+
+        return workflow.compile() 
+    
+    return buildChatAgent()
 
 server_params = StdioServerParameters(
   command="python",
   args=["/Users/ksdyb/Documents/src/mcp/mcp-rag/rag-server.py"],
 )
 
-async def mcp_rag_agent(query):
+async def mcp_rag_agent(query, st):
     async with stdio_client(server_params) as (read, write):
         # Open an MCP session to interact with the math_server.py tool.
         async with ClientSession(read, write) as session:
@@ -1198,38 +1332,31 @@ async def mcp_rag_agent(query):
             
             # Load tools
             tools = await load_mcp_tools(session)
-            print(f"tools: {tools}")
+            logger.info(f"tools: {tools}")
 
+            tool_info = ""
+            st.info("Tool 정보를 가져옵니다.")
             for tool in tools:
-                print(f'tool: {tool}\n')
-                print(f"name: {tool.name}")
-                    
-                args_schema = tool.args_schema
-                print(f"args_schema: {args_schema}")
-
+                tool_info += f"name: {tool.name}\n"    
                 if hasattr(tool, 'description'):
-                    description = tool.description
-                    print(f"description: {description}")
+                    tool_info += f"description: {tool.description}\n"
+                tool_info += f"args_schema: {tool.args_schema}\n\n"
+            st.info(f"{tool_info}")
 
-                response_format = tool.response_format
-                print(f"response_format: {response_format}")
-            
-            model = get_chat(extended_thinking="Disable")
-            agent = create_react_agent(model, tools)
+            agent = create_agent(tools, st)
             
             # Run the agent.            
             agent_response = await agent.ainvoke({"messages": query})
-            print(f"agent_response: {agent_response}")
+            st.info(f"agent_response: {agent_response}")
 
         # Return the response.
-        return agent_response["messages"][3].content
-    
-import asyncio
+        return agent_response["messages"][-1].content
+
 def run_agent(query, st):
     #query = "What is the capital of France?"
     #query = "what's (4 + 6) x 14?"
     #query = "보일러 에러 코드의 종류는?"
-    result = asyncio.run(mcp_rag_agent(query))
+    result = asyncio.run(mcp_rag_agent(query, st))
     print(f"result: {result}")
 
     return result, [], []

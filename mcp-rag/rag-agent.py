@@ -15,6 +15,10 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from typing import Literal
 from langchain_aws import ChatBedrock
 from botocore.config import Config
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langgraph.prebuilt import ToolNode
 
 logger = utils.CreateLogger("chat")
 
@@ -248,12 +252,6 @@ def create_agent(tools):
         return workflow.compile() 
     
     return buildChatAgent()
-
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-from langchain_mcp_adapters.tools import load_mcp_tools
-from langchain_mcp_adapters.tools import load_mcp_tools
-from langgraph.prebuilt import ToolNode
 
 server_params = StdioServerParameters(
   command="python",
