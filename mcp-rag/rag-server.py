@@ -1,14 +1,6 @@
 import json
 import boto3
-import re
 import traceback
-
-from botocore.config import Config
-from langchain_aws import BedrockEmbeddings
-from langchain_aws import ChatBedrock
-from langchain_core.prompts import ChatPromptTemplate
-from pydantic.v1 import BaseModel, Field
-from multiprocessing import Process, Pipe
 
 def load_config():
     config = None
@@ -26,9 +18,54 @@ def load_config():
 
 config = load_config()
 
-projectName = config["projectName"] if "projectName" in config else "langgraph-nova"
-index_name = projectName
+bedrock_region = config["region"] if "region" in config else "us-west-2"
 
+projectName = config["projectName"] if "projectName" in config else "mcp-rag"
+
+accountId = config["accountId"] if "accountId" in config else None
+if accountId is None:
+    raise Exception ("No accountId")
+
+region = config["region"] if "region" in config else "us-west-2"
+print(f"region: {region}")
+
+numberOfDocs = 3
+multi_region = "Enable"
+model_name = "Claude 3.5 Sonnet"
+knowledge_base_name = projectName
+
+def retrieve_knowledge_base(query):
+    lambda_client = boto3.client(
+        service_name='lambda',
+        region_name=bedrock_region
+    )
+
+    functionName = f"lambda-rag-for-{projectName}"
+    print(f"functionName: {functionName}")
+
+    try:
+        payload = {
+            'function': 'search_rag',
+            'knowledge_base_name': knowledge_base_name,
+            'keyword': query,
+            'top_k': numberOfDocs,
+            'multi_region': multi_region,
+            'model_name': model_name
+        }
+        print(f"payload: {payload}")
+
+        output = lambda_client.invoke(
+            FunctionName=functionName,
+            Payload=json.dumps(payload),
+        )
+        payload = json.load(output['Payload'])
+        print(f"response: {payload['response']}")
+        
+    except Exception:
+        err_msg = traceback.format_exc()
+        print(f"error message: {err_msg}")       
+
+    return payload['response'], []    
 
 from mcp.server.fastmcp import FastMCP 
 
@@ -42,12 +79,11 @@ def add(a: int, b: int) -> int:
 def multiply(a: int, b: int) -> int:
     return a * b
 
-projectName = "mcp-rag"
-knowledge_base_name = projectName
 @mcp.tool()
-def get_answer(query: str) -> str:
-    "answer to the general question"
-    return get_answer_using_opensearch(query)
+def search(keyword: str) -> str:
+    "search keyword"
+
+    return retrieve_knowledge_base(keyword)
 
 if __name__ =="__main__":
     print(f"###### main ######")

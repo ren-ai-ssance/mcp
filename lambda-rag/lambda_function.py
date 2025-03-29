@@ -43,7 +43,7 @@ def isKorean(text):
 selected_chat = 0
 multi_region = 'Disable'
 def get_chat(models, extended_thinking):
-    global selected_chat, model_type
+    global selected_chat
 
     profile = models[selected_chat]
     # print('profile: ', profile)
@@ -59,9 +59,9 @@ def get_chat(models, extended_thinking):
         maxOutputTokens = 5120 # 5k
     print(f'LLM: {selected_chat}, bedrock_region: {bedrock_region}, modelId: {modelId}, model_type: {model_type}')
 
-    if profile['model_type'] == 'nova':
+    if model_type == 'nova':
         STOP_SEQUENCE = '"\n\n<thinking>", "\n<thinking>", " <thinking>"'
-    elif profile['model_type'] == 'claude':
+    elif model_type == 'claude':
         STOP_SEQUENCE = "\n\nHuman:" 
                           
     # bedrock   
@@ -114,7 +114,6 @@ def get_chat(models, extended_thinking):
     return chat
 
 def get_parallel_processing_chat(models, selected):
-    global model_type
     profile = models[selected]
     bedrock_region =  profile['bedrock_region']
     modelId = profile['model_id']
@@ -122,9 +121,9 @@ def get_parallel_processing_chat(models, selected):
     maxOutputTokens = 4096
     print(f'selected_chat: {selected}, bedrock_region: {bedrock_region}, modelId: {modelId}, model_type: {model_type}')
 
-    if profile['model_type'] == 'nova':
+    if model_type == 'nova':
         STOP_SEQUENCE = '"\n\n<thinking>", "\n<thinking>", " <thinking>"'
-    elif profile['model_type'] == 'claude':
+    elif model_type == 'claude':
         STOP_SEQUENCE = "\n\nHuman:" 
                           
     # bedrock   
@@ -376,9 +375,6 @@ def lambda_handler(event, context):
 
     model_name = event.get('model_name')
     print('model_name: ', model_name)
-
-    model_type = event.get('model_type')
-    print('model_type: ', model_type)
 
     models = info.get_model_info(model_name)
 
