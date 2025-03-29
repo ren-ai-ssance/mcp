@@ -75,7 +75,12 @@ with st.sidebar:
     debugMode = 'Enable' if select_debugMode else 'Disable'
     #print('debugMode: ', debugMode)
 
-    chat.update(modelName, debugMode, st)
+    # multi region check box
+    select_multiRegion = st.checkbox('Multi Region', value=False)
+    multiRegion = 'Enable' if select_multiRegion else 'Disable'
+    #print('multiRegion: ', multiRegion)
+
+    chat.update(modelName, debugMode, multiRegion, st)
 
     st.success(f"Connected to {modelName}", icon="💚")
     clear_button = st.button("대화 초기화", key="clear")

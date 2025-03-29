@@ -113,14 +113,15 @@ model_type = "claude"
 models = info.get_model_info(model_name)
 model_id = models[0]["model_id"]
 debug_mode = "Enable"
+multi_region = "Disable"
 
 client = boto3.client(
     service_name='bedrock-agent',
     region_name=bedrock_region
 )  
 
-def update(modelName, debugMode, st):    
-    global model_name, model_id, model_type, debug_mode
+def update(modelName, debugMode, multiRegion, st):    
+    global model_name, model_id, model_type, debug_mode, multi_region
     global models, agent_id, agent_kb_id
     global agent_alias_id, agent_kb_alias_id, agent_alias_arn, agent_kb_alias_arn
     
@@ -135,6 +136,10 @@ def update(modelName, debugMode, st):
     if debug_mode != debugMode:
         debug_mode = debugMode
         logger.info(f"debug_mode: {debug_mode}")
+
+    if multi_region != multiRegion:
+        multi_region = multiRegion
+        logger.info(f"multi_region: {multi_region}")
 
 def clear_chat_history():
     memory_chain = []
@@ -1083,7 +1088,9 @@ def retrieve_knowledge_base(query):
         payload = {
             'function': 'search_rag',
             'knowledge_base_name': knowledge_base_name,
-            'keyword': query
+            'keyword': query,
+            'top_k': numberOfDocs,
+            'multi_region': multi_region
         }
         logger.info(f"payload: {payload}")
 
