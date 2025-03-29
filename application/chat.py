@@ -63,7 +63,7 @@ except Exception:
 
 bedrock_region = config["region"] if "region" in config else "us-west-2"
 
-projectName = config["projectName"] if "projectName" in config else "bedrock-agent"
+projectName = config["projectName"] if "projectName" in config else "mcp-rag"
 
 accountId = config["accountId"] if "accountId" in config else None
 if accountId is None:
@@ -280,17 +280,17 @@ secretsmanager = boto3.client(
     service_name='secretsmanager',
     region_name=bedrock_region
 )
-try:
-    get_weather_api_secret = secretsmanager.get_secret_value(
-        SecretId=f"openweathermap-{projectName}"
-    )
-    #print('get_weather_api_secret: ', get_weather_api_secret)
-    secret = json.loads(get_weather_api_secret['SecretString'])
-    #print('secret: ', secret)
-    weather_api_key = secret['weather_api_key']
+# try:
+#     get_weather_api_secret = secretsmanager.get_secret_value(
+#         SecretId=f"openweathermap-{projectName}"
+#     )
+#     #print('get_weather_api_secret: ', get_weather_api_secret)
+#     secret = json.loads(get_weather_api_secret['SecretString'])
+#     #print('secret: ', secret)
+#     weather_api_key = secret['weather_api_key']
 
-except Exception as e:
-    raise e
+# except Exception as e:
+#     raise e
 
 # api key to use LangSmith
 langsmith_api_key = ""
@@ -329,18 +329,6 @@ try:
             tavily_api_wrapper = TavilySearchAPIWrapper(tavily_api_key=tavily_key)
             #     os.environ["TAVILY_API_KEY"] = tavily_key
 
-            # # Tavily Tool Test
-            # query = 'what is Amazon Nova Pro?'
-            # search = TavilySearchResults(
-            #     max_results=1,
-            #     include_answer=True,
-            #     include_raw_content=True,
-            #     api_wrapper=tavily_api_wrapper,
-            #     search_depth="advanced", # "basic"
-            #     # include_domains=["google.com", "naver.com"]
-            # )
-            # output = search.invoke(query)
-            # print('tavily output: ', output)    
         else:
             logger.info(f"tavily_key is required.")
 except Exception as e: 
@@ -1014,6 +1002,40 @@ def get_image_summarization(object_name, prompt, st):
     logger.info(f"image contents: {contents}")
 
     return contents
+
+
+####################### Bedrock Agent #######################
+# RAG using Lambda
+############################################################# 
+
+def run_rag_with_knowledge_base(query, st):
+    lambda_client = boto3.client(
+        service_name='lambda',
+        region_name=bedrock_region
+    )
+
+    functionName = f"lambda-rag-for-{projectName}"
+    logger.info(f"functionName: {functionName}")
+
+    response = ""
+    try:
+        payload = {
+            'knowledge_base_name': knowledge_base_name,
+            'query': query
+        }
+        logger.info(f"payload: {payload}")
+
+        response = lambda_client.invoke(
+            FunctionName=functionName,
+            Payload=json.dumps(payload),
+        )
+        logger.info(f"response: {response}")
+        
+    except Exception:
+        err_msg = traceback.format_exc()
+        logger.info(f"error message: {err_msg}")       
+
+    return response, []      
 
 ####################### Bedrock Agent #######################
 # Bedrock Agent (Multi agent collaboration)

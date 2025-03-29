@@ -23,22 +23,6 @@ path = os.environ.get('sharing_url')
 model_name = "Nova Pro"
 models = info.get_model_info(model_name)
 
-secretsmanager = boto3.client(
-    service_name='secretsmanager',
-    region_name=bedrock_region
-)
-try:
-    get_weather_api_secret = secretsmanager.get_secret_value(
-        SecretId=f"openweathermap-{projectName}"
-    )
-    #print('get_weather_api_secret: ', get_weather_api_secret)
-    secret = json.loads(get_weather_api_secret['SecretString'])
-    #print('secret: ', secret)
-    weather_api_key = secret['weather_api_key']
-
-except Exception as e:
-    raise e
-
 def isKorean(text):
     # check korean
     pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')

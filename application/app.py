@@ -194,40 +194,40 @@ if prompt := st.chat_input("메시지를 입력하세요."):
             show_references(reference_docs) 
 
         
-        elif mode == 'Agent':
-            sessionState = ""
-            with st.status("thinking...", expanded=True, state="running") as status:                
-                response, image_url, reference_docs = chat.run_bedrock_agent(prompt, chat.agent_name, sessionState, st)
+        # elif mode == 'Agent':
+        #     sessionState = ""
+        #     with st.status("thinking...", expanded=True, state="running") as status:                
+        #         response, image_url, reference_docs = chat.run_bedrock_agent(prompt, chat.agent_name, sessionState, st)
 
-                # if chat.isKorean(response)==False:
-                #     logger.info(f"translate to korean")
-                #     response = chat.translate_text(response)
+        #         # if chat.isKorean(response)==False:
+        #         #     logger.info(f"translate to korean")
+        #         #     response = chat.translate_text(response)
 
-                st.write(response)
-                logger.info(f"response: {response}, image_url: {image_url}")
+        #         st.write(response)
+        #         logger.info(f"response: {response}, image_url: {image_url}")
 
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content":  response,
-                    "images": image_url if image_url else []
-                })
-                chat.save_chat_history(prompt, response)
+        #         st.session_state.messages.append({
+        #             "role": "assistant", 
+        #             "content":  response,
+        #             "images": image_url if image_url else []
+        #         })
+        #         chat.save_chat_history(prompt, response)
             
-            show_references(reference_docs) 
+        #     show_references(reference_docs) 
 
-        elif mode == 'Multi Agent Collaboration':
-            sessionState = ""
-            with st.status("thinking...", expanded=True, state="running") as status:
-                response, image_url = chat.run_multi_agent_collaboration(prompt, st)
-                st.write(response)
-                logger.info(f"response: {response}")
+        # elif mode == 'Multi Agent Collaboration':
+        #     sessionState = ""
+        #     with st.status("thinking...", expanded=True, state="running") as status:
+        #         response, image_url = chat.run_multi_agent_collaboration(prompt, st)
+        #         st.write(response)
+        #         logger.info(f"response: {response}")
                 
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": response,
-                    "images": image_url if image_url else []
-                })
-                chat.save_chat_history(prompt, response)                    
+        #         st.session_state.messages.append({
+        #             "role": "assistant", 
+        #             "content": response,
+        #             "images": image_url if image_url else []
+        #         })
+        #         chat.save_chat_history(prompt, response)                    
 
         elif mode == '번역하기':
             response = chat.translate_text(prompt)
