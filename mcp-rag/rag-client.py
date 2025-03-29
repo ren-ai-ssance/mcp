@@ -89,14 +89,14 @@ model = get_chat(extended_thinking="Disable")
 
 server_params = StdioServerParameters(
   command="python",
-  args=["rag-server.py"],
+  args=["/Users/ksdyb/Documents/src/mcp/mcp-rag/rag-server.py"],
 )
 
 from mcp.client.stdio import stdio_client
 
 async def run_agent():
   async with stdio_client(server_params) as (read, write):
-    # Open an MCP session to interact with the math_server.py tool.
+    # Open an MCP session to interact with the rag_server.py tool.
     async with ClientSession(read, write) as session:
       # Initialize the session.
       await session.initialize()
@@ -104,13 +104,27 @@ async def run_agent():
       # Load tools
       tools = await load_mcp_tools(session)
       print(f"tools: {tools}")
+
+    #   for tool in tools:
+    #     print(f'tool: {tool}\n')
+    #     print(f"name: {tool.name}")
+              
+    #     args_schema = tool.args_schema
+    #     print(f"args_schema: {args_schema}")
+
+    #     if hasattr(tool, 'description'):
+    #         description = tool.description
+    #         print(f"description: {description}")
+
+    #     response_format = tool.response_format
+    #     print(f"response_format: {response_format}")
       
       agent = create_react_agent(model, tools)
       
       # Run the agent.
       #agent_response = await agent.ainvoke({"messages": "What is the capital of France?"})
-      agent_response = await agent.ainvoke({"messages": "what's (4 + 6) x 14?"})
-      # agent_response = await agent.ainvoke({"messages": "AWS의 스토리지 서비스의 종류에 대해 설명해주세요."})
+      #agent_response = await agent.ainvoke({"messages": "what's (4 + 6) x 14?"})
+      agent_response = await agent.ainvoke({"messages": "보일러 에러코드에 대해 설명해주세요."})
       print(f"agent_response: {agent_response}")
 
       # Return the response.
@@ -119,29 +133,3 @@ async def run_agent():
 if __name__ == "__main__":
   result = asyncio.run(run_agent())
   print(f"result: {result}")
-
-
-
-# from langchain_mcp_adapters.client import MultiServerMCPClient
-
-# async def run_multi_server():
-#     async with MultiServerMCPClient(
-#         {
-#             # "RAG": {
-#             #     "command": "python",
-#             #     "args": ["/Users/ksdyb/Documents/src/mcp/mcp-rag-server/rag-server.py"],
-#             #     "transport": "stdio",
-#             # },
-#             "RAG": {
-#                 "url": "http://localhost:5173/sse",
-#                 "transport": "sse",
-#             }
-#         }
-#     ) as client:
-#         agent = create_react_agent(model, client.get_tools())
-#         # math_response = await agent.ainvoke({"messages": "what's (3 + 5) x 12?"})
-#         weather_response = await agent.ainvoke({"messages": "AWS의 스토리지 서비스의 종류는?"})
-#         print(f"weather_response: {weather_response}")
-
-# if __name__ == "__main__":
-#     asyncio.run(run_multi_server())

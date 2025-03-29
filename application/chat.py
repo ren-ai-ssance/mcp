@@ -152,25 +152,30 @@ def save_chat_history(text, msg):
     else:
         memory_chain.chat_memory.add_ai_message(msg) 
 
-def get_chat():
-    global model_type
+selected_chat = 0
+def get_chat(extended_thinking):
+    global selected_chat, model_type
 
-    profile = models[0]
+    logger.info(f"models: {models}")
+    logger.info(f"selected_chat: {selected_chat}")
+    
+    profile = models[selected_chat]
     # print('profile: ', profile)
         
     bedrock_region =  profile['bedrock_region']
-    modelId = profile['model_id']    
+    modelId = profile['model_id']
     model_type = profile['model_type']
     if model_type == 'claude':
         maxOutputTokens = 4096 # 4k
-    else: # nova
+    else:
         maxOutputTokens = 5120 # 5k
-    
-    logger.info(f"LLM: bedrock_region: {bedrock_region}, modelId: {modelId}, model_type: {model_type}")
+    number_of_models = len(models)
 
-    if model_type == 'nova':
+    logger.info(f"LLM: {selected_chat}, bedrock_region: {bedrock_region}, modelId: {modelId}, model_type: {model_type}")
+
+    if profile['model_type'] == 'nova':
         STOP_SEQUENCE = '"\n\n<thinking>", "\n<thinking>", " <thinking>"'
-    elif model_type == 'claude':
+    elif profile['model_type'] == 'claude':
         STOP_SEQUENCE = "\n\nHuman:" 
                           
     # bedrock   
@@ -183,14 +188,28 @@ def get_chat():
             }
         )
     )
-    parameters = {
-        "max_tokens":maxOutputTokens,     
-        "temperature":0.1,
-        "top_k":250,
-        "top_p":0.9,
-        "stop_sequences": [STOP_SEQUENCE]
-    }
-    # print('parameters: ', parameters)
+    if extended_thinking=='Enable':
+        maxReasoningOutputTokens=64000
+        logger.info(f"extended_thinking: {extended_thinking}")
+        thinking_budget = min(maxOutputTokens, maxReasoningOutputTokens-1000)
+
+        parameters = {
+            "max_tokens":maxReasoningOutputTokens,
+            "temperature":1,            
+            "thinking": {
+                "type": "enabled",
+                "budget_tokens": thinking_budget
+            },
+            "stop_sequences": [STOP_SEQUENCE]
+        }
+    else:
+        parameters = {
+            "max_tokens":maxOutputTokens,     
+            "temperature":0.1,
+            "top_k":250,
+            "top_p":0.9,
+            "stop_sequences": [STOP_SEQUENCE]
+        }
 
     chat = ChatBedrock(   # new chat model
         model_id=modelId,
@@ -199,6 +218,13 @@ def get_chat():
         region_name=bedrock_region
     )    
     
+    if multi_region=='Enable':
+        selected_chat = selected_chat + 1
+        if selected_chat == number_of_models:
+            selected_chat = 0
+    else:
+        selected_chat = 0
+
     return chat
 
 def print_doc(i, doc):
@@ -1150,3 +1176,60 @@ def run_rag_with_knowledge_base(query, st):
 # Bedrock Agent (Multi agent collaboration)
 ############################################################# 
 
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langgraph.prebuilt import create_react_agent
+
+server_params = StdioServerParameters(
+  command="python",
+  args=["/Users/ksdyb/Documents/src/mcp/mcp-rag/rag-server.py"],
+)
+
+async def mcp_rag_agent(query):
+    async with stdio_client(server_params) as (read, write):
+        # Open an MCP session to interact with the math_server.py tool.
+        async with ClientSession(read, write) as session:
+            # Initialize the session.
+            await session.initialize()
+
+            logger.info(f"query: {query}")
+            
+            # Load tools
+            tools = await load_mcp_tools(session)
+            print(f"tools: {tools}")
+
+            for tool in tools:
+                print(f'tool: {tool}\n')
+                print(f"name: {tool.name}")
+                    
+                args_schema = tool.args_schema
+                print(f"args_schema: {args_schema}")
+
+                if hasattr(tool, 'description'):
+                    description = tool.description
+                    print(f"description: {description}")
+
+                response_format = tool.response_format
+                print(f"response_format: {response_format}")
+            
+            model = get_chat(extended_thinking="Disable")
+            agent = create_react_agent(model, tools)
+            
+            # Run the agent.            
+            agent_response = await agent.ainvoke({"messages": query})
+            print(f"agent_response: {agent_response}")
+
+        # Return the response.
+        return agent_response["messages"][3].content
+    
+import asyncio
+def run_agent(query, st):
+    #query = "What is the capital of France?"
+    #query = "what's (4 + 6) x 14?"
+    #query = "보일러 에러 코드의 종류는?"
+    result = asyncio.run(mcp_rag_agent(query))
+    print(f"result: {result}")
+
+    return result, [], []

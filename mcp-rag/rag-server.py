@@ -11,7 +11,7 @@ def load_config():
 
     except Exception:
         print("use local configuration")
-        with open("config.json", "r", encoding="utf-8") as f:
+        with open("./config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
     
     return config
@@ -89,4 +89,6 @@ def search(keyword: str) -> str:
 if __name__ =="__main__":
     print(f"###### main ######")
     mcp.run(transport="stdio")
+
+
 

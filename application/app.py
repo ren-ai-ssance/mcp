@@ -245,23 +245,29 @@ if prompt := st.chat_input("메시지를 입력하세요."):
             show_references(reference_docs) 
 
         
-        # elif mode == 'Agent':
-        #     sessionState = ""
-        #     with st.status("thinking...", expanded=True, state="running") as status:                
-        #         response, image_url, reference_docs = chat.run_bedrock_agent(prompt, chat.agent_name, sessionState, st)
+        elif mode == 'Agent':
+            sessionState = ""
+            with st.status("thinking...", expanded=True, state="running") as status:       
 
-        #         # if chat.isKorean(response)==False:
-        #         #     logger.info(f"translate to korean")
-        #         #     response = chat.translate_text(response)
+                # result = asyncio.run(run_agent())
+    # print(f"result: {result}")
 
-        #         st.write(response)
-        #         logger.info(f"response: {response}, image_url: {image_url}")
+    # return result, [], []
+    #          
+                response, image_url, reference_docs = chat.run_agent(prompt, st)
 
-        #         st.session_state.messages.append({
-        #             "role": "assistant", 
-        #             "content":  response,
-        #             "images": image_url if image_url else []
-        #         })
+                # if chat.isKorean(response)==False:
+                #     logger.info(f"translate to korean")
+                #     response = chat.translate_text(response)
+
+                st.write(response)
+                logger.info(f"response: {response}, image_url: {image_url}")
+
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content":  response,
+                    "images": image_url if image_url else []
+                })
         #         chat.save_chat_history(prompt, response)
             
         #     show_references(reference_docs) 
