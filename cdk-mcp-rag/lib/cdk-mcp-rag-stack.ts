@@ -371,10 +371,10 @@ export class CdkMcpRagStack extends cdk.Stack {
     lambdaRag.grantInvoke(new cdk.aws_iam.ServicePrincipal("bedrock.amazonaws.com")); 
     
     const mcp_config = JSON.stringify(`{
-      “search”: [
-        “commend”: “python”,
-        “args”: [“application/mcp-server.py”],
-        “transport”: “stdio”
+      "search": [
+        "commend": "python",
+        "args": ["application/mcp-server.py"],
+        "transport": "stdio"
       ]
     }`)
     const environment = {
