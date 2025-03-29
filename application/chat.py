@@ -1090,8 +1090,9 @@ def retrieve_knowledge_base(query):
             'knowledge_base_name': knowledge_base_name,
             'keyword': query,
             'top_k': numberOfDocs,
-            'multi_region': multi_region,
-            'model_name': model_name
+            'grading': "Enable",
+            'model_name': model_name,
+            'multi_region': multi_region
         }
         logger.info(f"payload: {payload}")
 

@@ -223,9 +223,11 @@ def get_retrieval_grader(chat):
     retrieval_grader = grade_prompt | structured_llm_grader
     return retrieval_grader
 
-def grade_documents(models, question, documents):
+def grade_documents(model_name, question, documents):
     print(f"###### grade_documents ######")
     print(f"start grading...")
+
+    models = info.get_model_info(model_name)
     
     filtered_docs = []
     if multi_region == 'Enable':  # parallel processing        
@@ -372,13 +374,14 @@ def lambda_handler(event, context):
 
     top_k = event.get('top_k')
     print('top_k: ', top_k)
+    
+    grading = event.get('grading')
+    print('grading: ', grading)
 
     model_name = event.get('model_name')
     print('model_name: ', model_name)
 
-    models = info.get_model_info(model_name)
-
-    global multi_region, knowledge_base_id
+    global multi_region
     multi_region = event.get('multi_region')
     print('multi_region: ', multi_region)
 
@@ -398,6 +401,7 @@ def lambda_handler(event, context):
                 summaries = response["knowledgeBaseSummaries"]
                 for summary in summaries:
                     if summary["name"] == knowledge_base_name:
+                        global knowledge_base_id
                         knowledge_base_id = summary["knowledgeBaseId"]
                         print('knowledge_base_id: ', knowledge_base_id)
         except Exception:
@@ -410,15 +414,20 @@ def lambda_handler(event, context):
         # retrieve
         relevant_docs = search_by_knowledge_base(keyword, top_k)
 
-        # grade documents
-        filtered_docs = grade_documents(models, keyword, relevant_docs)
-
-        # check duplication
-        filtered_docs = check_duplication(filtered_docs) 
-
         relevant_context = ""
-        for document in filtered_docs:
-            relevant_context = relevant_context + document.page_content + "\n\n"        
+        if grading == "Enable":
+            # grade documents
+            filtered_docs = grade_documents(model_name, keyword, relevant_docs)
+
+            # check duplication
+            filtered_docs = check_duplication(filtered_docs) 
+            
+            for document in filtered_docs:
+                relevant_context = relevant_context + document.page_content + "\n\n"        
+            
+        else:
+            for document in relevant_docs:
+                relevant_context = relevant_context + document.page_content + "\n\n"        
         print('relevant_context: ', relevant_context)
         
     return {
