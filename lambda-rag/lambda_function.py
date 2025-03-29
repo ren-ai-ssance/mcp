@@ -46,12 +46,11 @@ def isKorean(text):
     
 selected_chat = 0
 multi_region = 'Disable'
-def get_chat():
+def get_chat(extended_thinking):
     global selected_chat, model_type
 
     profile = models[selected_chat]
-    print('profile: ', profile)
-    number_of_models = len(models)
+    # print('profile: ', profile)
         
     bedrock_region =  profile['bedrock_region']
     modelId = profile['model_id']
@@ -77,14 +76,28 @@ def get_chat():
             }
         )
     )
-    parameters = {
-        "max_tokens":maxOutputTokens,     
-        "temperature":0.1,
-        "top_k":250,
-        "top_p":0.9,
-        "stop_sequences": [STOP_SEQUENCE]
-    }
-    # print('parameters: ', parameters)
+    if extended_thinking=='Enable':
+        maxReasoningOutputTokens=64000
+        print(f"extended_thinking: {extended_thinking}")
+        thinking_budget = min(maxOutputTokens, maxReasoningOutputTokens-1000)
+
+        parameters = {
+            "max_tokens":maxReasoningOutputTokens,
+            "temperature":1,            
+            "thinking": {
+                "type": "enabled",
+                "budget_tokens": thinking_budget
+            },
+            "stop_sequences": [STOP_SEQUENCE]
+        }
+    else:
+        parameters = {
+            "max_tokens":maxOutputTokens,     
+            "temperature":0.1,
+            "top_k":250,
+            "top_p":0.9,
+            "stop_sequences": [STOP_SEQUENCE]
+        }
 
     chat = ChatBedrock(   # new chat model
         model_id=modelId,
@@ -92,6 +105,7 @@ def get_chat():
         model_kwargs=parameters,
         region_name=bedrock_region
     )    
+    
     if multi_region=='Enable':
         selected_chat = selected_chat + 1
         if selected_chat == number_of_models:
@@ -267,6 +281,14 @@ def check_duplication(docs):
     
     return updated_docs
 
+def print_doc(i, doc):
+    if len(doc.page_content)>=100:
+        text = doc.page_content[:100]
+    else:
+        text = doc.page_content
+            
+    print(f"{i}: {text}, metadata:{doc.metadata}")
+
 def search_by_knowledge_base(keyword: str, top_k: int) -> str:
     print("###### search_by_knowledge_base ######")    
     
@@ -297,7 +319,7 @@ def search_by_knowledge_base(keyword: str, top_k: int) -> str:
 
             print('--> docs from knowledge base')
             for i, doc in enumerate(docs):
-                # print_doc(i, doc)
+                print_doc(i, doc)
                 
                 content = f"{keyword}에 대해 조사한 결과는 아래와 같습니다.\n\n"
                 if doc.page_content:
