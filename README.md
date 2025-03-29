@@ -118,6 +118,30 @@ mcp dev mcp-server.py
 - [Riza MCP Server](https://github.com/riza-io/riza-mcp)
 - [Tavily MCP Server](https://github.com/tavily-ai/tavily-mcp)
 
+## 실행하기
+
+Output의 environmentformcprag의 내용을 복사하여 application/config.json을 생성합니다. "aws configure"로 credential이 설정되어 있어야합니다. 만약 visual studio code 사용자라면 config.json 파일은 아래 명령어를 사용합니다.
+
+```text
+code application/config.json
+```
+
+아래와 같이 필요한 패키지를 설치합니다.
+
+```text
+python3 -m venv venv
+source venv/bin/activate
+pip install streamlit streamlit_chat 
+pip install boto3 langchain_aws langchain langchain_community langgraph opensearch-py
+pip install beautifulsoup4 pytz tavily-python
+```
+
+아래와 같은 명령어로 streamlit을 실행합니다. 
+
+```text
+streamlit run application/app.py
+```
+
 
 ## Reference 
 
