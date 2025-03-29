@@ -276,14 +276,11 @@ def lambda_handler(event, context):
     function = event['function']
     print('function: ', function)
 
-    parameters = event.get('parameters', [])
-    print('parameters: ', parameters)
+    knowledge_base_name = event["knowledge_base_name"]
+    print('knowledge_base_name: ', knowledge_base_name)
 
     keyword = event.get('keyword')
     print('keyword: ', keyword)
-
-    knowledge_base_name = event["knowledge_base_name"]
-    print('knowledge_base_name: ', knowledge_base_name)
 
     # retrieve knowledge_base_id
     global knowledge_base_id
@@ -309,7 +306,6 @@ def lambda_handler(event, context):
             print('error message: ', err_msg)    
     
     if function == 'search_rag':
-        keyword = parameters[0]['value']
         print('keyword: ', keyword)
         output = search_by_knowledge_base(keyword)
         

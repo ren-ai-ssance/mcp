@@ -369,8 +369,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     });     
     
     lambdaRag.grantInvoke(new cdk.aws_iam.ServicePrincipal("bedrock.amazonaws.com")); 
-    langsmithApiSecret.grantRead(lambdaRag)
-
+    
     const environment = {
       "projectName": projectName,
       "accountId": accountId,

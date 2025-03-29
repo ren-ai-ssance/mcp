@@ -1020,8 +1020,9 @@ def run_rag_with_knowledge_base(query, st):
     response = ""
     try:
         payload = {
+            'function': 'search_rag',
             'knowledge_base_name': knowledge_base_name,
-            'query': query
+            'keyword': query
         }
         logger.info(f"payload: {payload}")
 
