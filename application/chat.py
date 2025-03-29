@@ -1007,8 +1007,70 @@ def get_image_summarization(object_name, prompt, st):
 ####################### Bedrock Agent #######################
 # RAG using Lambda
 ############################################################# 
+def get_rag_prompt(text):
+    # print("###### get_rag_prompt ######")
+    llm = get_chat()
+    # print('model_type: ', model_type)
+    
+    if model_type == "nova":
+        if isKorean(text)==True:
+            system = (
+                "당신의 이름은 서연이고, 질문에 대해 친절하게 답변하는 사려깊은 인공지능 도우미입니다."
+                "다음의 Reference texts을 이용하여 user의 질문에 답변합니다."
+                "모르는 질문을 받으면 솔직히 모른다고 말합니다."
+                "답변의 이유를 풀어서 명확하게 설명합니다."
+            )
+        else: 
+            system = (
+                "You will be acting as a thoughtful advisor."
+                "Provide a concise answer to the question at the end using reference texts." 
+                "If you don't know the answer, just say that you don't know, don't try to make up an answer."
+                "You will only answer in text format, using markdown format is not allowed."
+            )    
+    
+        human = (
+            "Question: {question}"
 
-def run_rag_with_knowledge_base(query, st):
+            "Reference texts: "
+            "{context}"
+        ) 
+        
+    elif model_type == "claude":
+        if isKorean(text)==True:
+            system = (
+                "당신의 이름은 서연이고, 질문에 대해 친절하게 답변하는 사려깊은 인공지능 도우미입니다."
+                "다음의 <context> tag안의 참고자료를 이용하여 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다." 
+                "모르는 질문을 받으면 솔직히 모른다고 말합니다."
+                "답변의 이유를 풀어서 명확하게 설명합니다."
+                "결과는 <result> tag를 붙여주세요."
+            )
+        else: 
+            system = (
+                "You will be acting as a thoughtful advisor."
+                "Here is pieces of context, contained in <context> tags." 
+                "If you don't know the answer, just say that you don't know, don't try to make up an answer."
+                "You will only answer in text format, using markdown format is not allowed."
+                "Put it in <result> tags."
+            )    
+
+        human = (
+            "<question>"
+            "{question}"
+            "</question>"
+
+            "<context>"
+            "{context}"
+            "</context>"
+        )
+
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    # print('prompt: ', prompt)
+    
+    rag_chain = prompt | llm
+
+    return rag_chain
+ 
+def retrieve_knowledge_base(query):
     lambda_client = boto3.client(
         service_name='lambda',
         region_name=bedrock_region
@@ -1017,7 +1079,6 @@ def run_rag_with_knowledge_base(query, st):
     functionName = f"lambda-rag-for-{projectName}"
     logger.info(f"functionName: {functionName}")
 
-    response = ""
     try:
         payload = {
             'function': 'search_rag',
@@ -1026,18 +1087,56 @@ def run_rag_with_knowledge_base(query, st):
         }
         logger.info(f"payload: {payload}")
 
-        response = lambda_client.invoke(
+        output = lambda_client.invoke(
             FunctionName=functionName,
             Payload=json.dumps(payload),
         )
-        logger.info(f"response: {response}")
+        payload = json.load(output['Payload'])
+        logger.info(f"response: {payload['response']}")
         
     except Exception:
         err_msg = traceback.format_exc()
         logger.info(f"error message: {err_msg}")       
 
-    return response, []      
+    return payload['response'], []      
 
+def run_rag_with_knowledge_base(query, st):
+    global reference_docs, contentList
+    reference_docs = []
+    contentList = []
+
+    # retrieve
+    if debug_mode == "Enable":
+        st.info(f"RAG 검색을 수행합니다. 검색어: {query}")  
+
+    relevant_context = retrieve_knowledge_base(query)    
+    logger.info(f"relevant_context: {relevant_context}")
+    st.info(f"RAG 검색을 완료했습니다.")
+    st.info(f"{relevant_context}")
+
+    rag_chain = get_rag_prompt(query)
+                       
+    msg = ""    
+    try: 
+        result = rag_chain.invoke(
+            {
+                "question": query,
+                "context": relevant_context                
+            }
+        )
+        logger.info(f"result: {result}")
+
+        msg = result.content        
+        if msg.find('<result>')!=-1:
+            msg = msg[msg.find('<result>')+8:msg.find('</result>')]
+        
+    except Exception:
+        err_msg = traceback.format_exc()
+        logger.info(f"error message: {err_msg}")                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg, reference_docs
+   
 ####################### Bedrock Agent #######################
 # Bedrock Agent (Multi agent collaboration)
 ############################################################# 

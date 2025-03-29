@@ -1,7 +1,7 @@
 import streamlit as st 
 import chat
 import utils
-
+import knowledge_base as kb
 import cost_analysis as cost
 
 # logging
@@ -134,6 +134,52 @@ if clear_button or "messages" not in st.session_state:
     st.rerun()
 
     chat.clear_chat_history()
+
+# Preview the uploaded image in the sidebar
+file_name = ""
+state_of_code_interpreter = False
+if uploaded_file is not None and clear_button==False:
+    logger.info(f"uploaded_file.name: {uploaded_file.name}")
+    if uploaded_file.name:
+        logger.info(f"csv type? {uploaded_file.name.lower().endswith(('.csv'))}")
+
+    if uploaded_file.name and not mode == '이미지 분석':
+        chat.initiate()
+
+        if debugMode=='Enable':
+            status = '선택한 파일을 업로드합니다.'
+            logger.info(f"status: {status}")
+            st.info(status)
+
+        file_name = uploaded_file.name
+        logger.info(f"uploading... file_name: {file_name}")
+        file_url = chat.upload_to_s3(uploaded_file.getvalue(), file_name)
+        logger.info(f"file_url: {file_url}")
+
+        kb.sync_data_source()  # sync uploaded files
+            
+        status = f'선택한 "{file_name}"의 내용을 요약합니다.'
+        # my_bar = st.sidebar.progress(0, text=status)
+        
+        # for percent_complete in range(100):
+        #     time.sleep(0.2)
+        #     my_bar.progress(percent_complete + 1, text=status)
+        if debugMode=='Enable':
+            logger.info(f"status: {status}")
+            st.info(status)
+    
+        msg = chat.get_summary_of_uploaded_file(file_name, st)
+        st.session_state.messages.append({"role": "assistant", "content": f"선택한 문서({file_name})를 요약하면 아래와 같습니다.\n\n{msg}"})    
+        logger.info(f"msg: {msg}")
+
+        st.write(msg)
+
+    if uploaded_file and clear_button==False and mode == '이미지 분석':
+        st.image(uploaded_file, caption="이미지 미리보기", use_container_width=True)
+
+        file_name = uploaded_file.name
+        url = chat.upload_to_s3(uploaded_file.getvalue(), file_name)
+        logger.info(f"url: {url}")
 
 if clear_button==False and mode == '비용 분석':
     st.subheader("📈 Cost Analysis")
