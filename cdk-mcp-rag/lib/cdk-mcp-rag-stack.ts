@@ -139,7 +139,6 @@ export class CdkMcpRagStack extends cdk.Stack {
           AllowFromPublic: true,          
         },
       ]), 
-      
     });
     OpenSearchCollection.addDependency(netPolicy);
 
@@ -371,5 +370,21 @@ export class CdkMcpRagStack extends cdk.Stack {
     
     lambdaRag.grantInvoke(new cdk.aws_iam.ServicePrincipal("bedrock.amazonaws.com")); 
 
+    const environment = {
+      "projectName": projectName,
+      "accountId": accountId,
+      "region": region,
+      "knowledge_base_role": knowledge_base_role.roleArn,
+      "collectionArn": collectionArn,
+      "opensearch_url": OpenSearchCollection.attrCollectionEndpoint,
+      "s3_bucket": s3Bucket.bucketName,      
+      "s3_arn": s3Bucket.bucketArn,
+      "sharing_url": 'https://'+distribution_sharing.domainName
+    }    
+    new cdk.CfnOutput(this, `environment-for-${projectName}`, {
+      value: JSON.stringify(environment),
+      description: `environment-${projectName}`,
+      exportName: `environment-${projectName}`
+    });
   }
 }
