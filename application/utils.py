@@ -1,5 +1,6 @@
 import logging
 import sys
+import json
 
 #logging
 def CreateLogger(logger_name):
@@ -55,3 +56,22 @@ def get_contents_type(file_name):
     else:
         content_type = "no info"    
     return content_type
+
+def status(st, str):
+    st.info(str)
+    
+def stcode(st, code):
+    st.code(code)
+
+def load_config():
+    config = None
+    try:
+        with open("/home/config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+        
+    except Exception:
+        print(f"use local configuration")
+        with open("application/config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+
+    return config

@@ -20,7 +20,7 @@ from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import ToolNode
 
-logger = utils.CreateLogger("chat")
+logger = utils.CreateLogger("agent")
 
 model_name = "Claude 3.5 Sonnet"
 model_type = "claude"

@@ -60,16 +60,7 @@ def initiate():
 
 initiate()
 
-try:
-    with open("/home/config.json", "r", encoding="utf-8") as f:
-        config = json.load(f)
-        logger.info(f"config: {config}")
-
-except Exception:
-    logger.info(f"use local configuration")
-    with open("application/config.json", "r", encoding="utf-8") as f:
-        config = json.load(f)
-        logger.info(f"config: {config}")
+config = utils.load_config()
 
 bedrock_region = config["region"] if "region" in config else "us-west-2"
 
@@ -1186,10 +1177,8 @@ def run_rag_with_knowledge_base(query, st):
 # Bedrock Agent (Multi agent collaboration)
 ############################################################# 
 
-def create_agent(tools, st):
+def create_agent(tools):
     tool_node = ToolNode(tools)
-    #tool_classes = list(tool_node.tools_by_name.values())
-    #logger.info(f"tool_classes: {tool_classes}")
 
     chatModel = get_chat(extended_thinking="Disable")
     model = chatModel.bind_tools(tools)
@@ -1200,6 +1189,8 @@ def create_agent(tools, st):
     def call_model(state: State, config):
         logger.info(f"###### call_model ######")
         logger.info(f"state: {state['messages']}")
+
+        logger.info(f"last message: {state['messages'][-1].content}")
 
         if isKorean(state["messages"][0].content)==True:
             system = (
@@ -1226,7 +1217,8 @@ def create_agent(tools, st):
                 chain = prompt | model
                     
                 response = chain.invoke(state["messages"])
-                logger.info(f"call_model response: {response}")
+                # logger.info(f"call_model response: {response}")
+                logger.info(f"call_model: {response.content}")
 
                 if isinstance(response.content, list):            
                     for re in response.content:
@@ -1241,20 +1233,14 @@ def create_agent(tools, st):
                                 status = status.replace('\"','')
                                 status = status.replace("\'",'')
                                 
-                                logger.info(f"status: {status}")
                                 if status.find('<thinking>') != -1:
                                     logger.info(f"Remove <thinking> tag.")
                                     status = status[status.find('<thinking>')+11:status.find('</thinking>')]
                                     logger.info(f"status without tag: {status}")
+                                logger.info(f"call_model: {status}")
 
-                                # if debug_mode=="Enable":
-                                #     utils.status(st, status)
-                                
                             elif re['type'] == 'tool_use':                
                                 logger.info(f"--> {re['type']}: {re['name']}, {re['input']}")
-
-                                # if debug_mode=="Enable":
-                                #     utils.status(st, f"{re['type']}: {re['name']}, {re['input']}")
                             else:
                                 logger.info(re)
                         else: # answer
@@ -1335,28 +1321,33 @@ async def mcp_rag_agent(query, st):
             logger.info(f"tools: {tools}")
 
             tool_info = ""
+            tool_list = []
             st.info("Tool 정보를 가져옵니다.")
             for tool in tools:
                 tool_info += f"name: {tool.name}\n"    
                 if hasattr(tool, 'description'):
                     tool_info += f"description: {tool.description}\n"
                 tool_info += f"args_schema: {tool.args_schema}\n\n"
-            st.info(f"{tool_info}")
+                tool_list.append(tool.name)
+            # st.info(f"{tool_info}")
+            st.info(f"Tools: {tool_list}")
 
-            agent = create_agent(tools, st)
+            agent = create_agent(tools)
             
             # Run the agent.            
             agent_response = await agent.ainvoke({"messages": query})
-            st.info(f"agent_response: {agent_response}")
 
-        # Return the response.
+            for i, re in enumerate(agent_response["messages"]):
+                if i==0 or i==len(agent_response["messages"])-1:
+                    continue
+
+                if isinstance(re, AIMessage):
+                    st.info(f"Agent: {re.content}")
+                # elif isinstance(re, ToolMessage):
+                #     st.info(f"Tool: {re.content}")
         return agent_response["messages"][-1].content
 
 def run_agent(query, st):
-    #query = "What is the capital of France?"
-    #query = "what's (4 + 6) x 14?"
-    #query = "보일러 에러 코드의 종류는?"
     result = asyncio.run(mcp_rag_agent(query, st))
-    print(f"result: {result}")
-
+    logger.info(f"result: {result}")
     return result, [], []
