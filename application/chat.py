@@ -1304,7 +1304,7 @@ def create_agent(tools):
 
 server_params = StdioServerParameters(
   command="python",
-  args=["/Users/ksdyb/Documents/src/mcp/mcp-rag/rag-server.py"],
+  args=["application/mcp-server.py"],
 )
 
 async def mcp_rag_agent(query, st):
@@ -1336,13 +1336,18 @@ async def mcp_rag_agent(query, st):
             
             # Run the agent.            
             agent_response = await agent.ainvoke({"messages": query})
+            logger.info(f"agent_response: {agent_response}")
 
             for i, re in enumerate(agent_response["messages"]):
                 if i==0 or i==len(agent_response["messages"])-1:
                     continue
 
                 if isinstance(re, AIMessage):
-                    st.info(f"Agent: {re.content}")
+                    if re.content:
+                        st.info(f"Agent: {re.content}")
+                    if re.tool_calls:
+                        for tool_call in re.tool_calls:
+                            st.info(f"Agent: {tool_call['name']}, {tool_call['args']}")
                 # elif isinstance(re, ToolMessage):
                 #     st.info(f"Tool: {re.content}")
         return agent_response["messages"][-1].content

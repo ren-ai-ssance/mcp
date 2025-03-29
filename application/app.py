@@ -80,6 +80,14 @@ with st.sidebar:
     multiRegion = 'Enable' if select_multiRegion else 'Disable'
     #print('multiRegion: ', multiRegion)
 
+    # MCP Config JSON 입력
+    st.subheader("⚙️ MCP Config")
+    mcp_config = st.text_area(
+        "MCP 설정을 JSON 형식으로 입력하세요",
+        value="""""",
+        height=150
+    )
+
     chat.update(modelName, debugMode, multiRegion, st)
 
     st.success(f"Connected to {modelName}", icon="💚")
@@ -248,17 +256,7 @@ if prompt := st.chat_input("메시지를 입력하세요."):
         elif mode == 'Agent':
             sessionState = ""
             with st.status("thinking...", expanded=True, state="running") as status:       
-
-                # result = asyncio.run(run_agent())
-    # print(f"result: {result}")
-
-    # return result, [], []
-    #          
                 response, image_url, reference_docs = chat.run_agent(prompt, st)
-
-                # if chat.isKorean(response)==False:
-                #     logger.info(f"translate to korean")
-                #     response = chat.translate_text(response)
 
                 st.write(response)
                 logger.info(f"response: {response}, image_url: {image_url}")
@@ -268,8 +266,7 @@ if prompt := st.chat_input("메시지를 입력하세요."):
                     "content":  response,
                     "images": image_url if image_url else []
                 })
-        #         chat.save_chat_history(prompt, response)
-            
+                chat.save_chat_history(prompt, response)            
         #     show_references(reference_docs) 
 
         # elif mode == 'Multi Agent Collaboration':

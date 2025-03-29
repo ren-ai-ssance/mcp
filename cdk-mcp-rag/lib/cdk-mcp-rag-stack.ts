@@ -370,6 +370,13 @@ export class CdkMcpRagStack extends cdk.Stack {
     
     lambdaRag.grantInvoke(new cdk.aws_iam.ServicePrincipal("bedrock.amazonaws.com")); 
     
+    const mcp_config = JSON.stringify(`{
+      “search”: [
+        “commend”: “python”,
+        “args”: [“application/mcp-server.py”],
+        “transport”: “stdio”
+      ]
+    }`)
     const environment = {
       "projectName": projectName,
       "accountId": accountId,
@@ -379,7 +386,8 @@ export class CdkMcpRagStack extends cdk.Stack {
       "opensearch_url": OpenSearchCollection.attrCollectionEndpoint,
       "s3_bucket": s3Bucket.bucketName,      
       "s3_arn": s3Bucket.bucketArn,
-      "sharing_url": 'https://'+distribution_sharing.domainName
+      "sharing_url": 'https://'+distribution_sharing.domainName,
+      "mcp": mcp_config
     }    
     new cdk.CfnOutput(this, `environment-for-${projectName}`, {
       value: JSON.stringify(environment),
