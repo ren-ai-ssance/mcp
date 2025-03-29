@@ -21,11 +21,6 @@ bedrock_region = os.environ.get('bedrock_region')
 projectName = os.environ.get('projectName')
 path = os.environ.get('sharing_url')
 
-model_name = "Claude 3.7 Sonnet"
-model_type = "claude"
-models = info.get_model_info(model_name)
-number_of_models = len(models)
-
 knowledge_base_id = ""
 numberOfDocs = 3
 knowledge_base_name = projectName
@@ -47,7 +42,7 @@ def isKorean(text):
     
 selected_chat = 0
 multi_region = 'Disable'
-def get_chat(extended_thinking):
+def get_chat(models, extended_thinking):
     global selected_chat, model_type
 
     profile = models[selected_chat]
@@ -56,6 +51,8 @@ def get_chat(extended_thinking):
     bedrock_region =  profile['bedrock_region']
     modelId = profile['model_id']
     model_type = profile['model_type']
+    number_of_models = len(models)
+
     if model_type == 'claude':
         maxOutputTokens = 4096 # 4k
     else:
@@ -177,11 +174,11 @@ def grade_document_based_on_relevance(conn, question, doc, models, selected):
     
     conn.close()
 
-def grade_documents_using_parallel_processing(question, documents):
+def grade_documents_using_parallel_processing(models, question, documents):
     global selected_chat
-    
-    filtered_docs = []    
 
+    number_of_models = len(models)    
+    filtered_docs = []    
     processes = []
     parent_connections = []
     
@@ -227,17 +224,17 @@ def get_retrieval_grader(chat):
     retrieval_grader = grade_prompt | structured_llm_grader
     return retrieval_grader
 
-def grade_documents(question, documents):
+def grade_documents(models, question, documents):
     print(f"###### grade_documents ######")
     print(f"start grading...")
     
     filtered_docs = []
     if multi_region == 'Enable':  # parallel processing        
-        filtered_docs = grade_documents_using_parallel_processing(question, documents)
+        filtered_docs = grade_documents_using_parallel_processing(models, question, documents)
 
     else:
         # Score each doc    
-        llm = get_chat(extended_thinking="Disable")
+        llm = get_chat(models, extended_thinking="Disable")
         retrieval_grader = get_retrieval_grader(llm)
         for i, doc in enumerate(documents):
             # print('doc: ', doc)
@@ -377,6 +374,14 @@ def lambda_handler(event, context):
     top_k = event.get('top_k')
     print('top_k: ', top_k)
 
+    model_name = event.get('model_name')
+    print('model_name: ', model_name)
+
+    model_type = event.get('model_type')
+    print('model_type: ', model_type)
+
+    models = info.get_model_info(model_name)
+
     global multi_region, knowledge_base_id
     multi_region = event.get('multi_region')
     print('multi_region: ', multi_region)
@@ -410,7 +415,7 @@ def lambda_handler(event, context):
         relevant_docs = search_by_knowledge_base(keyword, top_k)
 
         # grade documents
-        filtered_docs = grade_documents(keyword, relevant_docs)
+        filtered_docs = grade_documents(models, keyword, relevant_docs)
 
         # check duplication
         filtered_docs = check_duplication(filtered_docs) 
