@@ -22,6 +22,7 @@ projectName = os.environ.get('projectName')
 path = os.environ.get('sharing_url')
 
 model_name = "Claude 3.7 Sonnet"
+model_type = "claude"
 models = info.get_model_info(model_name)
 number_of_models = len(models)
 
@@ -246,15 +247,13 @@ def grade_documents(question, documents):
             
             grade = score.binary_score
             # print("grade: ", grade)
-            # Document relevant
-            if grade.lower() == "yes":
+            
+            if grade.lower() == "yes": # Document relevant
                 print(f"---GRADE: DOCUMENT RELEVANT---")
                 filtered_docs.append(doc)
-            # Document not relevant
-            else:
+            
+            else: # Document not relevant
                 print(f"---GRADE: DOCUMENT NOT RELEVANT---")
-                # We do not include the document in filtered_docs
-                # We set a flag to indicate that we want to run web search
                 continue
     
     return filtered_docs
