@@ -1,4 +1,4 @@
-# Model Context Protocol
+# MCP로 RAG Application 구현하기
 
 MCP(Model Context Protocal)은 Anthropic에서 기여하고 있는 오픈소스 프로젝트입니다. 2024년 11월에 MCP가 이렇게 성공할 것으로 예상한 사람은 많지 않았을것 같습니다. 저는 API 기반의 시스템 인터페이스를 선호했기에 MCP는 그다지 매력적이지 않았습니다. 하지만 이제 MCP는 LLM이 외부 context를 가져오는 방법으로 주된 인터페이스가 되었고 향후 이런 방향은 더 가속화될것 입니다. 
 
