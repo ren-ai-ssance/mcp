@@ -213,3 +213,5 @@ mcp dev mcp-server.py
 [Desktop Commander MCP](https://github.com/wonderwhy-er/DesktopCommanderMCP)
 
 [Smithery](https://smithery.ai/)
+
+[Cursor AI 말고, 나만의 #MCP 에이전트 앱 만들어 보기!](https://www.youtube.com/watch?v=ISrYHGg2C2c)
