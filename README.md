@@ -118,6 +118,23 @@ mcp dev mcp-server.py
 - [Riza MCP Server](https://github.com/riza-io/riza-mcp)
 - [Tavily MCP Server](https://github.com/tavily-ai/tavily-mcp)
 
+## MCP Server 정보 업데이트
+
+아래와 같이 json 형식의 서버정보를 업데이트 할 수 있습니다. 아래에서는 [mcp-server.py](./application/mcp-server.py)에서 정의한 search를 이용하고 있습니다.
+
+```java
+{
+  "mcpServers": {
+    "search": {
+      "command": "python",
+      "args": [
+        "application/mcp-server.py"
+      ]
+    }
+  }
+}
+```
+
 ## 실행하기
 
 Output의 environmentformcprag의 내용을 복사하여 application/config.json을 생성합니다. "aws configure"로 credential이 설정되어 있어야합니다. 만약 visual studio code 사용자라면 config.json 파일은 아래 명령어를 사용합니다.
