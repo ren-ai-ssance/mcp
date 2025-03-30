@@ -173,7 +173,7 @@ def create_agent(tools):
 
 [Smithery](https://smithery.ai/)에서 MCP server를 찾아보고 필요한 서버를 찾으면 접속할 수 있는 MCP 서버 정보를 JSON 형태로 조회할 수 있습니다. 
 
-<img src="https://github.com/user-attachments/assets/62e534ee-88bd-4f9f-a4ff-129522fd834f" width="400">
+<img src="https://github.com/user-attachments/assets/62e534ee-88bd-4f9f-a4ff-129522fd834f" width="500">
 
 [Smithery - Google Search Server](https://smithery.ai/server/@gradusnikov/google-search-mcp-server)에서 확인한 구글 검색용 MCP 서버 정보는 아래와 같습니다. 검색엔진 ID와 API Key를 필요로 합니다. 
 
