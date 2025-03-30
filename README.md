@@ -236,7 +236,7 @@ streamlit run application/app.py
 ```
 
 
-### MCP inspector
+### MCP Inspector
 
 Development Mode에서 mcp server를 테스트 하기 위해 MCP inspector를 이용할 수 있습니다. 아래와 같이 cli를 설치합니다. 
 
