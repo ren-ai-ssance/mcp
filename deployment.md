@@ -2,7 +2,7 @@
 
 ## Bedrock 사용 권한 설정하기
 
-LLM으로 Amazon Nova Pro을 사용하기 위하여, Amazon Bedrock의 us-west-2, us-east-1, us-east-2 리전을 사용합니다. [Model access](https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/modelaccess)에 접속해서 [Edit]를 선택하여 "Titan Text Embeddings V2"와 "Amazon Nova Pro"을 Vector Embedding과 LLM을 위해 enable 합니다.
+LLM으로 Anthropic Claude, Amazon Nova을 사용하기 위하여, Amazon Bedrock의 us-west-2, us-east-1, us-east-2 리전을 사용합니다. [Model access](https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/modelaccess)에 접속해서 [Edit]를 선택하여 "Anthropic Claude", "Amazon Nova", "Titan Text Embeddings V2"의 모델들 enable 합니다.
 
 ## 설치하기
 
@@ -48,13 +48,13 @@ sudo npm install -g aws-cdk --prefix /usr/local
 1) 소스를 다운로드합니다.
 
 ```java
-git clone https://github.com/kyopark2014/bedrock-agent
+git clone https://github.com/kyopark2014/mcp
 ```
 
 2) cdk 폴더로 이동하여 필요한 라이브러리를 설치합니다.
 
 ```java
-cd bedrock-agent/cdk-bedrock-agent/ && npm install
+cd mcp/cdk-mcp-rag/ && npm install
 ```
 
 3) CDK 사용을 위해 Boostraping을 수행합니다.
@@ -100,7 +100,7 @@ cdk deploy --require-approval never --all
 [Secret manager](https://us-west-2.console.aws.amazon.com/secretsmanager/listsecrets?region=us-west-2)에 접속하여, [openweathermap-bedrock-agent](https://us-west-2.console.aws.amazon.com/secretsmanager/secret?name=openweathermap-bedrock-agent&region=us-west-2), [tavilyapikey-bedrock-agent](https://us-west-2.console.aws.amazon.com/secretsmanager/secret?name=tavilyapikey-bedrock-agent&region=us-west-2), [langsmithapikey-bedrock-agent](https://us-west-2.console.aws.amazon.com/secretsmanager/secret?name=langsmithapikey-bedrock-agent&region=us-west-2)에 접속하여, [Retrieve secret value]를 선택 후, api key를 입력합니다.
 
 
-6) 만약 Streamlit에서 AWS Credential이 필요하다면, [Console-EC2](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#Instances:instanceState=running)에서 "app-for-bedrock-agent"을 선택한 후에 [Connect]를 선택합니다. 여러가지 옵션 중에서 Session Manager를 선택한 후에 [connect]를 접속한 후에 console로 접속합니다. 아래 명령어를 이용하여 ec2-user에 AWS Credential을 입력합니다.
+6) 만약 Streamlit에서 AWS Credential이 필요하다면, [Console-EC2](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#Instances:instanceState=running)에서 "app-for-mcp-rag"을 선택한 후에 [Connect]를 선택합니다. 여러가지 옵션 중에서 Session Manager를 선택한 후에 [connect]를 접속한 후에 console로 접속합니다. 아래 명령어를 이용하여 ec2-user에 AWS Credential을 입력합니다.
 
 ```text
 sudo runuser -l ec2-user -c 'aws configure'
@@ -179,8 +179,8 @@ cat << EOF > /tmp/config.json
              "collect_list":[
                 {
                    "file_path":"/var/log/application/logs.log",
-                   "log_group_name":"bedrock-agent.log",
-                   "log_stream_name":"bedrock-agent.log",
+                   "log_group_name":"mcp-rag.log",
+                   "log_stream_name":"mcp-rag.log",
                    "timezone":"UTC"
                 }
              ]
@@ -258,7 +258,7 @@ sudo runuser -l ec2-user -c "/home/ec2-user/.local/bin/streamlit run /home/ec2-u
 이때, ec2-user의 github 코드를 업데이트하는 명령어는 아래와 같습니다.
 
 ```text
-sudo runuser -l ec2-user -c 'cd /home/ec2-user/bedrock-agent && git pull'
+sudo runuser -l ec2-user -c 'cd /home/ec2-user/mcp-rag && git pull'
 ```
 
 ### Streamlit 관련 중요한 명령어들
@@ -297,7 +297,7 @@ After=network-online.target
 User=ec2-user
 Group=ec2-user
 Restart=always
-ExecStart=/home/ec2-user/.local/bin/streamlit run /home/ec2-user/bedrock-agent/application/app.py
+ExecStart=/home/ec2-user/.local/bin/streamlit run /home/ec2-user/mcp-rag/application/app.py
 
 [Install]
 WantedBy=multi-user.target
