@@ -41,7 +41,30 @@ MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
 
 
 
+
+
+
 ## MCP Server 정보 업데이트
+
+[Smithery - Google Search Server](https://smithery.ai/server/@gradusnikov/google-search-mcp-server)는 구글 검색을 제공합니다. 검색엔진 ID와 API Key를 필요로 합니다. 
+
+```java
+{
+  "mcpServers": {
+    "google-search-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@gradusnikov/google-search-mcp-server",
+        "--config",
+        "{\"googleCseId\":\"a6cd8c517fbd64b72\",\"googleApiKey\":\"AIzaSyDQlYpck9-9TbBSuxoew2luOGVB6unRPNk\"}"
+      ]
+    }
+  }
+}
+```
 
 아래와 같이 json 형식의 서버정보를 업데이트 할 수 있습니다. 아래에서는 [mcp-server.py](./application/mcp-server.py)에서 정의한 search를 이용하고 있습니다.
 
