@@ -214,16 +214,14 @@ code application/config.json
 python3 -m venv venv
 source venv/bin/activate
 pip install streamlit streamlit_chat 
-pip install boto3 langchain_aws langchain langchain_community langgraph opensearch-py
-pip install beautifulsoup4 pytz tavily-python
+pip install boto3 langchain_aws langchain langchain_community langgraph 
 ```
 
-아래와 같은 명령어로 streamlit을 실행합니다. 
+[deployment.md](./deployment.md)에 따라 AWS CDK로 Lambda, Knowledge base, Opensearch Serverless와 보안에 필요한 IAM Role을 설치합니다. 이후 아래와 같은 명령어로 streamlit을 실행합니다. 
 
 ```text
 streamlit run application/app.py
 ```
-
 
 ### MCP Inspector
 
@@ -238,7 +236,6 @@ pip install 'mcp[cli]'
 ```text
 mcp dev mcp-server.py
 ```
-
 
 ## 실행 결과
 
