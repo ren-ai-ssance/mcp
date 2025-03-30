@@ -59,7 +59,7 @@ with st.sidebar:
     # model selection box
     modelName = st.selectbox(
         '🖊️ 사용 모델을 선택하세요',
-        ('Nova Pro', 'Nova Lite', 'Nova Micro', 'Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.0 Sonnet', 'Claude 3.5 Haiku'), index=6
+        ('Nova Pro', 'Nova Lite', 'Nova Micro', 'Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.0 Sonnet', 'Claude 3.5 Haiku'), index=4
     )
 
     uploaded_file = None
@@ -93,6 +93,9 @@ with st.sidebar:
             value=mcp,
             height=150
         )
+        if mcp_config != mcp:
+            mcp = mcp_config
+            chat.update(modelName, debugMode, multiRegion, mcp, st)
 
     chat.update(modelName, debugMode, multiRegion, mcp, st)
 
@@ -150,9 +153,8 @@ if clear_button or "messages" not in st.session_state:
     uploaded_file = None
     
     st.session_state.greetings = False
-    st.rerun()
-
     chat.clear_chat_history()
+    st.rerun()    
 
 # Preview the uploaded image in the sidebar
 file_name = ""
@@ -272,7 +274,7 @@ if prompt := st.chat_input("메시지를 입력하세요."):
                     "content":  response,
                     "images": image_url if image_url else []
                 })
-                chat.save_chat_history(prompt, response)            
+                # chat.save_chat_history(prompt, response)            
         #     show_references(reference_docs) 
 
         # elif mode == 'Multi Agent Collaboration':

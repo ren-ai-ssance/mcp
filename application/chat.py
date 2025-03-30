@@ -143,21 +143,6 @@ def update(modelName, debugMode, multiRegion, mcp, st):
         logger.info(f"multi_region: {multi_region}")
 
     mcp_config = mcp
-    mcp_config = """{
-  "mcpServers": {
-    "mcp-tavily": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@smithery/cli@latest",
-        "run",
-        "mcp-tavily",
-        "--key",
-        "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
-      ]
-    }
-  }
-}"""
     logger.info(f"mcp_config: {mcp_config}")
 
 def clear_chat_history():
@@ -1440,7 +1425,13 @@ async def mcp_rag_agent(query, st):
                             st.info(f"Agent: {tool_call['name']}, {tool_call['args']}")
                 # elif isinstance(re, ToolMessage):
                 #     st.info(f"Tool: {re.content}")
-        return agent_response["messages"][-1].content
+            
+            result = agent_response["messages"][-1].content
+            logger.info(f"result: {result}")
+
+            st.info(f"Agent: {result}")
+            
+            return result
 
 def run_agent(query, st):
     result = asyncio.run(mcp_rag_agent(query, st))

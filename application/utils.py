@@ -1,6 +1,7 @@
 import logging
 import sys
 import json
+import traceback
 
 #logging
 def CreateLogger(logger_name):
@@ -66,12 +67,10 @@ def stcode(st, code):
 def load_config():
     config = None
     try:
-        with open("/home/config.json", "r", encoding="utf-8") as f:
-            config = json.load(f)
-        
-    except Exception:
-        print(f"use local configuration")
         with open("application/config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
-
+            print(f"config: {config}")
+    except Exception:
+        err_msg = traceback.format_exc()
+        print(f"error message: {err_msg}")    
     return config
