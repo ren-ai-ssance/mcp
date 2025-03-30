@@ -1347,7 +1347,7 @@ def load_multiple_mcp_server_parameters():
 
     mcpServers = mcp_json.get("mcpServers")
     logger.info(f"mcpServers: {mcpServers}")
-
+  
     server_info = {}
     if mcpServers is not None:
         command = ""
