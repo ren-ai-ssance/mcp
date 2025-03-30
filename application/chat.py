@@ -1302,10 +1302,55 @@ def create_agent(tools):
     
     return buildChatAgent()
 
-server_params = StdioServerParameters(
-  command="python",
-  args=["application/mcp-server.py"],
-)
+# server_params = StdioServerParameters(
+#   command="python",
+#   args=["application/mcp-server.py"],
+# )
+
+def load_mcp_server_parameters():
+    config = utils.load_config()
+    mcp = json.loads(config["mcp"])
+    # logger.info(f"mcp: {mcp}")
+
+    command = ""
+    args = []
+
+    mcp_json = json.loads(mcp)
+    logger.info(f"mcp_json: {mcp_json}")
+
+    mcpServers = mcp_json.get("mcpServers")
+    logger.info(f"mcpServers: {mcpServers}")
+
+    # mcpServers의 항목을 열거하세요.
+    command = ""
+    args = []
+    if mcpServers is not None:
+        for server in mcpServers:
+            logger.info(f"server: {server}")
+
+            config = mcpServers.get(server)
+            logger.info(f"config: {config}")
+
+            if "command" in config:
+                command = config["command"]
+            if "args" in config:
+                args = config["args"]
+
+            break
+
+    return StdioServerParameters(
+        command=command,
+        args=args
+    )
+
+server_params = load_mcp_server_parameters()
+logger.info(f"server_params: {server_params}")
+
+    # global server_params
+    # server_params = StdioServerParameters(
+    #     command="python",
+    #     args=["application/mcp-server.py"],    
+    # )
 
 async def mcp_rag_agent(query, st):
     async with stdio_client(server_params) as (read, write):

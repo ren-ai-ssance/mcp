@@ -1,6 +1,7 @@
 import streamlit as st 
 import chat
 import utils
+import json
 import knowledge_base as kb
 import cost_analysis as cost
 
@@ -82,11 +83,16 @@ with st.sidebar:
 
     # MCP Config JSON 입력
     st.subheader("⚙️ MCP Config")
-    mcp_config = st.text_area(
-        "MCP 설정을 JSON 형식으로 입력하세요",
-        value="""""",
-        height=150
-    )
+
+    config = utils.load_config()
+    mcp = json.loads(config["mcp"])
+    logger.info(f"mcp: {mcp}")
+    if mcp:
+        mcp_config = st.text_area(
+            "MCP 설정을 JSON 형식으로 입력하세요",
+            value=mcp,
+            height=150
+        )
 
     chat.update(modelName, debugMode, multiRegion, st)
 

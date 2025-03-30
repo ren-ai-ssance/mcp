@@ -376,8 +376,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       "command": "python",
       "args": [
         "application/mcp-server.py"
-      ],
-      "transport": "stdio"
+      ]
     }
   }
 }`)
