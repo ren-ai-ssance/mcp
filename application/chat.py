@@ -37,6 +37,7 @@ from typing import Literal
 from langgraph.graph import START, END, StateGraph
 from typing_extensions import Annotated, TypedDict
 from langgraph.graph.message import add_messages
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
 logger = utils.CreateLogger("chat")
 
@@ -1311,42 +1312,6 @@ def create_agent(tools):
 # )
 
 def load_mcp_server_parameters():
-    config = utils.load_config()
-    mcp = json.loads(config["mcp"])
-    # logger.info(f"mcp: {mcp}")
-
-    command = ""
-    args = []
-
-    mcp_json = json.loads(mcp)
-    logger.info(f"mcp_json: {mcp_json}")
-
-    mcpServers = mcp_json.get("mcpServers")
-    logger.info(f"mcpServers: {mcpServers}")
-
-    # mcpServers의 항목을 열거하세요.
-    command = ""
-    args = []
-    if mcpServers is not None:
-        for server in mcpServers:
-            logger.info(f"server: {server}")
-
-            config = mcpServers.get(server)
-            logger.info(f"config: {config}")
-
-            if "command" in config:
-                command = config["command"]
-            if "args" in config:
-                args = config["args"]
-
-            break
-
-    return StdioServerParameters(
-        command=command,
-        args=args
-    )
-
-def load_mcp_server_parameters_from_app():
     command = ""
     args = []
 
@@ -1378,9 +1343,72 @@ def load_mcp_server_parameters_from_app():
         args=args
     )
 
-async def mcp_rag_agent(query, st):
-    # server_params = load_mcp_server_parameters()
-    server_params = load_mcp_server_parameters_from_app()
+def tool_info(tools, st):
+    tool_info = ""
+    tool_list = []
+    st.info("Tool 정보를 가져옵니다.")
+    for tool in tools:
+        tool_info += f"name: {tool.name}\n"    
+        if hasattr(tool, 'description'):
+            tool_info += f"description: {tool.description}\n"
+        tool_info += f"args_schema: {tool.args_schema}\n\n"
+        tool_list.append(tool.name)
+    # st.info(f"{tool_info}")
+    st.info(f"Tools: {tool_list}")
+    
+async def mcp_rag_agent_multiple(query, st):
+    async with  MultiServerMCPClient(
+        {
+            "RAG": {
+                "command": "python",
+                "args": ["application/mcp-server.py"],
+                "transport": "stdio",
+            },
+            "Tavily": {
+                "command": "npx",
+                "args": [
+                    "-y",
+                    "@smithery/cli@latest",
+                    "run",
+                    "mcp-tavily",
+                    "--key",
+                    "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
+                ],
+                "transport": "stdio",
+            }
+        }
+    ) as client:
+        with st.status("thinking...", expanded=True, state="running") as status:                       
+            tools = client.get_tools()
+            logger.info(f"tools: {tools}")
+
+            if debug_mode == "Enable":
+                tool_info(tools, st)
+
+            # react agent
+            # model = get_chat(extended_thinking="Disable")
+            # agent = create_react_agent(model, client.get_tools())
+
+            # langgraph agent
+            agent = create_agent(tools)
+
+            response = await agent.ainvoke({"messages": query})
+            logger.info(f"response: {response}")
+
+            result = response["messages"][-1].content
+            logger.info(f"result: {result}")
+
+        st.markdown(result)
+
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": result
+        })
+
+    return result
+
+async def mcp_rag_agent_single(query, st):
+    server_params = load_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
     async with stdio_client(server_params) as (read, write):
@@ -1395,45 +1423,46 @@ async def mcp_rag_agent(query, st):
             tools = await load_mcp_tools(session)
             logger.info(f"tools: {tools}")
 
-            tool_info = ""
-            tool_list = []
-            st.info("Tool 정보를 가져옵니다.")
-            for tool in tools:
-                tool_info += f"name: {tool.name}\n"    
-                if hasattr(tool, 'description'):
-                    tool_info += f"description: {tool.description}\n"
-                tool_info += f"args_schema: {tool.args_schema}\n\n"
-                tool_list.append(tool.name)
-            # st.info(f"{tool_info}")
-            st.info(f"Tools: {tool_list}")
+            with st.status("thinking...", expanded=True, state="running") as status:       
+                if debug_mode == "Enable":
+                    tool_info(tools, st)
 
-            agent = create_agent(tools)
-            
-            # Run the agent.            
-            agent_response = await agent.ainvoke({"messages": query})
-            logger.info(f"agent_response: {agent_response}")
+                agent = create_agent(tools)
+                
+                # Run the agent.            
+                agent_response = await agent.ainvoke({"messages": query})                
+                logger.info(f"agent_response: {agent_response}")
 
-            for i, re in enumerate(agent_response["messages"]):
-                if i==0 or i==len(agent_response["messages"])-1:
-                    continue
+                if debug_mode == "Enable":
+                    for i, re in enumerate(agent_response["messages"]):
+                        if i==0 or i==len(agent_response["messages"])-1:
+                            continue
+                        
+                        if isinstance(re, AIMessage):
+                            if re.content:
+                                st.info(f"Agent: {re.content}")
+                            if re.tool_calls:
+                                for tool_call in re.tool_calls:
+                                    st.info(f"Agent: {tool_call['name']}, {tool_call['args']}")
+                        # elif isinstance(re, ToolMessage):
+                        #     st.info(f"Tool: {re.content}")
+                
+                result = agent_response["messages"][-1].content
+                logger.info(f"result: {result}")
 
-                if isinstance(re, AIMessage):
-                    if re.content:
-                        st.info(f"Agent: {re.content}")
-                    if re.tool_calls:
-                        for tool_call in re.tool_calls:
-                            st.info(f"Agent: {tool_call['name']}, {tool_call['args']}")
-                # elif isinstance(re, ToolMessage):
-                #     st.info(f"Tool: {re.content}")
-            
-            result = agent_response["messages"][-1].content
-            logger.info(f"result: {result}")
+            # st.info(f"Agent: {result}")
 
-            st.info(f"Agent: {result}")
+            st.markdown(result)
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": result
+            })
             
             return result
 
 def run_agent(query, st):
-    result = asyncio.run(mcp_rag_agent(query, st))
+    #result = asyncio.run(mcp_rag_agent_multiple(query, st))
+    result = asyncio.run(mcp_rag_agent_single(query, st))
+
     logger.info(f"result: {result}")
     return result, [], []

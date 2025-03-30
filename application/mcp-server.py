@@ -64,7 +64,13 @@ def retrieve_knowledge_base(query):
 
 from mcp.server.fastmcp import FastMCP 
 
-mcp = FastMCP("Search") 
+mcp = FastMCP(
+    name = "Search",
+    instructions=(
+        "You are a helpful assistant. "
+        "You can search the documentation for the user's question and provide the answer."
+    ),
+) 
 
 @mcp.tool()
 def search(keyword: str) -> str:

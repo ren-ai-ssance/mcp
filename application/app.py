@@ -9,7 +9,7 @@ import cost_analysis as cost
 logger = utils.CreateLogger("streamlit")
 
 # title
-st.set_page_config(page_title='Bedrock Agent', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
 
 mode_descriptions = {
     "일상적인 대화": [
@@ -86,7 +86,7 @@ with st.sidebar:
 
     config = utils.load_config()
     mcp = json.loads(config["mcp"])
-    logger.info(f"mcp: {mcp}")
+    # logger.info(f"mcp: {mcp}")
     if mcp:
         mcp_config = st.text_area(
             "MCP 설정을 JSON 형식으로 입력하세요",
@@ -263,19 +263,8 @@ if prompt := st.chat_input("메시지를 입력하세요."):
         
         elif mode == 'Agent':
             sessionState = ""
-            with st.status("thinking...", expanded=True, state="running") as status:       
-                response, image_url, reference_docs = chat.run_agent(prompt, st)
 
-                st.write(response)
-                logger.info(f"response: {response}, image_url: {image_url}")
-
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content":  response,
-                    "images": image_url if image_url else []
-                })
-                # chat.save_chat_history(prompt, response)            
-        #     show_references(reference_docs) 
+            response = chat.run_agent(prompt, st)
 
         # elif mode == 'Multi Agent Collaboration':
         #     sessionState = ""
