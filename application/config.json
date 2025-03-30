@@ -8,5 +8,5 @@
     "s3_bucket":"storage-for-mcp-rag-262976740991-us-west-2",
     "s3_arn":"arn:aws:s3:::storage-for-mcp-rag-262976740991-us-west-2",
     "sharing_url":"https://d2ktwrbyxtrufc.cloudfront.net",
-    "mcp":"\"{\\n  \\\"mcpServers\\\": {\\n    \\\"search\\\": {\\n      \\\"command\\\": \\\"python\\\",\\n      \\\"args\\\": [\\n        \\\"application/mcp-server.py\\\"\\n      ],\\n      \\\"transport\\\": \\\"stdio\\\"\\n    }\\n  }\\n}\""
+    "mcp":"\"{\\n  \\\"mcpServers\\\": {\\n    \\\"search\\\": {\\n      \\\"command\\\": \\\"python\\\",\\n      \\\"args\\\": [\\n        \\\"application/mcp-server.py\\\"\\n      ]\\n    }\\n  }\\n}\""
  }
