@@ -128,6 +128,21 @@ mcp dev mcp-server.py
 }
 ```
 
+아래는 기본 설정된 RAG를 위한 정보입니다.
+
+```java
+{
+  "mcpServers": {
+    "search": {
+      "command": "python",
+      "args": [
+        "application/mcp-server.py"
+      ]
+    }
+  }
+}
+```
+
 아래는 multiple mcp server를 설정시 config 입니다.
 
 ```python
