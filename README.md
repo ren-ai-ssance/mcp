@@ -110,6 +110,7 @@ streamlit run application/app.py
 
 이후 메뉴에서 "Agent"를 선택후에 아래와 같이 "강남역 맛집은?"라고 입력후 결과를 확인합니다.
 
+![image](https://github.com/user-attachments/assets/8275bf94-2f46-475d-9eea-02568e70199b)
 
 
 
