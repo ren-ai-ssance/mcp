@@ -2,6 +2,9 @@
 
 MCP(Model Context Protocal)은 생성형 AI가 외부 데이터를 활용하는 주요한 인터페이스로서 빠르게 확산되고 있습니다. 2024년 11월에 Anthropic의 오픈소스 프로젝트로 시작되었지만 현재는 Cursor뿐 아니라 OpenAI에서도 지원하고 있습니다. 여기에서는 [MCP with LangChain](https://github.com/langchain-ai/langchain-mcp-adapters)을 이용하여 LangGraph로 만든 application이 MCP를 활용하는 방법에 대해 설명합니다. 여기서 설명하는 RAG는 Amazon의 완전관리형 RAG 서비스인 Knowledge base로 구현되었으므로 문서의 텍스트 추출, 문서 동기화, chunking에서 편리하면 멀티모달도 활용할 수 있습니다. RAG는 AWS Lambda를 이용해 구성되었고 application에 있는 MCP client에서 python으로 구현한 경량 MCP server를 통해 조회하도록 구성합니다.
 
+<img src="https://github.com/user-attachments/assets/8b91942b-daa0-4eef-ba1d-af45bb8f5be4" width="750">
+
+
 ## MCP 활용
 
 ### MCP Basic
