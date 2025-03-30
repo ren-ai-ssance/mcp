@@ -31,6 +31,9 @@ mcp dev mcp-server.py
 - [Riza MCP Server](https://github.com/riza-io/riza-mcp)
 - [Tavily MCP Server](https://github.com/tavily-ai/tavily-mcp)
 
+[smithery-Tavily](https://smithery.ai/server/mcp-tavily)와 인터넷 검색을 구현할 수 있습니다.
+
+
 ## MCP Server 정보 업데이트
 
 아래와 같이 json 형식의 서버정보를 업데이트 할 수 있습니다. 아래에서는 [mcp-server.py](./application/mcp-server.py)에서 정의한 search를 이용하고 있습니다.
