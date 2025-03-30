@@ -86,7 +86,7 @@ with st.sidebar:
 
     config = utils.load_config()
     mcp = json.loads(config["mcp"])
-    # logger.info(f"mcp: {mcp}")
+    logger.info(f"mcp: {mcp}")
     if mcp:
         mcp_config = st.text_area(
             "MCP 설정을 JSON 형식으로 입력하세요",
@@ -263,7 +263,6 @@ if prompt := st.chat_input("메시지를 입력하세요."):
         
         elif mode == 'Agent':
             sessionState = ""
-
             response = chat.run_agent(prompt, st)
 
         # elif mode == 'Multi Agent Collaboration':

@@ -1343,6 +1343,43 @@ def load_mcp_server_parameters():
         args=args
     )
 
+def load_multiple_mcp_server_parameters():
+    logger.info(f"mcp_config: {mcp_config}")
+
+    mcp_json = json.loads(mcp_config)
+    logger.info(f"mcp_json: {mcp_json}")
+
+    mcpServers = mcp_json.get("mcpServers")
+    logger.info(f"mcpServers: {mcpServers}")
+
+    # mcpServers의 항목을 열거하세요.
+    command = ""
+    args = []
+
+    server_info = {}
+    if mcpServers is not None:
+        command = ""
+        args = []
+        for server in mcpServers:
+            logger.info(f"server: {server}")
+
+            config = mcpServers.get(server)
+            logger.info(f"config: {config}")
+
+            if "command" in config:
+                command = config["command"]
+            if "args" in config:
+                args = config["args"]
+
+            server_info[server] = {
+                "command": command,
+                "args": args,
+                "transport": "stdio"
+            }
+    logger.info(f"server_info: {server_info}")
+
+    return server_info
+
 def tool_info(tools, st):
     tool_info = ""
     tool_list = []
@@ -1357,27 +1394,30 @@ def tool_info(tools, st):
     st.info(f"Tools: {tool_list}")
     
 async def mcp_rag_agent_multiple(query, st):
-    async with  MultiServerMCPClient(
-        {
-            "RAG": {
-                "command": "python",
-                "args": ["application/mcp-server.py"],
-                "transport": "stdio",
-            },
-            "Tavily": {
-                "command": "npx",
-                "args": [
-                    "-y",
-                    "@smithery/cli@latest",
-                    "run",
-                    "mcp-tavily",
-                    "--key",
-                    "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
-                ],
-                "transport": "stdio",
-            }
-        }
-    ) as client:
+    server_params = load_multiple_mcp_server_parameters()
+    logger.info(f"server_params: {server_params}")
+
+
+# {
+        #     "RAG": {
+        #         "command": "python",
+        #         "args": ["application/mcp-server.py"],
+        #         "transport": "stdio",
+        #     },
+        #     "Tavily": {
+        #         "command": "npx",
+        #         "args": [
+        #             "-y",
+        #             "@smithery/cli@latest",
+        #             "run",
+        #             "mcp-tavily",
+        #             "--key",
+        #             "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
+        #         ],
+        #         "transport": "stdio",
+        #     }
+        # }
+    async with  MultiServerMCPClient(server_params) as client:
         with st.status("thinking...", expanded=True, state="running") as status:                       
             tools = client.get_tools()
             logger.info(f"tools: {tools}")
@@ -1461,8 +1501,8 @@ async def mcp_rag_agent_single(query, st):
             return result
 
 def run_agent(query, st):
-    #result = asyncio.run(mcp_rag_agent_multiple(query, st))
-    result = asyncio.run(mcp_rag_agent_single(query, st))
+    result = asyncio.run(mcp_rag_agent_multiple(query, st))
+    #result = asyncio.run(mcp_rag_agent_single(query, st))
 
     logger.info(f"result: {result}")
     return result, [], []
