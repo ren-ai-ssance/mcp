@@ -27,9 +27,135 @@ MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
 [LangChain MCP Adapter](https://github.com/langchain-ai/langchain-mcp-adapters)는 MCP를 LangGraph agent와 함께 사용할 수 있게 해주는 경량의 랩퍼(lightweight wrapper)로서 MIT 기반의 오픈소스입니다. MCP Adapter의 주된 역할은 MCP server를 위한 tool들을 정의하고, MCP client에서 tools의 정보를 조회하고 LangGraph의 tool node로 정의하여 활용할 수 있도록 도와줍니다. 
 
 
+RAG 검색을 위한 MCP server는 아래와 같이 정의할 수 있습니다. 
 
-  
+```python
+from mcp.server.fastmcp import FastMCP 
 
+mcp = FastMCP(
+    name = "Search",
+    instructions=(
+        "You are a helpful assistant. "
+        "You can search the documentation for the user's question and provide the answer."
+    ),
+) 
+
+@mcp.tool()
+def search(keyword: str) -> str:
+    "search keyword"
+
+    return retrieve_knowledge_base(keyword)
+
+if __name__ =="__main__":
+    print(f"###### main ######")
+    mcp.run(transport="stdio")
+```
+
+여기서 RAG 검색은 아래와 같이 lambda를 trigger하는 방식으로 구성하였습니다.
+
+```python
+def retrieve_knowledge_base(query):
+    lambda_client = boto3.client(
+        service_name='lambda',
+        region_name=bedrock_region
+    )
+    functionName = f"lambda-rag-for-{projectName}"
+    payload = {
+        'function': 'search_rag',
+        'knowledge_base_name': knowledge_base_name,
+        'keyword': query,
+        'top_k': numberOfDocs,
+        'grading': "Enable",
+        'model_name': model_name,
+        'multi_region': multi_region
+    }
+    output = lambda_client.invoke(
+        FunctionName=functionName,
+        Payload=json.dumps(payload),
+    )
+    payload = json.load(output['Payload'])
+    return payload['response'], []
+```
+
+MCP client는 아래와 같이 실행합니다. 비동기적으로 실행하기 위해서 asyncio를 이용하였습니다. MCP server에 대한 정보는 CDK로 배포후 생성되는 output에서 추출한 config.json 파일에서 얻어옵니다. 이후 사용자가 UI에서 MCP Config를 업데이트하면 정보를 업데이트 할 수 있습니다. 서버 정보는 [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)에서 제공하는 MultiServerMCPClient을 이용해 아래와 같이 정의합니다.
+
+```python
+from langchain_mcp_adapters.client import MultiServerMCPClient
+asyncio.run(mcp_rag_agent_multiple(query, st))
+
+async def mcp_rag_agent_multiple(query, st):
+    server_params = load_multiple_mcp_server_parameters()
+    async with  MultiServerMCPClient(server_params) as client:
+        with st.status("thinking...", expanded=True, state="running") as status:                       
+            tools = client.get_tools()
+            agent = create_agent(tools)
+            response = await agent.ainvoke({"messages": query})
+            result = response["messages"][-1].content
+
+        st.markdown(result)
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": result
+        })
+    return result
+```
+
+여기서는 custom한 목적으로 사용할 수 있도록 아래와 같이 agent를 정의하였습니다.
+
+```python
+def create_agent(tools):
+    tool_node = ToolNode(tools)
+
+    chatModel = get_chat(extended_thinking="Disable")
+    model = chatModel.bind_tools(tools)
+
+    class State(TypedDict):
+        messages: Annotated[list, add_messages]
+
+    def call_model(state: State, config):
+        system = (
+            "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
+            "상황에 맞는 구체적인 세부 정보를 충분히 제공합니다."
+            "모르는 질문을 받으면 솔직히 모른다고 말합니다."
+            "한국어로 답변하세요."
+        )
+        try:
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", system),
+                    MessagesPlaceholder(variable_name="messages"),
+                ]
+            )
+            chain = prompt | model                
+            response = chain.invoke(state["messages"])
+        return {"messages": [response]}
+
+    def should_continue(state: State) -> Literal["continue", "end"]:
+        messages = state["messages"]    
+        last_message = messages[-1]
+        if isinstance(last_message, AIMessage) and last_message.tool_calls:
+            return "continue"        
+        else:
+            return "end"
+
+    def buildChatAgent():
+        workflow = StateGraph(State)
+        workflow.add_node("agent", call_model)
+        workflow.add_node("action", tool_node)
+        workflow.add_edge(START, "agent")
+        workflow.add_conditional_edges(
+            "agent",
+            should_continue,
+            {
+                "continue": "action",
+                "end": END,
+            },
+        )
+        workflow.add_edge("action", "agent")
+        return workflow.compile() 
+    
+    return buildChatAgent()
+```
 
 ## MCP Servers의 활용
 
