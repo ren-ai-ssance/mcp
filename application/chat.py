@@ -1348,10 +1348,6 @@ def load_multiple_mcp_server_parameters():
     mcpServers = mcp_json.get("mcpServers")
     logger.info(f"mcpServers: {mcpServers}")
 
-    # mcpServers의 항목을 열거하세요.
-    command = ""
-    args = []
-
     server_info = {}
     if mcpServers is not None:
         command = ""
