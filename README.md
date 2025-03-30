@@ -19,7 +19,7 @@ pip install langchain-mcp-adapters
 MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
 
 - MCP Hosts: MCP를 통해 데이터에 접근하려는 프로그램으로 Claude Desktop, Cursor, User Agent Application이 해당됩니다.
-- MCP Clients: MCP Server와 1:1로 연결을 수행하는 Client로서 stdio, SSE를 선택할 수 있습니다.
+- MCP Clients: MCP Server와 1:1로 연결을 수행하는 Client로서 MCP Server와 stdio 또는 SSE 방식으로 연결할 수 있습니다.
 - MCP Servers: Client에 자신의 Capability를 알려주는 경량 프로그램으로 Local Computer의 파일이나 데이터베이스를 조회할 수 있고, 외부 API를 이용해 정보를 조회할 수 있습니다.
 
 ### LangChain MCP Adapter
