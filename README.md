@@ -159,18 +159,11 @@ def create_agent(tools):
 
 ## MCP Servers의 활용
 
-[Model Context Protocol servers](https://github.com/modelcontextprotocol/servers)에서 쓸만한 서버군을 찾아봅니다. 
+[Smithery](https://smithery.ai/)에서는 MCP server를 찾아보고 선택한 서버에 대한 config 정보를 조회할 수 있습니다. 또한, [Model Context Protocol servers](https://github.com/modelcontextprotocol/servers)에서도 아래와 같은 서버들에 대한 정보를 제공하고 있습니다.
 
 - [Perplexity Ask MCP Server](https://github.com/ppl-ai/modelcontextprotocol)
 - [Riza MCP Server](https://github.com/riza-io/riza-mcp)
 - [Tavily MCP Server](https://github.com/tavily-ai/tavily-mcp)
-
-
-
-
-
-
-## MCP Server 정보 업데이트
 
 [Smithery - Google Search Server](https://smithery.ai/server/@gradusnikov/google-search-mcp-server)는 구글 검색을 제공합니다. 검색엔진 ID와 API Key를 필요로 합니다. 
 
