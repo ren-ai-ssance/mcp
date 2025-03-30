@@ -1312,16 +1312,12 @@ def create_agent(tools):
 # )
 
 def load_mcp_server_parameters():
-    command = ""
-    args = []
-
     mcp_json = json.loads(mcp_config)
     logger.info(f"mcp_json: {mcp_json}")
 
     mcpServers = mcp_json.get("mcpServers")
     logger.info(f"mcpServers: {mcpServers}")
 
-    # mcpServers의 항목을 열거하세요.
     command = ""
     args = []
     if mcpServers is not None:
@@ -1397,26 +1393,6 @@ async def mcp_rag_agent_multiple(query, st):
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
-
-# {
-        #     "RAG": {
-        #         "command": "python",
-        #         "args": ["application/mcp-server.py"],
-        #         "transport": "stdio",
-        #     },
-        #     "Tavily": {
-        #         "command": "npx",
-        #         "args": [
-        #             "-y",
-        #             "@smithery/cli@latest",
-        #             "run",
-        #             "mcp-tavily",
-        #             "--key",
-        #             "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
-        #         ],
-        #         "transport": "stdio",
-        #     }
-        # }
     async with  MultiServerMCPClient(server_params) as client:
         with st.status("thinking...", expanded=True, state="running") as status:                       
             tools = client.get_tools()
