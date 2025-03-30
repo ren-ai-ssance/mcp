@@ -111,3 +111,4 @@ streamlit run application/app.py
 [Using LangChain With Model Context Protocol (MCP)](https://cobusgreyling.medium.com/using-langchain-with-model-context-protocol-mcp-e89b87ee3c4c)
 
   
+[Desktop Commander MCP](https://github.com/wonderwhy-er/DesktopCommanderMCP)
