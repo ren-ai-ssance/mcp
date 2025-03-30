@@ -128,6 +128,32 @@ mcp dev mcp-server.py
 }
 ```
 
+아래는 multiple mcp server를 설정시 config 입니다.
+
+```python
+{
+   "mcpServers":{
+      "RAG":{
+         "command":"python",
+         "args":[
+            "application/mcp-server.py"
+         ]
+      },
+      "mcp-tavily":{
+         "command":"npx",
+         "args":[
+            "-y",
+            "@smithery/cli@latest",
+            "run",
+            "mcp-tavily",
+            "--key",
+            "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
+         ]
+      }
+   }
+}
+```
+
 이 정보를 아래와 같이 왼쪽 메뉴의 MCP Config에 복사합니다.
 
 <img src="https://github.com/user-attachments/assets/0e054f8e-4356-42e0-a70e-636af8d377c8" width="300">
