@@ -27,13 +27,17 @@ MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
 
 [LangChain MCP Adapter](https://github.com/langchain-ai/langchain-mcp-adapters)는 MCP를 LangGraph agent와 함께 사용할 수 있게 해주는 경량의 랩퍼(lightweight wrapper)로서 MIT 기반의 오픈소스입니다. MCP Adapter의 주된 역할은 MCP server를 위한 tool들을 정의하고, MCP client에서 tools의 정보를 조회하고 LangGraph의 tool node로 정의하여 활용할 수 있도록 도와줍니다. 
 
+#### 사전 준비
+
 MCP와 LangChain MCP Adapter를 아래와 같이 설치합니다.
 
 ```text
 pip install mcp langchain-mcp-adapters
 ```
 
-RAG 검색을 위한 MCP server는 아래와 같이 정의할 수 있습니다. 
+#### MCP Server
+
+RAG 검색을 위한 MCP server는 아래와 같이 정의할 수 있습니다. Server의 transport를 "stdio"로 지정하면 server를 지속 실행시키지 않더라도, client가 server의 python code를 직접 실행할 수 있어서 편리합니다. 
 
 ```python
 from mcp.server.fastmcp import FastMCP 
@@ -57,7 +61,7 @@ if __name__ =="__main__":
     mcp.run(transport="stdio")
 ```
 
-여기서 RAG 검색은 아래와 같이 lambda를 trigger하는 방식으로 구성하였습니다.
+Server는 요청이 들어오면, retrieve_knowledge_base()로 RAG 검색을 수행합니다. Server의 python code는 경량(lightweight)이어야 하므로, 아래와 같이 lambda를 trigger하는 방식으로 구성하였습니다. Lambda에서는 retrieve, grade, generation의 동작을 수행합니다. 아래와 같이 "model_name"을 지정할 수 있고, 필요에 따라서는 "grading"을 선택적으로 사용할 수 있습니다. 또한 병렬처리로 속도를 빠르게 하고 싶은 경우에은 "multi_region"을 "Enable"로 설정합니다. 상세한 코드는 [lambda-rag](./lambda-rag/lambda_function.py)를 참조합니다. 
 
 ```python
 def retrieve_knowledge_base(query):
@@ -83,7 +87,93 @@ def retrieve_knowledge_base(query):
     return payload['response'], []
 ```
 
-MCP client는 아래와 같이 실행합니다. 비동기적으로 실행하기 위해서 asyncio를 이용하였습니다. MCP server에 대한 정보는 CDK로 배포후 생성되는 output에서 추출한 config.json 파일에서 얻어옵니다. 이후 사용자가 UI에서 MCP Config를 업데이트하면 정보를 업데이트 할 수 있습니다. 서버 정보는 [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)에서 제공하는 MultiServerMCPClient을 이용해 아래와 같이 정의합니다.
+#### MCP Client
+
+MCP client이 하나의 MCP server만 볼 경우에는 아래와 같이 stdio_client와 StdioServerParameters를 이용해 구현할 수 있습니다. MCP server에 대한 정보는 config.json에서 읽어오거나 streamlit에서 사용자가 입력한 정보를 사용할 수 있습니다. load_mcp_server_parameters()에서는 mcp_json을 읽어와서 [StdioServerParameters](https://github.com/langchain-ai/langchain-mcp-adapters)을 구성합니다. config.json의 MCP server에 대한 정보는 AWS CDK로 배포후 생성되는 output에서 가져옵니다.
+
+```python
+from mcp import ClientSession, StdioServerParameters
+
+def load_mcp_server_parameters():
+    mcp_json = json.loads(mcp_config)
+    mcpServers = mcp_json.get("mcpServers")
+
+    command = ""
+    args = []
+    if mcpServers is not None:
+        for server in mcpServers:
+            config = mcpServers.get(server)
+            if "command" in config:
+                command = config["command"]
+            if "args" in config:
+                args = config["args"]
+            break
+
+    return StdioServerParameters(
+        command=command,
+        args=args
+    )
+```
+
+아래와 같이 MCP server에 대한 정보로 stdio_client를 구성합니다. 이때 tools에 대한 정보를 load_mcp_tools로 가져옵니다. Agent에서는 tool 정보를 bind하고 ainvoke를 이용해 요청된 동작을 수행합니다. 
+
+```
+from mcp.client.stdio import stdio_client
+from langchain_mcp_adapters.tools import load_mcp_tools
+
+async def mcp_rag_agent_single(query, st):
+    server_params = load_mcp_server_parameters()
+
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            tools = await load_mcp_tools(session)
+            with st.status("thinking...", expanded=True, state="running") as status:       
+                agent = create_agent(tools)
+                agent_response = await agent.ainvoke({"messages": query})                
+
+                result = agent_response["messages"][-1].content
+            st.markdown(result)
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": result
+            })            
+            return result
+```
+
+MCP client는 아래와 같이 실행합니다. 비동기적으로 실행하기 위해서 asyncio를 이용하였습니다.  이후 사용자가 UI에서 MCP Config를 업데이트하면 정보를 업데이트 할 수 있습니다. 
+
+```python
+asyncio.run(mcp_rag_agent_single(query, st))
+```
+
+서버 정보가 여럿인 경우에 [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters)에서 제공하는 MultiServerMCPClient을 이용합니다. 먼저, 아래와 같이 서버 정보를 가져옵니다. 
+
+```python
+def load_multiple_mcp_server_parameters():
+    mcp_json = json.loads(mcp_config)
+    mcpServers = mcp_json.get("mcpServers")
+
+    server_info = {}
+    if mcpServers is not None:
+        command = ""
+        args = []
+        for server in mcpServers:
+            config = mcpServers.get(server)
+            if "command" in config:
+                command = config["command"]
+            if "args" in config:
+                args = config["args"]
+
+            server_info[server] = {
+                "command": command,
+                "args": args,
+                "transport": "stdio"
+            }
+    return server_info
+```
+
+이후 아래와 같이 MCP server정보와 MultiServerMCPClient로 client를 정의합니다. MCP server로 부터 가져온 tool 정보는 client.get_tools()로 가져와서 agent를 생성할 때에 사용합니다. Single MCP server와 마찬가지로 ainvoke로 실행하여 결과를 얻을 수 있습니다. 
 
 ```python
 from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -106,7 +196,7 @@ async def mcp_rag_agent_multiple(query, st):
     return result
 ```
 
-여기서는 custom한 목적으로 사용할 수 있도록 아래와 같이 agent를 정의하였습니다.
+여기서는 customize가 용이하도록 agent를 정의하였습니다.
 
 ```python
 def create_agent(tools):
