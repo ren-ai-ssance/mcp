@@ -72,6 +72,13 @@ pip install beautifulsoup4 pytz tavily-python
 streamlit run application/app.py
 ```
 
+## 실행 결과
+
+[error_code.pdf](./contents/error_code.pdf)을 다운로드 한 후에 파일을 업로드합니다. 이후 아래와 같이 "보일러 에러중 수압과 관련된 에러 코드를 검색해주세요."와 같이 입력하면 mcp를 이용해 tool의 정보를 가져오고, search tool로 얻어진 정보를 이용해 아래와 같은 정보를 보여줄 수 있습니다. 이때 search tool은 lambda를 실행하는데 lambda에서는 완전 관리형 RAG 서비스인 knowledge base를 이용하여 검색어를 조회하고 관련성을 평가한 후에 관련된 문서만을 전달합니다. Agent는 RAG를 조회하여 얻어진 정보로 답변을 아래와 같이 구합니다.
+
+![image](https://github.com/user-attachments/assets/01b5e47f-ada1-405e-8455-3d3ce260cb41)
+
+
 
 ## Reference 
 
