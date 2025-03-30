@@ -121,7 +121,7 @@ mcp dev mcp-server.py
         "run",
         "mcp-tavily",
         "--key",
-        "132c5aad-6f2f-4e42-19a1-d0b1fcb75613"
+        "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
       ]
     }
   }
