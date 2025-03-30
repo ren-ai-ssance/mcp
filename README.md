@@ -4,9 +4,7 @@ MCP(Model Context Protocal)은 Anthropic에서 기여하고 있는 오픈소스 
 
 [MCP with LangChain](https://github.com/langchain-ai/langchain-mcp-adapters)을 참조합니다.
 
-```text
-pip install langchain-mcp-adapters
-```
+
 
 ## MCP 활용
 
@@ -26,6 +24,11 @@ MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
 
 [LangChain MCP Adapter](https://github.com/langchain-ai/langchain-mcp-adapters)는 MCP를 LangGraph agent와 함께 사용할 수 있게 해주는 경량의 랩퍼(lightweight wrapper)로서 MIT 기반의 오픈소스입니다. MCP Adapter의 주된 역할은 MCP server를 위한 tool들을 정의하고, MCP client에서 tools의 정보를 조회하고 LangGraph의 tool node로 정의하여 활용할 수 있도록 도와줍니다. 
 
+LangChain MCP Adapter를 아래와 같이 설치합니다.
+
+```text
+pip install langchain-mcp-adapters
+```
 
 RAG 검색을 위한 MCP server는 아래와 같이 정의할 수 있습니다. 
 
