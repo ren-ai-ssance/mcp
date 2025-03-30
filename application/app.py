@@ -94,7 +94,7 @@ with st.sidebar:
             height=150
         )
 
-    chat.update(modelName, debugMode, multiRegion, st)
+    chat.update(modelName, debugMode, multiRegion, mcp, st)
 
     st.success(f"Connected to {modelName}", icon="💚")
     clear_button = st.button("대화 초기화", key="clear")

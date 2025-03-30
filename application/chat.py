@@ -121,10 +121,10 @@ client = boto3.client(
     region_name=bedrock_region
 )  
 
-def update(modelName, debugMode, multiRegion, st):    
+mcp_config = ""
+def update(modelName, debugMode, multiRegion, mcp, st):    
     global model_name, model_id, model_type, debug_mode, multi_region
-    global models, agent_id, agent_kb_id
-    global agent_alias_id, agent_kb_alias_id, agent_alias_arn, agent_kb_alias_arn
+    global models, mcp_config
     
     if model_name != modelName:
         model_name = modelName
@@ -141,6 +141,24 @@ def update(modelName, debugMode, multiRegion, st):
     if multi_region != multiRegion:
         multi_region = multiRegion
         logger.info(f"multi_region: {multi_region}")
+
+    mcp_config = mcp
+    mcp_config = """{
+  "mcpServers": {
+    "mcp-tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "mcp-tavily",
+        "--key",
+        "132c5abd-6f2e-4e42-89a1-d0b1fcb75613"
+      ]
+    }
+  }
+}"""
+    logger.info(f"mcp_config: {mcp_config}")
 
 def clear_chat_history():
     memory_chain = []
@@ -237,7 +255,7 @@ def print_doc(i, doc):
     logger.info(f"{i}: {text}, metadata:{doc.metadata}")
 
 def translate_text(text):
-    chat = get_chat()
+    chat = get_chat(extended_thinking="Disable")
 
     system = (
         "You are a helpful assistant that translates {input_language} to {output_language} in <article> tags. Put it in <result> tags."
@@ -273,7 +291,7 @@ def translate_text(text):
     return msg[msg.find('<result>')+8:len(msg)-9] # remove <result> tag
     
 def check_grammer(text):
-    chat = get_chat()
+    chat = get_chat(extended_thinking="Disable")
 
     if isKorean(text)==True:
         system = (
@@ -494,7 +512,7 @@ def traslation(chat, text, input_language, output_language):
 # General Conversation
 #########################################################
 def general_conversation(query):
-    llm = get_chat()
+    llm = get_chat(extended_thinking="Disable")
 
     system = (
         "당신의 이름은 서연이고, 질문에 대해 친절하게 답변하는 사려깊은 인공지능 도우미입니다."
@@ -634,7 +652,7 @@ def load_csv_document(s3_file_name):
     return docs
 
 def get_summary(docs):    
-    llm = get_chat()
+    llm = get_chat(extended_thinking="Disable")
 
     text = ""
     for doc in docs:
@@ -728,7 +746,7 @@ def summary_of_code(code, mode):
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
     # print('prompt: ', prompt)
     
-    llm = get_chat()
+    llm = get_chat(extended_thinking="Disable")
 
     chain = prompt | llm    
     try: 
@@ -748,7 +766,7 @@ def summary_of_code(code, mode):
     return summary
 
 def summary_image(img_base64, instruction):      
-    llm = get_chat()
+    llm = get_chat(extended_thinking="Disable")
 
     if instruction:
         logger.info(f"instruction: {instruction}")
@@ -789,7 +807,7 @@ def summary_image(img_base64, instruction):
     return extracted_text
 
 def extract_text(img_base64):    
-    multimodal = get_chat()
+    multimodal = get_chat(extended_thinking="Disable")
     query = "텍스트를 추출해서 markdown 포맷으로 변환하세요. <result> tag를 붙여주세요."
     
     extracted_text = ""
@@ -1041,7 +1059,7 @@ def get_image_summarization(object_name, prompt, st):
 ############################################################# 
 def get_rag_prompt(text):
     # print("###### get_rag_prompt ######")
-    llm = get_chat()
+    llm = get_chat(extended_thinking="Disable")
     # print('model_type: ', model_type)
     
     if model_type == "nova":
@@ -1343,16 +1361,43 @@ def load_mcp_server_parameters():
         args=args
     )
 
-server_params = load_mcp_server_parameters()
-logger.info(f"server_params: {server_params}")
+def load_mcp_server_parameters_from_app():
+    command = ""
+    args = []
 
-    # global server_params
-    # server_params = StdioServerParameters(
-    #     command="python",
-    #     args=["application/mcp-server.py"],    
-    # )
+    mcp_json = json.loads(mcp_config)
+    logger.info(f"mcp_json: {mcp_json}")
+
+    mcpServers = mcp_json.get("mcpServers")
+    logger.info(f"mcpServers: {mcpServers}")
+
+    # mcpServers의 항목을 열거하세요.
+    command = ""
+    args = []
+    if mcpServers is not None:
+        for server in mcpServers:
+            logger.info(f"server: {server}")
+
+            config = mcpServers.get(server)
+            logger.info(f"config: {config}")
+
+            if "command" in config:
+                command = config["command"]
+            if "args" in config:
+                args = config["args"]
+
+            break
+
+    return StdioServerParameters(
+        command=command,
+        args=args
+    )
 
 async def mcp_rag_agent(query, st):
+    # server_params = load_mcp_server_parameters()
+    server_params = load_mcp_server_parameters_from_app()
+    logger.info(f"server_params: {server_params}")
+
     async with stdio_client(server_params) as (read, write):
         # Open an MCP session to interact with the math_server.py tool.
         async with ClientSession(read, write) as session:
