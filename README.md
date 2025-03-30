@@ -31,7 +31,6 @@ mcp dev mcp-server.py
 - [Riza MCP Server](https://github.com/riza-io/riza-mcp)
 - [Tavily MCP Server](https://github.com/tavily-ai/tavily-mcp)
 
-[smithery-Tavily](https://smithery.ai/server/mcp-tavily)와 인터넷 검색을 구현할 수 있습니다.
 
 
 ## MCP Server 정보 업데이트
@@ -77,9 +76,40 @@ streamlit run application/app.py
 
 ## 실행 결과
 
+### MCP로 RAG를 조회하여 활용하기
+
 [error_code.pdf](./contents/error_code.pdf)을 다운로드 한 후에 파일을 업로드합니다. 이후 아래와 같이 "보일러 에러중 수압과 관련된 에러 코드를 검색해주세요."와 같이 입력하면 mcp를 이용해 tool의 정보를 가져오고, search tool로 얻어진 정보를 이용해 아래와 같은 정보를 보여줄 수 있습니다. 이때 search tool은 lambda를 실행하는데 lambda에서는 완전 관리형 RAG 서비스인 knowledge base를 이용하여 검색어를 조회하고 관련성을 평가한 후에 관련된 문서만을 전달합니다. Agent는 RAG를 조회하여 얻어진 정보로 답변을 아래와 같이 구합니다.
 
 ![image](https://github.com/user-attachments/assets/01b5e47f-ada1-405e-8455-3d3ce260cb41)
+
+### MCP로 인터넷 검색을 하여 활용하기
+
+[smithery-Tavily](https://smithery.ai/server/mcp-tavily)에 접속하여 환경에 맞는 설정값을 얻어옵니다. 아래는 Mac/Linux의 JSON format의 접속 정보입니다.
+
+```java
+{
+  "mcpServers": {
+    "mcp-tavily": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "mcp-tavily",
+        "--key",
+        "132c5aad-6f2f-4e42-19a1-d0b1fcb75613"
+      ]
+    }
+  }
+}
+```
+
+이 정보를 아래와 같이 왼쪽 메뉴의 MCP Config에 복사합니다.
+
+![image](https://github.com/user-attachments/assets/0e054f8e-4356-42e0-a70e-636af8d377c8)
+
+이후 메뉴에서 "Agent"를 선택후에 아래와 같이 "강남역 맛집은?"라고 입력후 결과를 확인합니다.
+
 
 
 
@@ -90,7 +120,6 @@ streamlit run application/app.py
 [Using MCP with LangGraph agents](https://www.youtube.com/watch?v=OX89LkTvNKQ)
 
 [MCP From Scratch](https://mirror-feeling-d80.notion.site/MCP-From-Scratch-1b9808527b178040b5baf83a991ed3b2)
-
 
 [Understanding MCP From Scratch](https://www.youtube.com/watch?v=CDjjaTALI68)
 
