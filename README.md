@@ -112,3 +112,5 @@ streamlit run application/app.py
 
   
 [Desktop Commander MCP](https://github.com/wonderwhy-er/DesktopCommanderMCP)
+
+[Smithery](https://smithery.ai/)
