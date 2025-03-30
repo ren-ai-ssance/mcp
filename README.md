@@ -59,7 +59,7 @@ MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
         "run",
         "@gradusnikov/google-search-mcp-server",
         "--config",
-        "{\"googleCseId\":\"a6cd8c517fbd64b72\",\"googleApiKey\":\"AIzaSyDQlYpck9-9TbBSuxoew2luOGVB6unRPNk\"}"
+        "{\"googleCseId\":\"b5cd8c527fbd64b72\",\"googleApiKey\":\"AIzbSyDQlYpck8-9TbBSuxoew1luOGVB6unRPNk\"}"
       ]
     }
   }
