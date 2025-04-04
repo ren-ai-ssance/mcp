@@ -97,4 +97,4 @@
 
 이제 "https://github.com/kyopark2014/technical-summary/blob/main/api-gateway-log.md를 참조하여 로깅에 대한 정보를 정리하세요."와 같이 입력하면, 해당 URL을 열어서 관련정보를 가져온 후에 아래와 같이 답변합니다.
 
-![image](https://github.com/user-attachments/assets/fe7c4382-9c8c-4cd7-9c0e-166fa04bc71e)
+![image](https://github.com/user-attachments/assets/28c9125b-f2bf-4383-ac7a-185ea8c45e6b)
