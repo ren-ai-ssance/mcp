@@ -136,7 +136,5 @@ JSON 정보는 아래와 같습니다.
 
 이때에 얻어진 결과는 아래와 같습니다.
 
-![image](https://github.com/user-attachments/assets/d2b73725-aed5-4b8e-a1b2-868bdb7e64c4)
-
 
 ![image](https://github.com/user-attachments/assets/cde0b053-e699-4b65-8e7c-03eea8f8f9ec)
