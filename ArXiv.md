@@ -162,6 +162,5 @@ not a complete elimination-of the distribution shift caused by vanishing\nvarian
 
 실행결과는 아래와 같습니다. 얻어온 tool에는 'search_papers', 'download_paper', 'list_papers', 'read_paper'가 있습니다.
 
-
-![noname](https://github.com/user-attachments/assets/d548161c-2867-4e41-a355-4e0788151145)
+![noname](https://github.com/user-attachments/assets/af0d5077-4e30-45f3-975d-c1f13232098b)
 
