@@ -1,8 +1,12 @@
 ## Airbnb MCP Server
 
-[Airbnb MCP Server](https://github.com/openbnb-org/mcp-server-airbnb)에 따라 Airbnb를 mcp로 연결할 수 있습니다. 
+[Airbnb MCP Server](https://github.com/openbnb-org/mcp-server-airbnb)에 따라 Airbnb를 mcp로 연결할 수 있습니다. [Smithery - Airbnb](https://smithery.ai/server/@openbnb-org/mcp-server-airbnb)에서 config를 가져옵니다. 
 
 config 정보는 아래와 같습니다.
+
+![image](https://github.com/user-attachments/assets/853e1551-e07e-4401-9e8b-052929070c2c)
+
+JSON 정보는 아래와 같습니다. 
 
 ```java
 {
@@ -11,7 +15,8 @@ config 정보는 아래와 같습니다.
       "command": "npx",
       "args": [
         "-y",
-        "@openbnb/mcp-server-airbnb"
+        "@openbnb/mcp-server-airbnb",
+        "--ignore-robots-txt"
       ]
     }
   }
@@ -130,5 +135,8 @@ config 정보는 아래와 같습니다.
 ```
 
 이때에 얻어진 결과는 아래와 같습니다.
+
+![image](https://github.com/user-attachments/assets/d2b73725-aed5-4b8e-a1b2-868bdb7e64c4)
+
 
 ![image](https://github.com/user-attachments/assets/cde0b053-e699-4b65-8e7c-03eea8f8f9ec)
