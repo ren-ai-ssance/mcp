@@ -1,6 +1,6 @@
 ## ArXiv MCP Server
 
-[ArXiv MCP Server](https://github.com/blazickjp/arxiv-mcp-server)는 [Smithery-arxiv-mcp-server]에 접속해서 아래와 같은 configuration 가져옵니다.
+[ArXiv MCP Server](https://github.com/blazickjp/arxiv-mcp-server)는 [Smithery-arxiv-mcp-server](https://smithery.ai/server/arxiv-mcp-server)에 접속해서 아래와 같은 configuration 가져옵니다.
 
 ![image](https://github.com/user-attachments/assets/200fc7e4-5edc-45dc-b476-aa2f99aa50e3)
 
