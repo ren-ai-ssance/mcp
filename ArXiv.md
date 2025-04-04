@@ -138,7 +138,18 @@ app에 접속하여 config를 업데이트하고 아래와 같이 "ReAct Agent�
       "Jensen",
       "Zhou"
    ],
-   "abstract":"It is a widely known issue that Transformers, when trained on shorter\nsequences, fail to generalize robustly to longer ones at test time. This raises\nthe question of whether Transformer models are real reasoning engines, despite\ntheir impressive abilities in mathematical problem solving and code synthesis.\nIn this paper, we offer a vanishing variance perspective on this issue. To the\nbest of our knowledge, we are the first to demonstrate that even for today's\nfrontier models, a longer sequence length results in a decrease in variance in\nthe output of the multi-head attention modules. On the argmax retrieval and\ndictionary lookup tasks, our experiments show that applying layer normalization\nafter the attention outputs leads to significantly better length\ngeneralization. Our analyses attribute this improvement to a reduction-though\nnot a complete elimination-of the distribution shift caused by vanishing\nvariance.",
+   "abstract":"It is a widely known issue that Transformers, when trained on shorter
+sequences, fail to generalize robustly to longer ones at test time. This raises
+the question of whether Transformer models are real reasoning engines, despite
+their impressive abilities in mathematical problem solving and code synthesis.
+In this paper, we offer a vanishing variance perspective on this issue. To the
+best of our knowledge, we are the first to demonstrate that even for today's
+frontier models, a longer sequence length results in a decrease in variance in
+the output of the multi-head attention modules. On the argmax retrieval and
+dictionary lookup tasks, our experiments show that applying layer normalization
+after the attention outputs leads to significantly better length
+generalization. Our analyses attribute this improvement to a reduction-though
+not a complete elimination-of the distribution shift caused by vanishing\nvariance.",
    "categories":[
       "cs.LG",
       "cs.AI"
