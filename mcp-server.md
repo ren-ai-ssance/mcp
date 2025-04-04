@@ -80,4 +80,21 @@
 
 ## Playwright MCP
 
-웹 페이지와 상호작용할 수 있도록 돕는 구조화된 접근성 스냅샷을 제공
+[playwright-mcp](https://github.com/microsoft/playwright-mcp)을 이용하여 웹 페이지와 상호작용할 수 있도록 돕는 구조화된 접근성 스냅샷을 활용합니다. [Playwright MCP Config](https://github.com/microsoft/playwright-mcp?tab=readme-ov-file#example-config)에 접속하여 config를 가져옵니다.
+
+```java
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}
+```
+
+이제 "https://github.com/kyopark2014/technical-summary/blob/main/api-gateway-log.md를 참조하여 로깅에 대한 정보를 정리하세요."와 같이 입력하면, 해당 URL을 열어서 관련정보를 가져온 후에 아래와 같이 답변합니다.
+
+![image](https://github.com/user-attachments/assets/fe7c4382-9c8c-4cd7-9c0e-166fa04bc71e)
