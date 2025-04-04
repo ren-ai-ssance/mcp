@@ -4,6 +4,8 @@
 
 ![image](https://github.com/user-attachments/assets/200fc7e4-5edc-45dc-b476-aa2f99aa50e3)
 
+가져온 config의 예는 아래와 같습니다. "/Users/ksdyb/Downloads/ArXiv"와 같은 폴더가 있어야 정상적으로 동작합니다. 없는 경우에 적절히 폴더를 생성하고 config를 업데이트 합니다.
+
 ```java
 {
   "mcpServers": {
@@ -21,6 +23,7 @@
   }
 }
 ```
+
 
 Local에서 실행시 uv를 설치합니다.
 
@@ -121,6 +124,29 @@ app에 접속하여 config를 업데이트하고 아래와 같이 "ReAct Agent�
    "response_format=""content_and_artifact",
    coroutine=<function convert_mcp_tool_to_langchain_tool.<locals>.call_tool at 0x134314b80>)
 ]
+```
+
+가져온 문서의 한 예는 아래와 같습니다.
+
+```java
+{
+   "id":"2504.02827v1",
+   "title":"On Vanishing Variance in Transformer Length Generalization",
+   "authors":[
+      "Ruining Li",
+      "Gabrijel Boduljak",
+      "Jensen",
+      "Zhou"
+   ],
+   "abstract":"It is a widely known issue that Transformers, when trained on shorter\nsequences, fail to generalize robustly to longer ones at test time. This raises\nthe question of whether Transformer models are real reasoning engines, despite\ntheir impressive abilities in mathematical problem solving and code synthesis.\nIn this paper, we offer a vanishing variance perspective on this issue. To the\nbest of our knowledge, we are the first to demonstrate that even for today's\nfrontier models, a longer sequence length results in a decrease in variance in\nthe output of the multi-head attention modules. On the argmax retrieval and\ndictionary lookup tasks, our experiments show that applying layer normalization\nafter the attention outputs leads to significantly better length\ngeneralization. Our analyses attribute this improvement to a reduction-though\nnot a complete elimination-of the distribution shift caused by vanishing\nvariance.",
+   "categories":[
+      "cs.LG",
+      "cs.AI"
+   ],
+   "published":"2025-04-03T17:59:56+00:00",
+   "url":"http://arxiv.org/pdf/2504.02827v1",
+   "resource_uri":"arxiv://2504.02827v1"
+}
 ```
 
 실행결과는 아래와 같습니다. 얻어온 tool에는 'search_papers', 'download_paper', 'list_papers', 'read_paper'가 있습니다.
