@@ -24,4 +24,4 @@
 
 [ArXiv.md](./ArXiv.md)와 같이 설정후 실행한 결과는 아래와 같습니다. 논문 데이터를 근거로 아래와 같은 결과를 얻을 수 있습니다.
 
-![Uploading noname.png…]()
+![noname](https://github.com/user-attachments/assets/a5b156ec-3dda-40d6-925a-608b12b65448)
