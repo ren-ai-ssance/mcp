@@ -6,6 +6,12 @@
 
 [Download and install Obsidian](https://help.obsidian.md/install)에서 OS에 맞는 Obsidian을 설치합니다.
 
+여기서 제가 설정한 Obsidian 메모의 경로는 아래와 같습니다.
+
+```text
+/Users/ksdyb/Library/Mobile Documents/iCloud~md~obsidian/Documents/memo
+```
+
 ### MCP config
 
 [Smithery - mcp-obsidian](https://smithery.ai/server/mcp-obsidian)에 접속하여 자신의 Obsidian 노트의 경로를 입력하고 config를 생성합니다.
