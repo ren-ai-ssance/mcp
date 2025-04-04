@@ -23,6 +23,26 @@ MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
 - MCP Clients: MCP Server와 1:1로 연결을 수행하는 Client로서 MCP Server와 stdio 또는 SSE 방식으로 연결할 수 있습니다.
 - MCP Servers: Client에 자신의 Capability를 알려주는 경량 프로그램으로 Local Computer의 파일이나 데이터베이스를 조회할 수 있고, 외부 API를 이용해 정보를 조회할 수 있습니다.
 
+[MCP Server Components](https://www.philschmid.de/mcp-introduction)에는 아래와 같은 항목이 있습니다. 
+
+- Tools (Model-controlled): API와 같이 특정한 action을 수행합니다.
+
+```python
+tools = await session.list_tools()
+```
+
+- Resources (Application-controlled): 생성형 AI 어플리케이션이 접근 할 수 있는 데이터 소스입니다. 복잡한 계산(significant computation)이나 부작용(side effect)없이 데이터를 가져올 수 있습니다. 
+
+```python
+resources = await session.list_resources()
+```
+
+- Prompts (User-controlled): tool나 resource를 사용할때에 이용하는 사전 정의된 템플렛으로서 추론(inference)전에 선택할 수 있습니다.
+
+```python
+prompts = await session.list_prompts()
+```
+  
 ### LangChain MCP Adapter
 
 [LangChain MCP Adapter](https://github.com/langchain-ai/langchain-mcp-adapters)는 MCP를 LangGraph agent와 함께 사용할 수 있게 해주는 경량의 랩퍼(lightweight wrapper)로서 MIT 기반의 오픈소스입니다. MCP Adapter의 주된 역할은 MCP server를 위한 tool들을 정의하고, MCP client에서 tools의 정보를 조회하고 LangGraph의 tool node로 정의하여 활용할 수 있도록 도와줍니다. 
@@ -454,3 +474,4 @@ mcp dev mcp-server.py
 [Smithery](https://smithery.ai/)
 
 [Cursor AI 말고, 나만의 #MCP 에이전트 앱 만들어 보기!](https://www.youtube.com/watch?v=ISrYHGg2C2c)
+
