@@ -78,3 +78,6 @@
 
 ![image](https://github.com/user-attachments/assets/5c83eee1-262d-428e-97d7-fac3d9f38f2a)
 
+## Playwright MCP
+
+웹 페이지와 상호작용할 수 있도록 돕는 구조화된 접근성 스냅샷을 제공
