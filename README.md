@@ -137,7 +137,7 @@ def load_mcp_server_parameters():
 
 아래와 같이 MCP server에 대한 정보로 stdio_client를 구성합니다. 이때 tools에 대한 정보를 load_mcp_tools로 가져옵니다. Agent에서는 tool 정보를 bind하고 ainvoke를 이용해 요청된 동작을 수행합니다. 
 
-```
+```python
 from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 
