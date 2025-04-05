@@ -1,6 +1,6 @@
 # Filesystem MCP Server
 
-[Filesystem MCP Server](https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem)을 이용하여 파일에 대한 정보를 가져올 수 있습니다. 
+[Filesystem MCP Server](https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem)을 이용하여 파일에 대한 정보를 가져올 수 있습니다. 좀 더 자세한 정보는 [Filesystem](https://sebastian-petrus.medium.com/mcp-server-claude-work-with-local-files-594f332a7084)를 참조합니다.
 
 아래와 같이 필요한 패키지를 설치합니다.
 
