@@ -19,9 +19,18 @@ MCP(Model Context Protocal)은 생성형 AI application이 외부 데이터를 �
 
 MCP의 주요 요소의 정의와 동작은 아래와 같습니다.
 
-- MCP Hosts: MCP를 통해 데이터에 접근하려는 프로그램으로 Claude Desktop, Cursor, User Agent Application이 해당됩니다.
+- MCP Hosts: MCP 프로토콜을 통해 데이터에 접근하는 프로그램/AI 도구로서 Claude Desktop, Cursor, User Agent Application이 해당됩니다.
 - MCP Clients: MCP Server와 1:1로 연결을 수행하는 Client로서 MCP Server와 stdio 또는 SSE 방식으로 연결할 수 있습니다.
-- MCP Servers: Client에 자신의 Capability를 알려주는 경량 프로그램으로 Local Computer의 파일이나 데이터베이스를 조회할 수 있고, 외부 API를 이용해 정보를 조회할 수 있습니다.
+- MCP Servers: 표준화된 MCP를 통해 Client에 Tool의 Capability를 알려주는 경량 프로그램으로 Local Computer의 파일이나 데이터베이스를 조회할 수 있고, 외부 API를 이용해 정보를 조회할 수 있습니다.
+- Local data sources: MCP 서버가 접근할 수 있는 데이터베이스와 로컬 데이터
+- Remote services: API를 통해 접근 가능한 외부 시스템
+
+MCP를 사용하면 아래와 같은 장점이 있습니다.
+
+- 표준화된 방식으로 다양한 데이터 소스에 접근 가능합니다.
+- 애플리케이션 코드 변경 없이 MCP 서버 업데이트를 통한 새로운 기능 추가할 수 있습니다.
+- 조직 전반에 걸쳐 AI 지원 및 확장이 용이합니다.
+
 
 [MCP Server Components](https://www.philschmid.de/mcp-introduction)에는 아래와 같은 항목이 있습니다. 
 
