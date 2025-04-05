@@ -127,3 +127,8 @@
 
 ![image](https://github.com/user-attachments/assets/4fe08e44-5535-4769-bccf-763a3dde7109)
 
+
+## Reference
+
+[Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers/blob/main/README-ko.md)
+
