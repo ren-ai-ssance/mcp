@@ -123,5 +123,4 @@
 그런데 아래처럼 문서 검색에 실패하고 있습니다.
 
 
-
-
+![image](https://github.com/user-attachments/assets/8e33043f-8ec0-4e81-a789-69221ca5783a)
