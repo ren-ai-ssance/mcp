@@ -34,7 +34,7 @@ MCP를 사용하면 아래와 같은 장점이 있습니다.
 
 [MCP Server Components](https://www.philschmid.de/mcp-introduction)에는 아래와 같은 항목이 있습니다. 
 
-- Tools (Model-controlled): API와 같이 특정한 action을 수행합니다.
+- Tools (Model-controlled): LLM이 특정 작업을 수행하기 위해 호출할 수 있는 기능(도구)으로서, API와 같이 특정한 action을 수행합니다. 
 
 ```python
 tools = await session.list_tools()
