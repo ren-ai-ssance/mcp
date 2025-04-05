@@ -4,6 +4,7 @@ import utils
 import json
 import knowledge_base as kb
 import cost_analysis as cost
+import supervisor
 
 # logging
 logger = utils.CreateLogger("streamlit")
@@ -19,7 +20,10 @@ mode_descriptions = {
         "Bedrock Knowledge Base를 이용해 구현한 RAG로 필요한 정보를 검색합니다."
     ],
     "Agent": [
-        "Bedrock Agent를 이용하여 Workflow를 구현합니다."
+        "Agent를 이용하여 Workflow를 구현합니다."
+    ],
+    "Agent (Chat)": [
+        "Agent를 이용하여 Workflow를 구현합니다. 채팅 히스토리를 이용해 interative한 대화를 즐길 수 있습니다."
     ],
     "번역하기": [
         "한국어와 영어에 대한 번역을 제공합니다. 한국어로 입력하면 영어로, 영어로 입력하면 한국어로 번역합니다."        
@@ -50,7 +54,7 @@ with st.sidebar:
     
     # radio selection
     mode = st.radio(
-        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Multi Agent Collaboration", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=0
+        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi Agent Collaboration", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=0
     )   
     st.info(mode_descriptions[mode][0])
 
@@ -259,25 +263,28 @@ if prompt := st.chat_input("메시지를 입력하세요."):
                 chat.save_chat_history(prompt, response)
             
             show_references(reference_docs) 
-
         
         elif mode == 'Agent':
             sessionState = ""
-            response = chat.run_agent(prompt, st)
+            response = chat.run_agent(prompt, "Disable", st)
 
-        # elif mode == 'Multi Agent Collaboration':
-        #     sessionState = ""
-        #     with st.status("thinking...", expanded=True, state="running") as status:
-        #         response, image_url = chat.run_multi_agent_collaboration(prompt, st)
-        #         st.write(response)
-        #         logger.info(f"response: {response}")
+        elif mode == 'Agent (Chat)':
+            sessionState = ""
+            response = chat.run_agent(prompt, "Enable", st)
+
+        elif mode == 'Multi Agent Collaboration':
+            sessionState = ""
+            with st.status("thinking...", expanded=True, state="running") as status:
+                response, image_url = supervisor.run_supervisor(prompt, st)
+                st.write(response)
+                logger.info(f"response: {response}")
                 
-        #         st.session_state.messages.append({
-        #             "role": "assistant", 
-        #             "content": response,
-        #             "images": image_url if image_url else []
-        #         })
-        #         chat.save_chat_history(prompt, response)                    
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": response,
+                    "images": image_url if image_url else []
+                })
+                chat.save_chat_history(prompt, response)                    
 
         elif mode == '번역하기':
             response = chat.translate_text(prompt)

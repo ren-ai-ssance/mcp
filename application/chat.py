@@ -38,15 +38,26 @@ from langgraph.graph import START, END, StateGraph
 from typing_extensions import Annotated, TypedDict
 from langgraph.graph.message import add_messages
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.store.memory import InMemoryStore
 
 logger = utils.CreateLogger("chat")
 
-userId = "demo"
+userId = uuid.uuid4().hex
 map_chain = dict() 
+
+checkpointers = dict() 
+memorystores = dict() 
+
+checkpointer = MemorySaver()
+memorystore = InMemoryStore()
+
+checkpointers[userId] = checkpointer
+memorystores[userId] = memorystore
 
 def initiate():
     global userId
-    global memory_chain
+    global memory_chain, checkpointers, memorystores, checkpointer, memorystore
 
     userId = uuid.uuid4().hex
     logger.info(f"userId: {userId}")
@@ -54,10 +65,19 @@ def initiate():
     if userId in map_chain:  
             # print('memory exist. reuse it!')
             memory_chain = map_chain[userId]
+
+            checkpointer = checkpointers[userId]
+            memorystore = memorystores[userId]
     else: 
         # print('memory does not exist. create new one!')        
         memory_chain = ConversationBufferWindowMemory(memory_key="chat_history", output_key='answer', return_messages=True, k=5)
         map_chain[userId] = memory_chain
+
+        checkpointer = MemorySaver()
+        memorystore = InMemoryStore()
+
+        checkpointers[userId] = checkpointer
+        memorystores[userId] = memorystore
 
 initiate()
 
@@ -1181,7 +1201,7 @@ def run_rag_with_knowledge_base(query, st):
 # Bedrock Agent (Multi agent collaboration)
 ############################################################# 
 
-def create_agent(tools):
+def create_agent(tools, historyMode):
     tool_node = ToolNode(tools)
 
     chatModel = get_chat(extended_thinking="Disable")
@@ -1304,7 +1324,41 @@ def create_agent(tools):
 
         return workflow.compile() 
     
-    return buildChatAgent()
+    def buildChatAgentWithHistory():
+        workflow = StateGraph(State)
+
+        workflow.add_node("agent", call_model)
+        workflow.add_node("action", tool_node)
+        workflow.add_edge(START, "agent")
+        workflow.add_conditional_edges(
+            "agent",
+            should_continue,
+            {
+                "continue": "action",
+                "end": END,
+            },
+        )
+        workflow.add_edge("action", "agent")
+    
+        return workflow.compile(
+            checkpointer=checkpointer,
+            store=memorystore
+        )
+    
+    # workflow 
+    if historyMode == "Enable":
+        app = buildChatAgentWithHistory()
+        config = {
+            "recursion_limit": 50,
+            "configurable": {"thread_id": userId}
+        }
+    else:
+        app = buildChatAgent()
+        config = {
+            "recursion_limit": 50
+        }
+
+    return app, config
 
 # server_params = StdioServerParameters(
 #   command="python",
@@ -1385,7 +1439,7 @@ def tool_info(tools, st):
     # st.info(f"{tool_info}")
     st.info(f"Tools: {tool_list}")
     
-async def mcp_rag_agent_multiple(query, st):
+async def mcp_rag_agent_multiple(query, historyMode, st):
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
@@ -1402,9 +1456,9 @@ async def mcp_rag_agent_multiple(query, st):
             # agent = create_react_agent(model, client.get_tools())
 
             # langgraph agent
-            agent = create_agent(tools)
+            agent, config = create_agent(tools, historyMode)
 
-            response = await agent.ainvoke({"messages": query})
+            response = await agent.ainvoke({"messages": query}, config)
             logger.info(f"response: {response}")
 
             result = response["messages"][-1].content
@@ -1472,8 +1526,8 @@ async def mcp_rag_agent_single(query, st):
             
             return result
 
-def run_agent(query, st):
-    result = asyncio.run(mcp_rag_agent_multiple(query, st))
+def run_agent(query, historyMode, st):
+    result = asyncio.run(mcp_rag_agent_multiple(query, historyMode, st))
     #result = asyncio.run(mcp_rag_agent_single(query, st))
 
     logger.info(f"result: {result}")
