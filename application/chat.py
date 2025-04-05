@@ -513,6 +513,23 @@ def traslation(chat, text, input_language, output_language):
 
     return msg[msg.find('<result>')+8:len(msg)-9] # remove <result> tag
 
+def extract_thinking_tag(response, st):
+    if response.find('<thinking>') != -1:
+        status = response[response.find('<thinking>')+11:response.find('</thinking>')]
+        logger.info(f"gent_thinking: {status}")
+        
+        if debug_mode=="Enable":
+            st.info(status)
+
+        if response.find('<thinking>') == 0:
+            msg = response[response.find('</thinking>')+13:]
+        else:
+            msg = response[:response.find('<thinking>')]
+        logger.info(f"msg: {msg}")
+    else:
+        msg = response
+
+    return msg
 
 ####################### LangChain #######################
 # General Conversation

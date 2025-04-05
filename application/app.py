@@ -25,6 +25,9 @@ mode_descriptions = {
     "Agent (Chat)": [
         "Agent를 이용하여 Workflow를 구현합니다. 채팅 히스토리를 이용해 interative한 대화를 즐길 수 있습니다."
     ],
+    "Multi Agent Collaboration": [
+        "Multi Agent Collaboration에 기반한 대화입니다. 여기에서는 Supervisor/Collaborators의 구조를 가지고 있습니다."
+    ],
     "번역하기": [
         "한국어와 영어에 대한 번역을 제공합니다. 한국어로 입력하면 영어로, 영어로 입력하면 한국어로 번역합니다."        
     ],
@@ -275,7 +278,7 @@ if prompt := st.chat_input("메시지를 입력하세요."):
         elif mode == 'Multi Agent Collaboration':
             sessionState = ""
             with st.status("thinking...", expanded=True, state="running") as status:
-                response, image_url = supervisor.run_supervisor(prompt, st)
+                response, image_url, reference_docs = supervisor.run_supervisor(prompt, st)
                 st.write(response)
                 logger.info(f"response: {response}")
                 
@@ -284,7 +287,9 @@ if prompt := st.chat_input("메시지를 입력하세요."):
                     "content": response,
                     "images": image_url if image_url else []
                 })
-                chat.save_chat_history(prompt, response)                    
+                chat.save_chat_history(prompt, response)       
+
+                show_references(reference_docs)              
 
         elif mode == '번역하기':
             response = chat.translate_text(prompt)

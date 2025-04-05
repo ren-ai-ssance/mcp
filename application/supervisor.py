@@ -20,7 +20,7 @@ logger = utils.CreateLogger('supervisor')
 def create_collaborator(tools, name, st):
     logger.info(f"###### create_collaborator ######")
 
-    chatModel = chat.get_chat(chat.reasoning_mode)
+    chatModel = chat.get_chat(extended_thinking="Disable")
     model = chatModel.bind_tools(tools)
 
     class State(TypedDict): 
