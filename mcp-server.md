@@ -99,9 +99,9 @@
 
 ![image](https://github.com/user-attachments/assets/28c9125b-f2bf-4383-ac7a-185ea8c45e6b)
 
-## Local Files
+## Filesystem
 
-[LocalFiles.md](https://github.com/kyopark2014/mcp/blob/main/LocalFiles.md)와 같이 파일 정보를 읽거나 생성할 수 있습니다. 
+[Filesystem.md](https://github.com/kyopark2014/mcp/blob/main/Filesystem.md)와 같이 파일 정보를 읽거나 생성할 수 있습니다. 
 
 아래와 같이 config를 설정합니다. 
 
