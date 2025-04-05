@@ -98,3 +98,32 @@
 이제 "https://github.com/kyopark2014/technical-summary/blob/main/api-gateway-log.md를 참조하여 로깅에 대한 정보를 정리하세요."와 같이 입력하면, 해당 URL을 열어서 관련정보를 가져온 후에 아래와 같이 답변합니다.
 
 ![image](https://github.com/user-attachments/assets/28c9125b-f2bf-4383-ac7a-185ea8c45e6b)
+
+## Local Files
+
+[LocalFiles.md](https://github.com/kyopark2014/mcp/blob/main/LocalFiles.md)와 같이 파일 정보를 읽거나 생성할 수 있습니다. 
+
+아래와 같이 config를 설정합니다. 
+
+```java
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+	    "@modelcontextprotocol/server-filesystem",
+        "/Users/ksdyb/Documents"
+      ]
+    }
+  }
+}
+```
+
+이제 "파일의 갯수를 알려주세요."를 입력하고 결과를 확인합니다.
+
+![image](https://github.com/user-attachments/assets/04bb29db-17c8-42c0-a277-927ddfd95249)
+
+"test.txt 파일을 생성하고, 파일에 "안녕하세요."라고 입력하세요."라고 입력하면 파일을 생성할 수 있습니다.
+
+![image](https://github.com/user-attachments/assets/4fe08e44-5535-4769-bccf-763a3dde7109)
+
