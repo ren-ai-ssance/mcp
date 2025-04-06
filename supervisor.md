@@ -1,30 +1,4 @@
-# Supervisor Agent를 이용한 Multi-Agent Collaboration
-
-## Multi Agent Supervisor
-
-[Multi-agent supervisor](https://langchain-ai.github.io/langgraph/tutorials/multi_agent/agent_supervisor/)에서는 Router형태의 supervisor를 구현합니다.
-
-아래와 같이 structured output에서는 router class를 이용하여 agent를 선택하고 있습니다.
-
-```python
-class Router(TypedDict):
-    """Worker to route to next. If no workers needed, route to FINISH."""
-
-    next: Literal[*options]
-
-def supervisor_node(state: State):
-    messages = [
-        {"role": "system", "content": system_prompt},
-    ] + state["messages"]
-    response = llm.with_structured_output(Router).invoke(messages)
-    goto = response["next"]
-    if goto == "FINISH":
-        goto = END
-
-    return Command(goto=goto, update={"next": goto})
-```
-
-## LangGraph Supervisor
+# LangGraph Supervisor
 
 [LangGraph Multi-Agent Supervisor](https://github.com/langchain-ai/langgraph-supervisor-py)을 이용하면 hierachical 구조를 만들때 도움이 됩니다.
 
@@ -37,44 +11,18 @@ pip install langgraph-supervisor
 
 
 
+
+## 실행 결과
+
+"서울에서 부산을 거쳐서 제주로 가려고합니다. 가는 동안의 날씨와 지역 맛집 검색해서 추천해주세요."로 입력후 결과를 확인합니다. 
+
+![noname](https://github.com/user-attachments/assets/f6d55fbc-186e-461d-9366-f1326417e2ed)
+
+
 동작은 아래와 같습니다.
 
 ![image](https://github.com/user-attachments/assets/b7ec2913-804b-4b4a-a1a9-d972ddb9a591)
 
-사용 예는 아래와 같습니다.
-
-```python
-# Create supervisor workflow
-workflow = create_supervisor(
-    [research_agent, math_agent],
-    model=model,
-    prompt=(
-        "You are a team supervisor managing a research expert and a math expert. "
-        "For current events, use research_agent. "
-        "For math problems, use math_agent."
-    )
-)
-
-# Compile and run
-app = workflow.compile()
-result = app.invoke({
-    "messages": [
-        {
-            "role": "user",
-            "content": "what's the combined headcount of the FAANG companies in 2024?"
-        }
-    ]
-})
-```
-
-output에서 response는 아래와 같이 full_history, last_message와 같이 선택가능합니다.
-
-```python
-workflow = create_supervisor(
-    agents=[agent1, agent2],
-    output_mode="full_history"
-)
-```
 
 
 ## Swarm
