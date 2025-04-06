@@ -10,7 +10,7 @@ from langgraph.prebuilt import ToolNode
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
 from langgraph.graph import START, END, StateGraph
-from langgraph_supervisor import create_supervisor
+from langgraph_swarm import create_handoff_tool, create_swarm
 
 logger = utils.CreateLogger('swarm')
 
@@ -172,39 +172,35 @@ def run_langgraph_swarm(query, st):
     logger.info(f"###### run_supervisor ######")
     logger.info(f"query: {query}")
 
-    global search_agent, stock_agent, supervisor_agent, weather_agent, code_agent, isInitiated
+    global search_agent, weather_agent, langgraph_app, isInitiated
     if not isInitiated:
-        # creater search agent
-        search_agent = create_collaborator(
-            [tool_use.search_by_tavily, tool_use.search_by_knowledge_base], 
-            "search_agent", st
+        # Handoff tools
+        transfer_to_search_agent = create_handoff_tool(
+            agent_name="search_agent",
+            description="Transfer the user to the search_agent for search questions related to the user's request.",
         )
-        # creater stock agent
-        stock_agent = create_collaborator(
-            [tool_use.stock_data_lookup], 
-            "stock_agent", st
-        )
-        # creater weather agent
-        weather_agent = create_collaborator(
-            [tool_use.get_weather_info], 
-            "weather_agent", st
-        )
-        # creater code agent
-        code_agent = create_collaborator(
-            [tool_use.code_drawer, tool_use.code_interpreter], 
-            "code_agent", st
+        transfer_to_weather_agent = create_handoff_tool(
+            agent_name="weather_agent",
+            description="Transfer the user to the weather_agent to look up weather information to the user's request.",
         )
 
-        workflow = create_supervisor(
-            [search_agent, stock_agent, weather_agent, code_agent],
-            model=chat.get_chat(extended_thinking="Disable"),
-            prompt=(
-                "You are a team supervisor managing a search expert and a stock expert. "
-                "For current events, use search_agent. "
-                "For stock problems, use stock_agent."
-            )
-        )        
-        supervisor_agent = workflow.compile(name="superviser")
+        # creater search agent
+        search_agent = create_collaborator(
+            [tool_use.get_weather_info, transfer_to_search_agent], 
+            "search_agent", st
+        )
+
+        # # creater weather agent
+        weather_agent = create_collaborator(
+            [tool_use.search_by_tavily, tool_use.search_by_knowledge_base, transfer_to_weather_agent], 
+            "weather_agent", st
+        )
+
+        agent_swarm = create_swarm(
+            [search_agent, weather_agent], default_active_agent="search_agent"
+        )
+        langgraph_app = agent_swarm.compile()
+
         isInitiated = True
 
     inputs = [HumanMessage(content=query)]
@@ -212,7 +208,7 @@ def run_langgraph_swarm(query, st):
         "recursion_limit": 50
     }
     
-    result = supervisor_agent.invoke({"messages": inputs}, config)
+    result = langgraph_app.invoke({"messages": inputs}, config)
     logger.info(f"messages: {result['messages']}")
     
     length = len(result["messages"])
