@@ -198,10 +198,16 @@ def run_langgraph_supervisor(query, st):
         workflow = create_supervisor(
             [search_agent, stock_agent, weather_agent, code_agent],
             model=chat.get_chat(extended_thinking="Disable"),
-            prompt=(
-                "You are a team supervisor managing a search expert and a stock expert. "
-                "For current events, use search_agent. "
-                "For stock problems, use stock_agent."
+            # prompt=(
+            #     "You are a team supervisor managing a search expert and a stock expert. "
+            #     "For current events, use search_agent. "
+            #     "For stock problems, use stock_agent."
+            # )
+            prompt = (
+                "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
+                "상황에 맞는 구체적인 세부 정보를 충분히 제공합니다."
+                "모르는 질문을 받으면 솔직히 모른다고 말합니다."
+                "한국어로 답변하세요."
             )
         )        
         supervisor_agent = workflow.compile(name="superviser")

@@ -406,7 +406,7 @@ print(image_base64)
 @tool
 def code_interpreter(code):
     """
-    Execute a Python script to solve a complex question.    
+    Execute a Python script to solve a complex question using code.    
     Since Python runtime cannot use external APIs, necessary data must be included in the code.
     The Python runtime does not have filesystem access, but does include the entire standard library.    
     code: the Python code was written in English
