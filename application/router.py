@@ -39,8 +39,10 @@ def create_collaborator(tools, name, st):
         messages = state["messages"]    
 
         last_message = messages[-1]
-        logger.info(f"last_message: {last_message}")
-        st.info(f"{last_message}")
+
+        if last_message.content:
+            logger.info(f"last_message: {last_message.content}")
+            st.info(f"{last_message.content}")           
 
         if last_message.tool_calls:
             for message in last_message.tool_calls:
@@ -179,11 +181,11 @@ def run_router_supervisor(query, st):
         next: str
         answer: str
 
-    members = ["search_agent", "code_agent"]
+    members = ["search_agent", "code_agent", "weather_agent"]
 
     class Router(TypedDict):
         """Worker to route to next. If no workers needed, route to FINISH."""
-        next: Literal["search_agent", "code_agent", "FINISH"]
+        next: Literal["search_agent", "code_agent", "weather_agent", "FINISH"]
 
     llm = chat.get_chat(extended_thinking="Disable")
 
@@ -278,6 +280,21 @@ def run_router_supervisor(query, st):
             },
             goto = "supervisor",
         )
+    
+    def weather_node(state: State) -> Command[Literal["supervisor"]]:
+        logger.info(f"state of weather_node: {state}")
+
+        result = weather_agent.invoke(state)
+        logger.info(f"result of weather_agent: {result}")
+
+        return Command(
+            update={
+                "messages": [
+                    AIMessage(content=result["messages"][-1].content, name="weather_agent")
+                ]
+            },
+            goto = "supervisor",
+        )
 
     def build_graph():
         workflow = StateGraph(State)
@@ -285,6 +302,7 @@ def run_router_supervisor(query, st):
         workflow.add_node("supervisor", supervisor_node)
         workflow.add_node("search_agent", search_node)
         workflow.add_node("code_agent", code_node)
+        workflow.add_node("weather_agent", weather_node)
 
         return workflow.compile()
 
