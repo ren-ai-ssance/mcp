@@ -1,6 +1,6 @@
 # LangGraph Supervisor
 
-[LangGraph Multi-Agent Supervisor](https://github.com/langchain-ai/langgraph-supervisor-py)을 이용하면 hierachical 구조를 만들때 도움이 됩니다.
+[LangGraph Multi-Agent Supervisor](https://github.com/langchain-ai/langgraph-supervisor-py)을 이용하면 multi-agent collaboration을 구현합니다.
 
 이를 위해 langgraph-supervisor을 설치합니다.
 
