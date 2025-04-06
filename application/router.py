@@ -199,25 +199,36 @@ def run_router_supervisor(query, st):
         logger.info(f"###### supervisor_node ######")
         logger.info(f"state: {state}")
 
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", system_prompt),
-                MessagesPlaceholder(variable_name="messages"),
-            ]
-        )
-        structured_llm = llm.with_structured_output(Router, include_raw=True)
+        goto = END
+        try: 
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", system_prompt),
+                    MessagesPlaceholder(variable_name="messages"),
+                ]
+            )
+            structured_llm = llm.with_structured_output(Router, include_raw=True)
+            
+            chain = prompt | structured_llm
+                        
+            messages = state['messages']
+            logger.info(f"messages: {messages}")
+
+            response = chain.invoke({"messages": messages})
+            logger.info(f"response: {response}")
+            parsed = response.get("parsed")
+            logger.info(f"parsed: {parsed}")
+
+            goto = parsed["next"]
+            if goto == "FINISH":            
+                goto = END
         
-        chain = prompt | structured_llm
-        response = chain.invoke({"messages": state["messages"]})
-        logger.info(f"response: {response}")
-        parsed = response.get("parsed")
-
-        goto = parsed["next"]
-        if goto == "FINISH":            
-            goto = END
-
-        logger.info(f"goto: {goto}")
-        st.info(f"next: {goto}")
+            logger.info(f"goto: {goto}")
+            st.info(f"next: {goto}")
+        except Exception:
+            err_msg = traceback.format_exc()
+            logger.info(f"error message of supervisor_node: {err_msg}")
+            # raise Exception ("Not able to request to LLM")
                 
         return Command(goto=goto, update={"next": goto})
 
@@ -244,24 +255,28 @@ def run_router_supervisor(query, st):
 
     def search_node(state: State) -> Command[Literal["supervisor"]]:
         result = search_agent.invoke(state)
+        logger.info(f"result of search_node: {result}")
+
         return Command(
             update={
                 "messages": [
                     AIMessage(content=result["messages"][-1].content, name="search_agent")
                 ]
             },
-            goto="supervisor",
+            goto = "supervisor",
         )
 
     def code_node(state: State) -> Command[Literal["supervisor"]]:
         result = code_agent.invoke(state)
+        logger.info(f"result of code_node: {result}")
+
         return Command(
             update={
                 "messages": [
                     AIMessage(content=result["messages"][-1].content, name="code_agent")
                 ]
             },
-            goto="supervisor",
+            goto = "supervisor",
         )
 
     def build_graph():
