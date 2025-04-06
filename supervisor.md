@@ -12,7 +12,7 @@ class Router(TypedDict):
 
     next: Literal[*options]
 
-def supervisor_node(state: State) -> Command[Literal[*members, "__end__"]]:
+def supervisor_node(state: State):
     messages = [
         {"role": "system", "content": system_prompt},
     ] + state["messages"]
