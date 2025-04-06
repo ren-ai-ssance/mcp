@@ -40,6 +40,7 @@ from langgraph.graph.message import add_messages
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.store.memory import InMemoryStore
+from multiprocessing import Process, Pipe
 
 logger = utils.CreateLogger("chat")
 
@@ -54,6 +55,8 @@ memorystore = InMemoryStore()
 
 checkpointers[userId] = checkpointer
 memorystores[userId] = memorystore
+
+reasoning_mode = 'Disable'
 
 def initiate():
     global userId
@@ -133,6 +136,7 @@ doc_prefix = s3_prefix+'/'
 model_name = "Claude 3.5 Sonnet"
 model_type = "claude"
 models = info.get_model_info(model_name)
+number_of_models = len(models)
 model_id = models[0]["model_id"]
 debug_mode = "Enable"
 multi_region = "Disable"
@@ -367,6 +371,26 @@ if langsmith_api_key:
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
     os.environ["LANGCHAIN_PROJECT"] = langchain_project
 
+# secret of code interpreter
+code_interpreter_api_key = ""
+try:
+    get_code_interpreter_api_secret = secretsmanager.get_secret_value(
+        SecretId=f"code-interpreter-{projectName}"
+    )
+    #print('get_code_interpreter_api_secret: ', get_code_interpreter_api_secret)
+    secret = json.loads(get_code_interpreter_api_secret['SecretString'])
+    #print('secret: ', secret)
+    code_interpreter_api_key = secret['code_interpreter_api_key']
+    code_interpreter_project = secret['project_name']
+    code_interpreter_id = secret['code_interpreter_id']
+
+    # logger.info(f"code_interpreter_id: {code_interpreter_id}")
+except Exception as e:
+    raise e
+
+if code_interpreter_api_key:
+    os.environ["RIZA_API_KEY"] = code_interpreter_api_key
+    
 # api key to use Tavily Search
 tavily_key = tavily_api_wrapper = ""
 try:
@@ -530,6 +554,170 @@ def extract_thinking_tag(response, st):
         msg = response
 
     return msg
+
+def get_parallel_processing_chat(models, selected):
+    global model_type
+    profile = models[selected]
+    bedrock_region =  profile['bedrock_region']
+    modelId = profile['model_id']
+    model_type = profile['model_type']
+    maxOutputTokens = 4096
+    logger.info(f'selected_chat: {selected}, bedrock_region: {bedrock_region}, modelId: {modelId}, model_type: {model_type}')
+
+    if profile['model_type'] == 'nova':
+        STOP_SEQUENCE = '"\n\n<thinking>", "\n<thinking>", " <thinking>"'
+    elif profile['model_type'] == 'claude':
+        STOP_SEQUENCE = "\n\nHuman:" 
+                          
+    # bedrock   
+    boto3_bedrock = boto3.client(
+        service_name='bedrock-runtime',
+        region_name=bedrock_region,
+        config=Config(
+            retries = {
+                'max_attempts': 30
+            }
+        )
+    )
+    parameters = {
+        "max_tokens":maxOutputTokens,     
+        "temperature":0.1,
+        "top_k":250,
+        "top_p":0.9,
+        "stop_sequences": [STOP_SEQUENCE]
+    }
+    # print('parameters: ', parameters)
+
+    chat = ChatBedrock(   # new chat model
+        model_id=modelId,
+        client=boto3_bedrock, 
+        model_kwargs=parameters,
+    )        
+    return chat
+
+def print_doc(i, doc):
+    if len(doc.page_content)>=100:
+        text = doc.page_content[:100]
+    else:
+        text = doc.page_content
+            
+    logger.info(f"{i}: {text}, metadata:{doc.metadata}")
+
+def grade_document_based_on_relevance(conn, question, doc, models, selected):     
+    chat = get_parallel_processing_chat(models, selected)
+    retrieval_grader = get_retrieval_grader(chat)
+    score = retrieval_grader.invoke({"question": question, "document": doc.page_content})
+    # print(f"score: {score}")
+    
+    grade = score.binary_score    
+    if grade == 'yes':
+        logger.info(f"---GRADE: DOCUMENT RELEVANT---")
+        conn.send(doc)
+    else:  # no
+        logger.info(f"--GRADE: DOCUMENT NOT RELEVANT---")
+        conn.send(None)
+    
+    conn.close()
+
+def grade_documents_using_parallel_processing(question, documents):
+    global selected_chat
+    
+    filtered_docs = []    
+
+    processes = []
+    parent_connections = []
+    
+    for i, doc in enumerate(documents):
+        #print(f"grading doc[{i}]: {doc.page_content}")        
+        parent_conn, child_conn = Pipe()
+        parent_connections.append(parent_conn)
+            
+        process = Process(target=grade_document_based_on_relevance, args=(child_conn, question, doc, models, selected_chat))
+        processes.append(process)
+        
+        selected_chat = selected_chat + 1
+        if selected_chat == number_of_models:
+            selected_chat = 0
+    for process in processes:
+        process.start()
+            
+    for parent_conn in parent_connections:
+        relevant_doc = parent_conn.recv()
+
+        if relevant_doc is not None:
+            filtered_docs.append(relevant_doc)
+
+    for process in processes:
+        process.join()
+    
+    return filtered_docs
+
+class GradeDocuments(BaseModel):
+    """Binary score for relevance check on retrieved documents."""
+
+    binary_score: str = Field(description="Documents are relevant to the question, 'yes' or 'no'")
+
+def get_retrieval_grader(chat):
+    system = """You are a grader assessing relevance of a retrieved document to a user question. \n 
+    If the document contains keyword(s) or semantic meaning related to the question, grade it as relevant. \n
+    Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question."""
+
+    grade_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system),
+            ("human", "Retrieved document: \n\n {document} \n\n User question: {question}"),
+        ]
+    )
+    
+    # from langchain_core.output_parsers import PydanticOutputParser  # not supported for Nova
+    # parser = PydanticOutputParser(pydantic_object=GradeDocuments)
+    # retrieval_grader = grade_prompt | chat | parser
+
+    structured_llm_grader = chat.with_structured_output(GradeDocuments)
+    retrieval_grader = grade_prompt | structured_llm_grader
+    return retrieval_grader
+
+def show_extended_thinking(st, result):
+    # logger.info(f"result: {result}")
+    if "thinking" in result.response_metadata:
+        if "text" in result.response_metadata["thinking"]:
+            thinking = result.response_metadata["thinking"]["text"]
+            st.info(thinking)
+
+def grade_documents(question, documents):
+    logger.info(f"###### grade_documents ######")
+    
+    logger.info(f"start grading...")
+    
+    filtered_docs = []
+    if multi_region == 'Enable':  # parallel processing        
+        filtered_docs = grade_documents_using_parallel_processing(question, documents)
+
+    else:
+        # Score each doc    
+        llm = get_chat(extended_thinking="Disable")
+        retrieval_grader = get_retrieval_grader(llm)
+        for i, doc in enumerate(documents):
+            # print('doc: ', doc)
+            print_doc(i, doc)
+            
+            score = retrieval_grader.invoke({"question": question, "document": doc.page_content})
+            # print("score: ", score)
+            
+            grade = score.binary_score
+            # print("grade: ", grade)
+            # Document relevant
+            if grade.lower() == "yes":
+                logger.info(f"---GRADE: DOCUMENT RELEVANT---")
+                filtered_docs.append(doc)
+            # Document not relevant
+            else:
+                logger.info(f"---GRADE: DOCUMENT NOT RELEVANT---")
+                # We do not include the document in filtered_docs
+                # We set a flag to indicate that we want to run web search
+                continue
+
+    return filtered_docs
 
 ####################### LangChain #######################
 # General Conversation

@@ -5,6 +5,8 @@ import json
 import knowledge_base as kb
 import cost_analysis as cost
 import supervisor
+import router
+import swarm
 
 # logging
 logger = utils.CreateLogger("streamlit")
@@ -25,8 +27,14 @@ mode_descriptions = {
     "Agent (Chat)": [
         "Agent를 이용하여 Workflow를 구현합니다. 채팅 히스토리를 이용해 interative한 대화를 즐길 수 있습니다."
     ],
-    "Multi Agent Collaboration": [
-        "Multi Agent Collaboration에 기반한 대화입니다. 여기에서는 Supervisor/Collaborators의 구조를 가지고 있습니다."
+    "Multi-agent Supervisor (Router)": [
+        "Multi-agent Supervisor (Router)에 기반한 대화입니다. 여기에서는 Supervisor/Collaborators의 구조를 가지고 있습니다."
+    ],
+    "LangGraph Supervisor": [
+        "LangGraph Supervisor를 이용한 Multi-agent Collaboration입니다. 여기에서는 Supervisor/Collaborators의 구조를 가지고 있습니다."
+    ],
+    "LangGraph Swarm": [
+        "LangGraph Swarm를 이용한 Multi-agent Collaboration입니다. 여기에서는 Agent들 사이에 서로 정보를 교환합니다."
     ],
     "번역하기": [
         "한국어와 영어에 대한 번역을 제공합니다. 한국어로 입력하면 영어로, 영어로 입력하면 한국어로 번역합니다."        
@@ -57,7 +65,7 @@ with st.sidebar:
     
     # radio selection
     mode = st.radio(
-        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi Agent Collaboration", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=0
+        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi-agent Supervisor (Router)", "LangGraph Supervisor", "LangGraph Swarm", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=0
     )   
     st.info(mode_descriptions[mode][0])
 
@@ -275,10 +283,42 @@ if prompt := st.chat_input("메시지를 입력하세요."):
             sessionState = ""
             response = chat.run_agent(prompt, "Enable", st)
 
-        elif mode == 'Multi Agent Collaboration':
+        elif mode == "Multi-agent Supervisor (Router)":
             sessionState = ""
             with st.status("thinking...", expanded=True, state="running") as status:
-                response, image_url, reference_docs = supervisor.run_supervisor(prompt, st)
+                response, image_url, reference_docs = router.run_router_supervisor(prompt, st)
+                st.write(response)
+                logger.info(f"response: {response}")
+                
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": response,
+                    "images": image_url if image_url else []
+                })
+                chat.save_chat_history(prompt, response)       
+
+                show_references(reference_docs)              
+
+        elif mode == "LangGraph Supervisor":
+            sessionState = ""
+            with st.status("thinking...", expanded=True, state="running") as status:
+                response, image_url, reference_docs = supervisor.run_langgraph_supervisor(prompt, st)
+                st.write(response)
+                logger.info(f"response: {response}")
+                
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": response,
+                    "images": image_url if image_url else []
+                })
+                chat.save_chat_history(prompt, response)       
+
+                show_references(reference_docs)              
+
+        elif mode == "LangGraph Swarm":
+            sessionState = ""
+            with st.status("thinking...", expanded=True, state="running") as status:
+                response, image_url, reference_docs = swarm.run_langgraph_swarm(prompt, st)
                 st.write(response)
                 logger.info(f"response: {response}")
                 

@@ -12,7 +12,7 @@ from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
 from langgraph.graph import START, END, StateGraph
 from langgraph_supervisor import create_supervisor
 
-logger = utils.CreateLogger('supervisor')
+logger = utils.CreateLogger('swarm')
 
 ####################### LangGraph #######################
 # Chat Agent Executor
@@ -168,7 +168,7 @@ contentList = []
 image_url = []
 isInitiated=False
 
-def run_langgraph_supervisor(query, st):
+def run_langgraph_swarm(query, st):
     logger.info(f"###### run_supervisor ######")
     logger.info(f"query: {query}")
 

@@ -300,6 +300,17 @@ export class CdkMcpRagStack extends cdk.Stack {
       },
     });
 
+    const codeInterpreterSecret = new secretsmanager.Secret(this, `code-interpreter-secret-for-${projectName}`, {
+      description: 'secret for code interpreter api key', // code interpreter
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      secretName: `code-interpreter-${projectName}`,
+      secretObjectValue: {
+        project_name: cdk.SecretValue.unsafePlainText(projectName),
+        code_interpreter_api_key: cdk.SecretValue.unsafePlainText(''),
+        code_interpreter_id: cdk.SecretValue.unsafePlainText(''),
+      },
+    });
+
     // cloudfront for sharing s3
     const distribution_sharing = new cloudFront.Distribution(this, `sharing-for-${projectName}`, {
       defaultBehavior: {
