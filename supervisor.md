@@ -16,15 +16,12 @@ pip install langgraph-supervisor
 
 "서울 날씨는?"로 입력후 결과를 확인합니다.
 
-<img width="700" alt="image" src="https://github.com/user-attachments/assets/1a55e7cd-fa4a-466d-b0ec-e71b47ff2c76" />
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/419f8ec9-1533-414a-9fae-f790538623b7" />
 
 
 "strawberry의 r의 갯수는?
 
-<img width="700" alt="image" src="https://github.com/user-attachments/assets/3936683e-1057-466b-93b4-8ee968f1ceac" />
-
-
-
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/4f988649-0c2a-499b-abca-1bc9ac6f11dd" />
 
 
 "서울에서 부산을 거쳐서 제주로 가려고합니다. 가는 동안의 날씨와 지역 맛집 검색해서 추천해주세요."로 입력후 결과를 확인합니다. 
