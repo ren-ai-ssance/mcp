@@ -122,8 +122,6 @@ inputs = [HumanMessage(content=query)]
     }
     
     result = supervisor_agent.invoke({"messages": inputs}, config)
-    logger.info(f"messages: {result['messages']}")
-
     msg = result["messages"][-1].content
 ```
 
