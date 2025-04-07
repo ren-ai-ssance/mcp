@@ -7,13 +7,11 @@
 
 Swarm agent가 search와 weather agent를 가졌을 때의 결과입니다.
 
-<img src="https://github.com/user-attachments/assets/4f3fde50-9a73-40f1-88e6-d839c2f2ce8a" width="600">
+<img src="https://github.com/user-attachments/assets/4f3fde50-9a73-40f1-88e6-d839c2f2ce8a" width="400">
 
 Swarm agent에 search, code, weather agent의 구조를 가졌을때의 모습니다. Agent들이 mash 형태로 서로 연결되어 있다면 agent들이 증가할 때마다 복잡도가 높아집니다.
 
-<img src="https://github.com/user-attachments/assets/8f719734-9644-4d26-990f-b771c999afc5" width="600">
-
-<img src="https://github.com/user-attachments/assets/80c5f0c3-c849-4025-b482-cbfc882c3020" width="600">
+<img src="https://github.com/user-attachments/assets/80c5f0c3-c849-4025-b482-cbfc882c3020" width="700">
 
 
 아래와 같이 LangGraph의 Swarm을 설치합니다.
