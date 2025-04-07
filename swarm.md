@@ -22,8 +22,9 @@ workflow = create_swarm(
 ```
 ## 실행 결과
 
-![Pasted Graphic 3](https://github.com/user-attachments/assets/c7e1e998-aeb1-4bac-b98f-6de05bcc41b2)
+"서울 날씨는?"이라고 질문하면 search agent에서 weather agent로 이동 후에 날씨 정보를 조회합니다.
 
+<img src="https://github.com/user-attachments/assets/c7e1e998-aeb1-4bac-b98f-6de05bcc41b2" width="700">
 
 
 "서울에서 부산을 거쳐서 제주로 가려고합니다. 가는 동안의 현재 온도와 지역 맛집 검색해서 추천해주세요."로 입력후 결과를 확인합니다.
