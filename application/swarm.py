@@ -181,18 +181,18 @@ def run_langgraph_swarm(query, st):
         )
         transfer_to_weather_agent = create_handoff_tool(
             agent_name="weather_agent",
-            description="Transfer the user to the weather_agent to look up weather information to the user's request.",
+            description="Transfer the user to the weather_agent to look up weather information for the user's request.",
         )
 
-        # creater search agent
+        # create search agent
         search_agent = create_collaborator(
-            [tool_use.get_weather_info, transfer_to_search_agent], 
+            [tool_use.search_by_tavily, tool_use.search_by_knowledge_base, transfer_to_weather_agent], 
             "search_agent", st
         )
 
-        # # creater weather agent
+        # create weather agent
         weather_agent = create_collaborator(
-            [tool_use.search_by_tavily, tool_use.search_by_knowledge_base, transfer_to_weather_agent], 
+            [tool_use.get_weather_info, transfer_to_search_agent], 
             "weather_agent", st
         )
 
