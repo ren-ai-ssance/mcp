@@ -19,7 +19,7 @@ workflow = create_swarm(
     [search, stock, code_interpreter],
     default_active_agent="search"
 )
-
+```
 ## 실행 결과
 
 "서울에서 부산을 거쳐서 제주로 가려고합니다. 가는 동안의 현재 온도와 지역 맛집 검색해서 추천해주세요."로 입력후 결과를 확인합니다.
