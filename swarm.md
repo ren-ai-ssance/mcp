@@ -73,7 +73,7 @@ result = langgraph_app.invoke({"messages": inputs}, config)
 
 이때의 결과를 보면 아래와 같이, 시작이 search agent이므로 weather agent로 transfer하고 날씨 정보를 수집합니다.
 
-<img src="https://github.com/user-attachments/assets/a5ccda15-862e-42cf-98e4-305e17c6e461" width="700">
+<img src="https://github.com/user-attachments/assets/a01d7922-cd73-4879-ba79-2da1f8d14f70" width="700">
 
 
 날씨 정보를 모두 수집하면 다시 search agent로 전환한 후에 검색을 수행합니다.
