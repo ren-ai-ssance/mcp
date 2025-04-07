@@ -8,18 +8,60 @@
 pip install langgraph-swarm
 ```
 
-아래는 추후 구현 예정입니다. 
+search agent가 weather agent로 이동하기 위해서, create_handoff_tool로 transfer_to_search_agent을 정의합니다. 마찬가지로 weather agent에서 search agent로 이동하기 위한 transfer_to_weather_agent을 아래와 같이 정의합니다.
 
 ```python
-from langgraph_swarm import create_handoff_tool, create_swarm
+from langgraph_swarm import create_handoff_tool
 
-checkpointer = InMemorySaver()
-store = InMemoryStore()
-workflow = create_swarm(
-    [search, stock, code_interpreter],
-    default_active_agent="search"
+transfer_to_search_agent = create_handoff_tool(
+    agent_name="search_agent",
+    description="Transfer the user to the search_agent for search questions related to the user's request.",
+)
+transfer_to_weather_agent = create_handoff_tool(
+    agent_name="weather_agent",
+    description="Transfer the user to the weather_agent to look up weather information for the user's request.",
 )
 ```
+
+이제 collaborator로 search와 weather agent를 정의합니다. search agent는 tavily 검색과 완전관리형 RAG 서비스인 search_by_knowledge_base를 가지고 있고, weather에서 search로 이동하기 위한 transfer_to_search_agent가 있습니다. weather agent는 날씨 검색을 위한 get_weather_info라는 tool과 weather에서 search agent로 전환을 위한 transfer_to_search_agent을 가지고 있습니다.
+
+```python
+# creater search agent
+search_agent = create_collaborator(
+    [search_by_tavily, search_by_knowledge_base, transfer_to_weather_agent], 
+    "search_agent", st
+)
+
+# creater weather agent
+weather_agent = create_collaborator(
+    [get_weather_info, transfer_to_search_agent], 
+    "weather_agent", st
+)
+```
+
+이제 creat_swarm을 이용하여 swarm_agent을 준비합니다. swarm_agent는 search와 weather agent들을 가지고 있고, default로 search agent를 이용합니다. 
+
+```python
+from langgraph_swarm import create_swarm
+
+swarm_agent = create_swarm(
+    [search_agent, weather_agent], default_active_agent="search_agent"
+)
+langgraph_app = swarm_agent.compile()
+```
+
+아래와 같이 swarm_agent를 invoke하여 결과를 얻습니다.
+
+```python
+inputs = [HumanMessage(content=query)]
+config = {
+    "recursion_limit": 50
+}
+
+result = langgraph_app.invoke({"messages": inputs}, config)
+```
+
+
 ## 실행 결과
 
 "서울 날씨는?"이라고 질문하면 search agent에서 weather agent로 이동 후에 날씨 정보를 조회합니다.
