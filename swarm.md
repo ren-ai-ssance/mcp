@@ -2,7 +2,7 @@
 
 [LangGraph Multi-Agent Swarm](https://github.com/langchain-ai/langgraph-swarm-py/tree/main)와 같이 때로는 agent가 직접 메시지 및 history를 공유함으로써 multi-agent를 구성하는것이 좋을수도 있습니다. [Swarm](https://github.com/openai/swarm)은 agent간에 handoff가 가능합니다. 아래에서는 [LangGraph Swarm](https://www.youtube.com/watch?v=iqXn6Oiis4Q)을 참조하여 multi-agent를 구성하는 것을 설명합니다.
 
-<img src="https://github.com/user-attachments/assets/8f719734-9644-4d26-990f-b771c999afc5" width="600">
+<img src="https://github.com/user-attachments/assets/8f719734-9644-4d26-990f-b771c999afc5" width="700">
 
 
 Swarm agent가 search와 weather agent를 가졌을 때의 결과입니다.
