@@ -19,3 +19,19 @@ workflow = create_swarm(
     [search, stock, code_interpreter],
     default_active_agent="search"
 )
+
+## 실행 결과
+
+"서울에서 부산을 거쳐서 제주로 가려고합니다. 가는 동안의 현재 온도와 지역 맛집 검색해서 추천해주세요."로 입력후 결과를 확인합니다.
+
+이때의 결과를 보면 아래와 같이, 시작이 search agent이므로 weather agent로 transfer하고 날씨 정보를 수집합니다.
+
+![image](https://github.com/user-attachments/assets/a5ccda15-862e-42cf-98e4-305e17c6e461)
+
+날씨 정보를 모두 수집하면 다시 search agent로 전환한 후에 검색을 수행합니다.
+
+![image](https://github.com/user-attachments/assets/7de5a1a7-5201-4b9a-b7aa-b1e248615338)
+
+최종적으로 아래와 같이 서울, 부산, 제주의 온도와 맛집에 대한 정보를 아래처럼 수집하였습니다.
+
+![image](https://github.com/user-attachments/assets/5295485c-6077-4e88-9065-69e3b6b1f185)
