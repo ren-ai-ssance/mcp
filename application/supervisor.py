@@ -37,7 +37,10 @@ def create_collaborator(tools, name, st):
         messages = state["messages"]    
 
         last_message = messages[-1]
-        logger.info(f"last_message: {last_message}")
+        logger.info(f"last_message: {last_message.content}")
+
+        if last_message.content:
+            st.info(f"{name}: {last_message.content}")
 
         if last_message.tool_calls:
             for message in last_message.tool_calls:
@@ -196,19 +199,16 @@ def run_langgraph_supervisor(query, st):
         )
 
         workflow = create_supervisor(
-            [search_agent, stock_agent, weather_agent, code_agent],
+            agents=[search_agent, stock_agent, weather_agent, code_agent],
             model=chat.get_chat(extended_thinking="Disable"),
-            # prompt=(
-            #     "You are a team supervisor managing a search expert and a stock expert. "
-            #     "For current events, use search_agent. "
-            #     "For stock problems, use stock_agent."
-            # )
             prompt = (
                 "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
                 "상황에 맞는 구체적인 세부 정보를 충분히 제공합니다."
                 "모르는 질문을 받으면 솔직히 모른다고 말합니다."
-                "한국어로 답변하세요."
-            )
+            ),
+            tools=None,
+            supervisor_name="langgraph_supervisor",
+            output_mode="full_history" # last_message full_history
         )        
         supervisor_agent = workflow.compile(name="superviser")
         isInitiated = True
@@ -225,7 +225,7 @@ def run_langgraph_supervisor(query, st):
     for i in range(length):
         index = length-i-1
         message = result["messages"][index]
-        logger.info(f"message[{index}]: {message}")
+        # logger.info(f"message[{index}]: {message.content}")
 
         stop_reason = ""
         if "stop_reason" in message.response_metadata:
