@@ -450,8 +450,7 @@ mcp dev mcp-server.py
 
 "지난 한달간의 AWS 비용을 요약해주세요." 입력후에 결과를 확인합니다.
 
-![image](https://github.com/user-attachments/assets/5794def3-47fd-498f-8074-0d970bee1c99)
-
+<img src="https://github.com/user-attachments/assets/5794def3-47fd-498f-8074-0d970bee1c99" width="650">
 
 
 ## Reference 
