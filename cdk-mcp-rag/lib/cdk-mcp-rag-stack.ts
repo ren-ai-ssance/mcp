@@ -397,6 +397,12 @@ export class CdkMcpRagStack extends cdk.Stack {
       "args": [
         "application/mcp-server.py"
       ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
     }
   }
 }`)
