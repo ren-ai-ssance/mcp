@@ -1590,12 +1590,15 @@ def load_mcp_server_parameters():
                 command = config["command"]
             if "args" in config:
                 args = config["args"]
+            if "env" in config:
+                env = config["env"]
 
             break
 
     return StdioServerParameters(
         command=command,
-        args=args
+        args=args,
+        env=env
     )
 
 def load_multiple_mcp_server_parameters():
@@ -1621,12 +1624,21 @@ def load_multiple_mcp_server_parameters():
                 command = config["command"]
             if "args" in config:
                 args = config["args"]
+            if "env" in config:
+                env = config["env"]
 
-            server_info[server] = {
-                "command": command,
-                "args": args,
-                "transport": "stdio"
-            }
+                server_info[server] = {
+                    "command": command,
+                    "args": args,
+                    "env": env,
+                    "transport": "stdio"
+                }
+            else:
+                server_info[server] = {
+                    "command": command,
+                    "args": args,
+                    "transport": "stdio"
+                }
     logger.info(f"server_info: {server_info}")
 
     return server_info

@@ -5,7 +5,6 @@ import pandas as pd
 import plotly.express as px
 import traceback
 import chat
-import cost_analysis as cost
 
 from datetime import datetime, timedelta
 from langchain_core.prompts import ChatPromptTemplate
@@ -13,12 +12,12 @@ from langchain_core.prompts import ChatPromptTemplate
 # logging
 logger = utils.CreateLogger("streamlit")
 
-def get_cost_analysis():
+def get_cost_analysis(days: str=30):
     """Cost analysis data collection"""
     logger.info(f"Getting cost analysis...")
     try:
         end_date = datetime.now()
-        start_date = end_date - timedelta(days=30)
+        start_date = end_date - timedelta(days=days)
         
         # cost explorer
         ce = boto3.client('ce')
