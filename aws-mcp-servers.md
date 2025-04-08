@@ -57,3 +57,24 @@
    }
 }
 ```
+
+[AWS Knowledge Base Retrieval MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/aws-kb-retrieval-server)
+
+```java
+{
+  "mcpServers": {
+    "aws-kb-retrieval": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-aws-kb-retrieval"
+      ],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "YOUR_ACCESS_KEY_HERE",
+        "AWS_SECRET_ACCESS_KEY": "YOUR_SECRET_ACCESS_KEY_HERE",
+        "AWS_REGION": "YOUR_AWS_REGION_HERE"
+      }
+    }
+  }
+}
+```
