@@ -137,7 +137,6 @@ inputs = [HumanMessage(content=query)]
 <img width="700" alt="image" src="https://github.com/user-attachments/assets/4f988649-0c2a-499b-abca-1bc9ac6f11dd" />
 
 
-"서울에서 부산을 거쳐서 제주로 가려고합니다. 가는 동안의 날씨와 지역 맛집 검색해서 추천해주세요."로 입력후 결과를 확인합니다. 
+"서울에서 부산을 거쳐서 제주로 가려고 합니다. 가는 동안의 날씨와 지역 맛집을 검색해서 추천해주세요."로 입력후 결과를 확인합니다. 
 
-<img width="700" alt="image" src="https://github.com/user-attachments/assets/f6d55fbc-186e-461d-9366-f1326417e2ed" />
-
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/ed64848a-5595-4456-ac05-99cda55e8cc8" />
