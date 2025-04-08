@@ -1,4 +1,4 @@
-# MCP로 RAG Application 구현하기
+# MCP Application 구현하기
 
 MCP(Model Context Protocal)은 생성형 AI application이 외부 데이터를 활용하는 주요한 인터페이스로 빠르게 확산되고 있습니다. 2024년 11월에 Anthropic의 오픈소스 프로젝트로 시작되었고, 현재 Cursor뿐 아니라 OpenAI에서도 지원하고 있습니다. 여기에서는 [MCP with LangChain](https://github.com/langchain-ai/langchain-mcp-adapters)을 이용하여 LangGraph로 만든 application이 MCP를 활용하는 방법에 대해 설명합니다. 여기서 구현한 RAG는 Amazon의 완전관리형 RAG 서비스인 Knowledge base로 구현되었으므로, 문서의 텍스트 추출, 동기화, chunking과 같은 작업을 손쉽게 수행할 수 있으며, 멀티모달을 이용해 이미지/표를 분석할 수 있습니다. 여기에서는 MCP server에서 RAG에 손쉽게 접근할 수 있도록 AWS Lambda를 이용해 API를 구성하였습니다.
 
@@ -365,6 +365,96 @@ pip install 'mcp[cli]'
 ```text
 mcp dev mcp-server.py
 ```
+
+### AWS Cost Analysis
+
+MCP tool로서 아래와 같이 AWS cost 정보를 가져와서 분석할 수 있습니다.
+
+```python
+from datetime import datetime, timedelta
+import pandas as pd
+def get_cost_analysis(days: str=30):
+    """Cost analysis data collection"""
+    try:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        
+        # cost explorer
+        ce = boto3.client('ce')
+
+        # service cost
+        service_response = ce.get_cost_and_usage(
+            TimePeriod={
+                'Start': start_date.strftime('%Y-%m-%d'),
+                'End': end_date.strftime('%Y-%m-%d')
+            },
+            Granularity='MONTHLY',
+            Metrics=['UnblendedCost'],
+            GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
+        )
+        
+        service_costs = pd.DataFrame([
+            {
+                'SERVICE': group['Keys'][0],
+                'cost': float(group['Metrics']['UnblendedCost']['Amount'])
+            }
+            for group in service_response['ResultsByTime'][0]['Groups']
+        ])
+        
+        # region cost
+        region_response = ce.get_cost_and_usage(
+            TimePeriod={
+                'Start': start_date.strftime('%Y-%m-%d'),
+                'End': end_date.strftime('%Y-%m-%d')
+            },
+            Granularity='MONTHLY',
+            Metrics=['UnblendedCost'],
+            GroupBy=[{'Type': 'DIMENSION', 'Key': 'REGION'}]
+        )
+        # logger.info(f"Region Cost: {region_response}")
+        
+        region_costs = pd.DataFrame([
+            {
+                'REGION': group['Keys'][0],
+                'cost': float(group['Metrics']['UnblendedCost']['Amount'])
+            }
+            for group in region_response['ResultsByTime'][0]['Groups']
+        ])
+        
+        # Daily Cost
+        daily_response = ce.get_cost_and_usage(
+            TimePeriod={
+                'Start': start_date.strftime('%Y-%m-%d'),
+                'End': end_date.strftime('%Y-%m-%d')
+            },
+            Granularity='DAILY',
+            Metrics=['UnblendedCost'],
+            GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
+        )
+        
+        daily_costs = []
+        for time_period in daily_response['ResultsByTime']:
+            date = time_period['TimePeriod']['Start']
+            for group in time_period['Groups']:
+                daily_costs.append({
+                    'date': date,
+                    'SERVICE': group['Keys'][0],
+                    'cost': float(group['Metrics']['UnblendedCost']['Amount'])
+                })
+        
+        daily_costs_df = pd.DataFrame(daily_costs)
+        
+        return {
+            'service_costs': service_costs,
+            'region_costs': region_costs,
+            'daily_costs': daily_costs_df
+        }
+        
+    except Exception as e:
+        print(f"Error in cost analysis: {str(e)}")
+        return None
+```
+
 
 ## 실행 결과
 
