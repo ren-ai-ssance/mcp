@@ -1,5 +1,9 @@
 # AWS Cost Anaysis MCP Server
 
+
+pip install uvx
+
+
 [Cost Analysis MCP Server](https://awslabs.github.io/mcp/servers/cost-analysis-mcp-server/)에 따라 MCP server를 설정하면 아래와 같습니다.
 
 ```java
