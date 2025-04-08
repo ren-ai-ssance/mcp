@@ -139,4 +139,4 @@ inputs = [HumanMessage(content=query)]
 
 "서울에서 부산을 거쳐서 제주로 가려고 합니다. 가는 동안의 날씨와 지역 맛집을 검색해서 추천해주세요."로 입력후 결과를 확인합니다. 
 
-<img width="700" alt="image" src="https://github.com/user-attachments/assets/ed64848a-5595-4456-ac05-99cda55e8cc8" />
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/d8deb7ab-1b13-4ef4-a179-62f9044c981e" />
