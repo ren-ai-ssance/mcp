@@ -1419,8 +1419,9 @@ def create_agent(tools, historyMode):
         logger.info(f"###### call_model ######")
         logger.info(f"state: {state['messages']}")
 
-        logger.info(f"last message: {state['messages'][-1].content}")
-
+        last_message = state['messages'][-1]
+        logger.info(f"last message: {last_message}")
+        
         if isKorean(state["messages"][0].content)==True:
             system = (
                 "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
@@ -1491,7 +1492,7 @@ def create_agent(tools, historyMode):
         messages = state["messages"]    
 
         last_message = messages[-1]
-        logger.info(f"last_message: {last_message}")
+        logger.info(f"last_message: {last_message.content}")
 
         if isinstance(last_message, AIMessage) and last_message.tool_calls:
             logger.info(f"{last_message.content}")
@@ -1690,7 +1691,7 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
 
     return result
 
-async def mcp_rag_agent_single(query, st):
+async def mcp_rag_agent_single(query, historyMode, st):
     server_params = load_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
@@ -1710,7 +1711,7 @@ async def mcp_rag_agent_single(query, st):
                 if debug_mode == "Enable":
                     tool_info(tools, st)
 
-                agent = create_agent(tools)
+                agent = create_agent(tools, historyMode)
                 
                 # Run the agent.            
                 agent_response = await agent.ainvoke({"messages": query})                
@@ -1745,7 +1746,7 @@ async def mcp_rag_agent_single(query, st):
 
 def run_agent(query, historyMode, st):
     result = asyncio.run(mcp_rag_agent_multiple(query, historyMode, st))
-    #result = asyncio.run(mcp_rag_agent_single(query, st))
+    #result = asyncio.run(mcp_rag_agent_single(query, historyMode, st))
 
     logger.info(f"result: {result}")
     return result, [], []
