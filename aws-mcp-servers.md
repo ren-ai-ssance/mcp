@@ -2,6 +2,31 @@
 
 여기에서는 AWS MCP 서버들에 대한 정보를 정리합니다.
 
+## AWS Documentation MCP Server
+
+[AWS Documentation MCP Server](https://awslabs.github.io/mcp/servers/aws-documentation-mcp-server/)에서는 아래와 같은 config를 제공합니다.
+
+```java
+{
+  "mcpServers": {
+    "awslabs.aws-documentation-mcp-server": {
+        "command": "uvx",
+        "args": ["awslabs.aws-documentation-mcp-server@latest"],
+        "env": {
+          "FASTMCP_LOG_LEVEL": "ERROR"
+        },
+        "disabled": false,
+        "autoApprove": []
+    }
+  }
+}
+```
+
+이때의 결과는 아래와 같습니다.
+
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/f21e683b-b591-43cb-aba9-2fc746b85984" />
+
+
 ```java
 {
    "mcpServers":{
