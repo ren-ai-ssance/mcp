@@ -17,7 +17,7 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from typing import Literal
 
-logger = utils.CreateLogger("chat")
+logger = utils.CreateLogger("search")
 
 # load config
 config = utils.load_config()

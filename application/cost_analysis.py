@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from langchain_core.prompts import ChatPromptTemplate
 
 # logging
-logger = utils.CreateLogger("streamlit")
+logger = utils.CreateLogger("cost_analysis")
 
 def get_cost_analysis(days: str=30):
     """Cost analysis data collection"""
