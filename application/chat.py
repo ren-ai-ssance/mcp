@@ -147,7 +147,7 @@ client = boto3.client(
 )  
 
 mcp_config = ""
-def update(modelName, debugMode, multiRegion, mcp, st):    
+def update(modelName, debugMode, multiRegion, mcp):    
     global model_name, model_id, model_type, debug_mode, multi_region
     global models, mcp_config
     

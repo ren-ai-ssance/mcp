@@ -110,9 +110,9 @@ with st.sidebar:
         )
         if mcp_config != mcp:
             mcp = mcp_config
-            chat.update(modelName, debugMode, multiRegion, mcp, st)
+            chat.update(modelName, debugMode, multiRegion, mcp)
 
-    chat.update(modelName, debugMode, multiRegion, mcp, st)
+    chat.update(modelName, debugMode, multiRegion, mcp)
 
     st.success(f"Connected to {modelName}", icon="💚")
     clear_button = st.button("대화 초기화", key="clear")

@@ -15,8 +15,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mcp-cost")
 
-def get_cost_analysis(days: str=30, region: str="us-west-2"):
-    """Cost analysis data collection"""
+def get_cost_analysis(days: int=30, region: str="us-west-2"):
+    """
+    Cost analysis data collection
+    Parameters:
+        days: the period of the data, e.g., 30
+        region: The region of aws infrastructure, e.g., us-west-2
+    """   
     try:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
