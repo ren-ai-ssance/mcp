@@ -7,6 +7,7 @@ import cost_analysis as cost
 import supervisor
 import router
 import swarm
+import mcp_config 
 
 # logging
 logger = utils.CreateLogger("streamlit")
@@ -77,15 +78,6 @@ with st.sidebar:
         ('Nova Pro', 'Nova Lite', 'Nova Micro', 'Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.0 Sonnet', 'Claude 3.5 Haiku'), index=4
     )
 
-    uploaded_file = None
-    if mode=='이미지 분석':
-        st.subheader("🌇 이미지 업로드")
-        uploaded_file = st.file_uploader("이미지 요약을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
-    elif mode=='RAG' or mode=="Agent" or mode=="Agent with Knowlege Base":
-        st.subheader("📋 문서 업로드")
-        # print('fileId: ', chat.fileId)
-        uploaded_file = st.file_uploader("RAG를 위한 파일을 선택합니다.", type=["pdf", "txt", "py", "md", "csv", "json"], key=chat.fileId)
-
     # debug checkbox
     select_debugMode = st.checkbox('Debug Mode', value=True)
     debugMode = 'Enable' if select_debugMode else 'Disable'
@@ -99,18 +91,39 @@ with st.sidebar:
     # MCP Config JSON 입력
     st.subheader("⚙️ MCP Config")
 
-    config = utils.load_config()
-    mcp = json.loads(config["mcp"])
-    logger.info(f"mcp: {mcp}")
-    if mcp:
-        mcp_config = st.text_area(
-            "MCP 설정을 JSON 형식으로 입력하세요",
-            value=mcp,
-            height=150
-        )
-        if mcp_config != mcp:
-            mcp = mcp_config
-            chat.update(modelName, debugMode, multiRegion, mcp)
+    # mcp selection
+    mcp = ""
+    if mode=='Agent' or mode=='Agent (Chat)':
+        mcp_mode = st.radio(
+            label="MCP를 설정하세요.",options=["default", "playwright", "obsidian", "airbnb", "사용자 설정"], index=0
+        )   
+
+        mcp = mcp_config.load_config(mcp_mode)
+        logger.info(f"mcp: {mcp}")
+
+        if mcp_mode=='사용자 설정':
+            mcp_info = st.text_area(
+                "MCP 설정을 JSON 형식으로 입력하세요",
+                value=mcp,
+                height=150
+            )
+            logger.info(f"mcp_info: {mcp_info}")
+
+            if mcp_info and mcp != mcp_info:
+                mcp_json = json.loads(mcp_info)
+                logger.info(f"mcp_json: {mcp_json}")
+
+                mcp = mcp_json
+                chat.update(modelName, debugMode, multiRegion, mcp)
+
+    uploaded_file = None
+    if mode=='이미지 분석':
+        st.subheader("🌇 이미지 업로드")
+        uploaded_file = st.file_uploader("이미지 요약을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
+    elif mode=='RAG' or mode=="Agent" or mode=="Agent with Knowlege Base":
+        st.subheader("📋 문서 업로드")
+        # print('fileId: ', chat.fileId)
+        uploaded_file = st.file_uploader("RAG를 위한 파일을 선택합니다.", type=["pdf", "txt", "py", "md", "csv", "json"], key=chat.fileId)
 
     chat.update(modelName, debugMode, multiRegion, mcp)
 

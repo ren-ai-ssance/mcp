@@ -146,10 +146,10 @@ client = boto3.client(
     region_name=bedrock_region
 )  
 
-mcp_config = ""
+mcp_json = ""
 def update(modelName, debugMode, multiRegion, mcp):    
     global model_name, model_id, model_type, debug_mode, multi_region
-    global models, mcp_config
+    global models, mcp_json
     
     if model_name != modelName:
         model_name = modelName
@@ -167,8 +167,8 @@ def update(modelName, debugMode, multiRegion, mcp):
         multi_region = multiRegion
         logger.info(f"multi_region: {multi_region}")
 
-    mcp_config = mcp
-    logger.info(f"mcp_config: {mcp_config}")
+    mcp_json = mcp
+    logger.info(f"mcp_json: {mcp_json}")
 
 def clear_chat_history():
     memory_chain = []
@@ -1572,7 +1572,6 @@ def create_agent(tools, historyMode):
 # )
 
 def load_mcp_server_parameters():
-    mcp_json = json.loads(mcp_config)
     logger.info(f"mcp_json: {mcp_json}")
 
     mcpServers = mcp_json.get("mcpServers")
@@ -1603,9 +1602,6 @@ def load_mcp_server_parameters():
     )
 
 def load_multiple_mcp_server_parameters():
-    logger.info(f"mcp_config: {mcp_config}")
-
-    mcp_json = json.loads(mcp_config)
     logger.info(f"mcp_json: {mcp_json}")
 
     mcpServers = mcp_json.get("mcpServers")
