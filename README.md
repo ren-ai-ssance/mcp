@@ -441,6 +441,54 @@ def get_cost_analysis(days: str=30):
     }
 ```
 
+### MCP Image Genration
+
+[mcp_server_image_generation.py](./application/mcp_server_image_generation.py)과 같이 mcp_generate_image와 mcp_generate_image_with_colors을 tool로 등록합니다. 이후 [mcp_nova_canvas.py](./application/mcp_nova_canvas.py)와 같이 이미지를 생성합니다.
+
+```python
+async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images):
+    """Generate an image using Amazon Nova Canvas with text prompt."""
+    
+    response = await generate_image_with_text(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        filename=filename,
+        width=width,
+        height=height,
+        quality=quality,
+        cfg_scale=cfg_scale,
+        seed=seed,
+        number_of_images=number_of_images
+    )
+
+    return {
+        "url": [f'{path}' for path in response.paths]
+    } 
+```
+
+MCP의 image_generation로 부터 얻은 결과는 아래와 같이 표시합니다. 상세한 내용은 [chat.py](./application/chat.py)을 참고하세요.
+
+```python
+def show_status_message(response, st):
+    image_url = []
+    for i, re in enumerate(response):
+        logger.info(f"message[{i}]: {re}")
+        if i==len(response)-1:
+            break
+        if isinstance(re, ToolMessage):
+          tool_result = json.loads(re.content)
+          logger.info(f"tool_result: {tool_result}")
+
+          if "url" in tool_result:
+              st.info(f"URL: {tool_result['url']}")
+
+              urls = tool_result['url']
+              for url in urls:
+                  image_url.append(url)
+                  st.image(url)
+    return image_url
+```
+
 
 ## 실행 결과
 
