@@ -70,17 +70,20 @@ with st.sidebar:
     )   
     st.info(mode_descriptions[mode][0])
     
-    # MCP Config JSON 입력
-    st.subheader("⚙️ MCP Config")
-
     # mcp selection
     mcp = ""
     if mode=='Agent' or mode=='Agent (Chat)':
+        # MCP Config JSON 입력
+        st.subheader("⚙️ MCP Config")
+        
         mcp_mode = st.radio(
-            label="MCP를 설정하세요.",options=["default", "playwright", "obsidian", "airbnb", "사용자 설정"], index=0
+            label="MCP를 설정하세요.",options=["default", "image generation", "playwright", "obsidian", "airbnb", "사용자 설정"], index=0
         )   
 
-        mcp = mcp_config.load_config(mcp_mode)
+        if mcp_mode == 'image generation':
+            mcp = mcp_config.load_config('image_generation')
+        else:
+            mcp = mcp_config.load_config(mcp_mode)
         logger.info(f"mcp: {mcp}")
 
         if mcp_mode=='사용자 설정':

@@ -15,7 +15,7 @@ logging.basicConfig(
         logging.StreamHandler(sys.stderr)
     ]
 )
-logger = logging.getLogger("mcp-s3")
+logger = logging.getLogger("nova-canvas")
 
 async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images):
     """Generate an image using Amazon Nova Canvas with text prompt."""

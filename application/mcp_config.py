@@ -16,6 +16,17 @@ def load_config(mcp_type):
                 }
             }
         }
+    elif mcp_type == "image_generation":
+        return {
+            "mcpServers": {
+                "imageGeneration": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_image_generation.py"
+                    ]
+                }
+            }
+        }    
     elif mcp_type == "airbnb":
         return {
             "mcpServers": {

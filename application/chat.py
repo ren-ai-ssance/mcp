@@ -1436,27 +1436,25 @@ def create_agent(tools, historyMode):
                 "If you don't know the answer, just say that you don't know, don't try to make up an answer."
             )
 
-        for attempt in range(3):   
-            logger.info(f"attempt: {attempt}")
-            try:
-                prompt = ChatPromptTemplate.from_messages(
-                    [
-                        ("system", system),
-                        MessagesPlaceholder(variable_name="messages"),
-                    ]
-                )
-                chain = prompt | model
-                    
-                response = chain.invoke(state["messages"])
-                # logger.info(f"call_model response: {response}")
-                logger.info(f"call_model: {response.content}")
+        try:
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", system),
+                    MessagesPlaceholder(variable_name="messages"),
+                ]
+            )
+            chain = prompt | model
+                
+            response = chain.invoke(state["messages"])
+            # logger.info(f"call_model response: {response}")
+            logger.info(f"call_model: {response.content}")
 
-            except Exception:
-                response = AIMessage(content="답변을 찾지 못하였습니다.")
+        except Exception:
+            response = AIMessage(content="답변을 찾지 못하였습니다.")
 
-                err_msg = traceback.format_exc()
-                logger.info(f"error message: {err_msg}")
-                # raise Exception ("Not able to request to LLM")
+            err_msg = traceback.format_exc()
+            logger.info(f"error message: {err_msg}")
+            # raise Exception ("Not able to request to LLM")
 
         return {"messages": [response]}
 
