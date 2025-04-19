@@ -577,6 +577,14 @@ def show_status_message(response, st):
 <img src="https://github.com/user-attachments/assets/5794def3-47fd-498f-8074-0d970bee1c99" width="650">
 
 
+### 이미지 생성
+
+왼쪽 메뉴에서 Agent를 선택하고, MCP config로 "image generation"을 선택한 후에 "노을이 지는 아름다운 강변을 달리기하는 사람을 그려주세요."라고 입력 후에 결과를 확인합니다.
+
+<img src="https://github.com/user-attachments/assets/a4147b0f-86d2-4042-83bb-9c9b61e51a2f" width="650">
+
+
+
 ## Reference 
 
 [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
