@@ -17,7 +17,6 @@ DEFAULT_CFG_SCALE = 6.5
 DEFAULT_NUMBER_OF_IMAGES = 1
 DEFAULT_OUTPUT_DIR = 'output'  # Default directory inside workspace_dir
 
-
 # Nova Canvas Prompt Best Practices
 PROMPT_INSTRUCTIONS = """
 # Amazon Nova Canvas Prompting Best Practices

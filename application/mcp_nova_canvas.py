@@ -17,7 +17,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mcp-s3")
 
-async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images, workspace_dir):
+async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images):
     """Generate an image using Amazon Nova Canvas with text prompt."""
     
     logger.debug(
@@ -37,16 +37,13 @@ async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, heig
             quality=quality,
             cfg_scale=cfg_scale,
             seed=seed,
-            number_of_images=number_of_images,
-            workspace_dir=workspace_dir,
+            number_of_images=number_of_images
         )
 
         if response.status == 'success':
-            # return response.paths
-            return McpImageGenerationResponse(
-                status='success',
-                paths=[f'file://{path}' for path in response.paths],
-            )
+            return {
+                "url": [f'{path}' for path in response.paths]
+            } 
         else:
             logger.error(f'Image generation returned error status: {response.message}')
             await ctx.error(f'Failed to generate image: {response.message}')  # type: ignore
@@ -58,7 +55,7 @@ async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, heig
         raise
 
 
-async def mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images, workspace_dir) -> McpImageGenerationResponse:
+async def mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images) -> McpImageGenerationResponse:
     """Generate an image using Amazon Nova Canvas with color guidance. """
 
     logger.debug(
@@ -81,15 +78,13 @@ async def mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, f
             quality=quality,
             cfg_scale=cfg_scale,
             seed=seed,
-            number_of_images=number_of_images,
-            workspace_dir=workspace_dir,
+            number_of_images=number_of_images
         )
 
         if response.status == 'success':
-            return McpImageGenerationResponse(
-                status='success',
-                paths=[f'file://{path}' for path in response.paths],
-            )
+            return {
+                "url": [f'{path}' for path in response.paths]
+            } 
         else:
             logger.error(
                 f'Color-guided image generation returned error status: {response.message}'

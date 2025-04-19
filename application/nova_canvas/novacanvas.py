@@ -72,8 +72,7 @@ def save_generated_images(
     base64_images: List[str],
     filename: Optional[str] = None,
     number_of_images: int = DEFAULT_NUMBER_OF_IMAGES,
-    prefix: str = 'nova_canvas',
-    workspace_dir: Optional[str] = None,
+    prefix: str = 'nova_canvas'
 ) -> Dict[str, List]:
     """Save base64-encoded images to files.
 
@@ -82,21 +81,12 @@ def save_generated_images(
         filename: Base filename to use (without extension). If None, a random name is generated.
         number_of_images: Number of images being saved.
         prefix: Prefix to use for randomly generated filenames.
-        workspace_dir: Directory where the images should be saved. If None, uses current directory.
 
     Returns:
         Dictionary with lists of paths to the saved image files and PIL Image objects.
     """
     logger.debug(f'Saving {len(base64_images)} images')
     # Determine the output directory
-    if workspace_dir:
-        output_dir = os.path.join(workspace_dir, DEFAULT_OUTPUT_DIR)
-    else:
-        output_dir = DEFAULT_OUTPUT_DIR
-
-    # Create output directory if it doesn't exist
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     # Save the generated images
     saved_paths: List[str] = []
@@ -114,15 +104,11 @@ def save_generated_images(
         # Decode the base64 image data
         image_data = base64.b64decode(base64_image_data)
 
-        # Save the image
-        image_path = os.path.join(output_dir, image_filename)
-        with open(image_path, 'wb') as file:
-            file.write(image_data)
-        # Convert to absolute path
-        abs_image_path = os.path.abspath(image_path)
-        saved_paths.append(abs_image_path)
+    import chat
+    url = chat.upload_to_s3(image_data, image_filename)
+    logger.info(f"Uploaded image to S3: {url}")
 
-    return {'paths': saved_paths}
+    return {'url': url}
 
 async def invoke_nova_canvas(
     request_model_dict: Dict[str, Any]
@@ -165,8 +151,7 @@ async def generate_image_with_text(
     quality: str = DEFAULT_QUALITY,
     cfg_scale: float = DEFAULT_CFG_SCALE,
     seed: Optional[int] = None,
-    number_of_images: int = DEFAULT_NUMBER_OF_IMAGES,
-    workspace_dir: Optional[str] = None,
+    number_of_images: int = DEFAULT_NUMBER_OF_IMAGES
 ) -> ImageGenerationResponse:
     """Generate an image using Amazon Nova Canvas with text prompt.
 
@@ -184,7 +169,6 @@ async def generate_image_with_text(
         cfg_scale: How strongly the image adheres to the prompt (1.1-10.0).
         seed: Seed for generation (0-858,993,459). Random if not provided.
         number_of_images: The number of images to generate (1-5).
-        workspace_dir: Directory where the images should be saved. If None, uses current directory.
 
     Returns:
         ImageGenerationResponse: An object containing the paths to the generated images,
@@ -247,15 +231,17 @@ async def generate_image_with_text(
                 base64_images,
                 filename,
                 number_of_images,
-                prefix='nova_canvas',
-                workspace_dir=workspace_dir,
+                prefix='nova_canvas'
             )
 
-            logger.info(f'Successfully generated {len(result["paths"])} image(s)')
+            logger.info(f"url: {result['url']}")
+
+            url_message = f'Generated image url: {result["url"]}'
+            # message = f'Generated {len(result["paths"])} image(s)'
             return ImageGenerationResponse(
                 status='success',
-                message=f'Generated {len(result["paths"])} image(s)',
-                paths=result['paths'],
+                message=url_message,
+                paths=[result['url']],
                 prompt=prompt,
                 negative_prompt=negative_prompt,
             )
@@ -279,7 +265,6 @@ async def generate_image_with_text(
             negative_prompt=negative_prompt,
         )
 
-
 async def generate_image_with_colors(
     prompt: str,
     colors: List[str],
@@ -290,8 +275,7 @@ async def generate_image_with_colors(
     quality: str = DEFAULT_QUALITY,
     cfg_scale: float = DEFAULT_CFG_SCALE,
     seed: Optional[int] = None,
-    number_of_images: int = DEFAULT_NUMBER_OF_IMAGES,
-    workspace_dir: Optional[str] = None,
+    number_of_images: int = DEFAULT_NUMBER_OF_IMAGES
 ) -> ImageGenerationResponse:
     """Generate an image using Amazon Nova Canvas with color guidance.
 
@@ -310,7 +294,6 @@ async def generate_image_with_colors(
         cfg_scale: How strongly the image adheres to the prompt (1.1-10.0).
         seed: Seed for generation (0-858,993,459). Random if not provided.
         number_of_images: The number of images to generate (1-5).
-        workspace_dir: Directory where the images should be saved. If None, uses current directory.
 
     Returns:
         ImageGenerationResponse: An object containing the paths to the generated images,
@@ -383,15 +366,15 @@ async def generate_image_with_colors(
                 base64_images,
                 filename,
                 number_of_images,
-                prefix='nova_canvas_color',
-                workspace_dir=workspace_dir,
+                prefix='nova_canvas_color'
             )
 
-            logger.info(f'Successfully generated {len(result["paths"])} color-guided image(s)')
+            url_message = f'Generated image url: {result["url"]}'
+            # message = f'Generated {len(result["paths"])} image(s)'
             return ImageGenerationResponse(
                 status='success',
-                message=f'Generated {len(result["paths"])} image(s)',
-                paths=result['paths'],
+                message=url_message,
+                paths=[result['url']],
                 prompt=prompt,
                 negative_prompt=negative_prompt,
                 colors=colors,

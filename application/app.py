@@ -69,25 +69,7 @@ with st.sidebar:
         label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi-agent Supervisor (Router)", "LangGraph Supervisor", "LangGraph Swarm", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=0
     )   
     st.info(mode_descriptions[mode][0])
-
-    # logger.info(f"mode: {mode}")
-
-    # model selection box
-    modelName = st.selectbox(
-        '🖊️ 사용 모델을 선택하세요',
-        ('Nova Pro', 'Nova Lite', 'Nova Micro', 'Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.0 Sonnet', 'Claude 3.5 Haiku'), index=4
-    )
-
-    # debug checkbox
-    select_debugMode = st.checkbox('Debug Mode', value=True)
-    debugMode = 'Enable' if select_debugMode else 'Disable'
-    #print('debugMode: ', debugMode)
-
-    # multi region check box
-    select_multiRegion = st.checkbox('Multi Region', value=False)
-    multiRegion = 'Enable' if select_multiRegion else 'Disable'
-    #print('multiRegion: ', multiRegion)
-
+    
     # MCP Config JSON 입력
     st.subheader("⚙️ MCP Config")
 
@@ -114,7 +96,22 @@ with st.sidebar:
                 logger.info(f"mcp_json: {mcp_json}")
 
                 mcp = mcp_json
-                chat.update(modelName, debugMode, multiRegion, mcp)
+
+    # model selection box
+    modelName = st.selectbox(
+        '🖊️ 사용 모델을 선택하세요',
+        ('Nova Pro', 'Nova Lite', 'Nova Micro', 'Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.0 Sonnet', 'Claude 3.5 Haiku'), index=4
+    )
+
+    # debug checkbox
+    select_debugMode = st.checkbox('Debug Mode', value=True)
+    debugMode = 'Enable' if select_debugMode else 'Disable'
+    #print('debugMode: ', debugMode)
+
+    # multi region check box
+    select_multiRegion = st.checkbox('Multi Region', value=False)
+    multiRegion = 'Enable' if select_multiRegion else 'Disable'
+    #print('multiRegion: ', multiRegion)
 
     uploaded_file = None
     if mode=='이미지 분석':

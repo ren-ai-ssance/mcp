@@ -16,7 +16,6 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Any, Dict, List, Literal, Optional
 
-
 class Quality(str, Enum):
     """Quality options for image generation.
 
@@ -39,7 +38,6 @@ class TaskType(str, Enum):
 
     TEXT_IMAGE = 'TEXT_IMAGE'
     COLOR_GUIDED_GENERATION = 'COLOR_GUIDED_GENERATION'
-
 
 class ImageGenerationConfig(BaseModel):
     """Configuration for image generation.
@@ -110,7 +108,6 @@ class ImageGenerationConfig(BaseModel):
 
         return self
 
-
 class TextToImageParams(BaseModel):
     """Parameters for text-to-image generation.
 
@@ -123,7 +120,6 @@ class TextToImageParams(BaseModel):
 
     text: str = Field(..., min_length=1, max_length=1024)
     negativeText: Optional[str] = Field(default=None, min_length=1, max_length=1024)
-
 
 class ColorGuidedGenerationParams(BaseModel):
     """Parameters for color-guided generation.
@@ -161,7 +157,6 @@ class ColorGuidedGenerationParams(BaseModel):
                     f"Color '{color}' is not a valid hexadecimal color in the format '#RRGGBB'"
                 )
         return v
-
 
 class TextImageRequest(BaseModel):
     """Request model for text-to-image generation.
@@ -201,7 +196,6 @@ class TextImageRequest(BaseModel):
             else ImageGenerationConfig().model_dump(),  # Return default config instead of None
         }
 
-
 class ColorGuidedRequest(BaseModel):
     """Request model for color-guided generation.
 
@@ -240,7 +234,6 @@ class ColorGuidedRequest(BaseModel):
             else ImageGenerationConfig().model_dump(),  # Return default config instead of None
         }
 
-
 class McpImageGenerationResponse(BaseModel):
     """Response from image generation API.
 
@@ -250,7 +243,6 @@ class McpImageGenerationResponse(BaseModel):
 
     status: str
     paths: List[str]
-
 
 class ImageGenerationResponse(BaseModel):
     """Response from image generation API.

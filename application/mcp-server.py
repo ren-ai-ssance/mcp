@@ -207,20 +207,11 @@ async def mcp_generate_image(
     number_of_images: int = Field(
         default=DEFAULT_NUMBER_OF_IMAGES,
         description='The number of images to generate (1-5)',
-    ),
-    workspace_dir: Optional[str] = Field(
-        default=None,
-        description="""The current workspace directory where the image should be saved.
-        CRITICAL: Assistant must always provide the current IDE workspace directory parameter to save images to the user's current project.""",
     )):
     """Generate an image using Amazon Nova Canvas with text prompt.
 
     This tool uses Amazon Nova Canvas to generate images based on a text prompt.
     The generated image will be saved to a file and the path will be returned.
-
-    IMPORTANT FOR ASSISTANT: Always send the current workspace directory when calling this tool!
-    The workspace_dir parameter should be set to the directory where the user is currently working
-    so that images are saved to a location accessible to the user.
 
     ## Prompt Best Practices
 
@@ -247,7 +238,19 @@ async def mcp_generate_image(
         McpImageGenerationResponse: A response containing the generated image paths.
     """
 
-    return await canvas.mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images, workspace_dir)
+    logger.info("MCP tool generate_image called")
+    logger.info(f"ctx: {ctx}")
+    logger.info(f"prompt: {prompt}")
+    logger.info(f"negative_prompt: {negative_prompt}")
+    logger.info(f"filename: {filename}")
+    logger.info(f"width: {width}")
+    logger.info(f"height: {height}")
+    logger.info(f"quality: {quality}")
+    logger.info(f"cfg_scale: {cfg_scale}")
+    logger.info(f"seed: {seed}")
+    logger.info(f"number_of_images: {number_of_images}")
+
+    return await canvas.mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images)
 
 @mcp.tool(name='generate_image_with_colors')
 async def mcp_generate_image_with_colors(
@@ -283,19 +286,11 @@ async def mcp_generate_image_with_colors(
         description='How strongly the image adheres to the prompt (1.1-10.0)',
     ),
     seed: Optional[int] = Field(default=None, description='Seed for generation (0-858,993,459)'),
-    number_of_images: int = Field(default=1, description='The number of images to generate (1-5)'),
-    workspace_dir: Optional[str] = Field(
-        default=None,
-        description="The current workspace directory where the image should be saved. CRITICAL: Assistant must always provide this parameter to save images to the user's current project.",
-    )):
+    number_of_images: int = Field(default=1, description='The number of images to generate (1-5)')):
     """Generate an image using Amazon Nova Canvas with color guidance.
 
     This tool uses Amazon Nova Canvas to generate images based on a text prompt and color palette.
     The generated image will be saved to a file and the path will be returned.
-
-    IMPORTANT FOR Assistant: Always send the current workspace directory when calling this tool!
-    The workspace_dir parameter should be set to the directory where the user is currently working
-    so that images are saved to a location accessible to the user.
 
     ## Prompt Best Practices
 
@@ -320,7 +315,20 @@ async def mcp_generate_image_with_colors(
         McpImageGenerationResponse: A response containing the generated image paths.
     """
 
-    return await canvas.mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images, workspace_dir)
+    logger.info("MCP tool generate_image with colors called")
+    logger.info(f"ctx: {ctx}")
+    logger.info(f"prompt: {prompt}")
+    logger.info(f"colors: {colors}")
+    logger.info(f"negative_prompt: {negative_prompt}")
+    logger.info(f"filename: {filename}")
+    logger.info(f"width: {width}")
+    logger.info(f"height: {height}")
+    logger.info(f"quality: {quality}")
+    logger.info(f"cfg_scale: {cfg_scale}")
+    logger.info(f"seed: {seed}")
+    logger.info(f"number_of_images: {number_of_images}")
+
+    return await canvas.mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images)
 
     
 ######################################

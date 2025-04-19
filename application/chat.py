@@ -794,7 +794,8 @@ def upload_to_s3(file_bytes, file_name):
         )
         logger.info(f"upload response: {response}")
 
-        url = f"https://{s3_bucket}.s3.amazonaws.com/{s3_key}"
+        #url = f"https://{s3_bucket}.s3.amazonaws.com/{s3_key}"
+        url = path+'/'+s3_image_prefix+'/'+parse.quote(file_name)
         return url
     
     except Exception as e:
@@ -1421,7 +1422,7 @@ def create_agent(tools, historyMode):
 
         last_message = state['messages'][-1]
         logger.info(f"last message: {last_message}")
-        
+
         if isKorean(state["messages"][0].content)==True:
             system = (
                 "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
@@ -1450,32 +1451,6 @@ def create_agent(tools, historyMode):
                 # logger.info(f"call_model response: {response}")
                 logger.info(f"call_model: {response.content}")
 
-                if isinstance(response.content, list):            
-                    for re in response.content:
-                        if "type" in re:
-                            if re['type'] == 'text':
-                                logger.info(f"--> {re['type']}: {re['text']}")
-
-                                status = re['text']
-                                logger.info(f"status: {status}")
-                                
-                                status = status.replace('`','')
-                                status = status.replace('\"','')
-                                status = status.replace("\'",'')
-                                
-                                if status.find('<thinking>') != -1:
-                                    logger.info(f"Remove <thinking> tag.")
-                                    status = status[status.find('<thinking>')+11:status.find('</thinking>')]
-                                    logger.info(f"status without tag: {status}")
-                                logger.info(f"call_model: {status}")
-
-                            elif re['type'] == 'tool_use':                
-                                logger.info(f"--> {re['type']}: {re['name']}, {re['input']}")
-                            else:
-                                logger.info(re)
-                        else: # answer
-                            logger.info(response.content)
-                break
             except Exception:
                 response = AIMessage(content="답변을 찾지 못하였습니다.")
 
@@ -1495,16 +1470,6 @@ def create_agent(tools, historyMode):
         logger.info(f"last_message: {last_message.content}")
 
         if isinstance(last_message, AIMessage) and last_message.tool_calls:
-            logger.info(f"{last_message.content}")
-
-            for message in last_message.tool_calls:
-                args = message['args']
-                if debug_mode=='Enable': 
-                    if "code" in args:                    
-                        state_msg = f"tool name: {message['name']}"
-                        logger.info(f"state_msg: {state_msg}")
-                        logger.info(f"args: {args}")
-
             logger.info(f"--- CONTINUE: {last_message.tool_calls[-1]['name']} ---")
             return "continue"
         
@@ -1652,7 +1617,39 @@ def tool_info(tools, st):
         tool_list.append(tool.name)
     # st.info(f"{tool_info}")
     st.info(f"Tools: {tool_list}")
-    
+
+def show_status_message(response, st):
+    image_url = []
+    for i, re in enumerate(response):
+        logger.info(f"message[{i}]: {re}")
+
+        if i==len(response)-1:
+            break
+
+        if isinstance(re, AIMessage):
+            st.info(f"{re.content}")
+            if 'tool_calls' in re:
+                logger.info(f"Tool name: {re.tool_calls[0]['name']}")
+                st.info(f"Tool name: {re.tool_call['name']}")
+                st.info(f"{re.tool_call['args']}")
+        elif isinstance(re, ToolMessage):
+            st.info(f"Tool name: {re.name}")
+
+            try: 
+                tool_result = json.loads(re.content)
+                logger.info(f"tool_result: {tool_result}")
+
+                if "url" in tool_result:
+                    st.info(f"URL: {tool_result['url']}")
+
+                    urls = tool_result['url']
+                    for url in urls:
+                        image_url.append(url)
+                        st.image(url)
+            except:
+                pass
+    return image_url
+            
 async def mcp_rag_agent_multiple(query, historyMode, st):
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
@@ -1675,6 +1672,9 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
             response = await agent.ainvoke({"messages": query}, config)
             logger.info(f"response: {response}")
 
+            if debug_mode == "Enable":
+                image_url = show_status_message(response["messages"], st)
+
             result = response["messages"][-1].content
             logger.info(f"result: {result}")
 
@@ -1682,7 +1682,8 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
 
         st.session_state.messages.append({
             "role": "assistant", 
-            "content": result
+            "content": result,
+            "images": image_url if image_url else []
         })
 
     return result
