@@ -506,6 +506,32 @@ def show_status_message(response, st):
     return image_url
 ```
 
+### MCP: AWS Diagram
+
+[AWS Diagram MCP Server](https://awslabs.github.io/mcp/servers/aws-diagram-mcp-server/)을 이용하면 AWS Diagram을 그릴 수 있습니다.
+
+이때 사용하는 MCP Config는 아래와 같습니다.
+
+```python
+{
+    "mcpServers": {
+        "awslabs.aws-diagram-mcp-server": {
+            "command": "uvx",
+            "args": ["awslabs.aws-diagram-mcp-server"],
+            "env": {
+                "FASTMCP_LOG_LEVEL": "ERROR"
+            },
+        }
+    }
+}
+```
+
+Diagram을 그리기 위해서는 [Graphviz](https://www.graphviz.org/download/)를 따라서 graphviz를 설치합니다. Mac에서는 아래 명령어를 사용합니다.
+
+```text
+brew install graphviz
+```
+
 
 ## 실행 결과
 
@@ -600,6 +626,11 @@ def show_status_message(response, st):
 
 <img src="https://github.com/user-attachments/assets/a4147b0f-86d2-4042-83bb-9c9b61e51a2f" width="650">
 
+### AWS Architecture 그리기
+
+메뉴에서 "Agent(Chat)"를 선택하고 MCP로 "aws diagram"를 고른 후, "Amazon S3로 web hosting을 하기 위한 architecture를 추천해주세요."와 "Cognito를 이용해 인증할수 있도록 해주세요."으로 순차적으로 명령을 하면 아래와 같은 결과를 얻을 수 있습니다.
+
+![noname](https://github.com/user-attachments/assets/04191a61-746f-4852-ad2a-e77b6af7cedc)
 
 
 ## Reference 
