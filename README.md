@@ -506,7 +506,7 @@ def show_status_message(response, st):
     return image_url
 ```
 
-### MCP: AWS Diagram
+### MCP AWS Diagram
 
 [AWS Diagram MCP Server](https://awslabs.github.io/mcp/servers/aws-diagram-mcp-server/)을 이용하면 AWS Diagram을 그릴 수 있습니다.
 
