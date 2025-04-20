@@ -508,7 +508,7 @@ def show_status_message(response, st):
 
 ### MCP AWS Diagram
 
-[AWS Diagram MCP Server](https://awslabs.github.io/mcp/servers/aws-diagram-mcp-server/)을 이용하면 AWS Diagram을 그릴 수 있습니다.
+[AWS Diagram MCP Server](https://awslabs.github.io/mcp/servers/aws-diagram-mcp-server/)을 이용하면 AWS Diagram을 그릴 수 있습니다. 상세한 내용은 [mcp_config.py](./application/mcp_config.py)을 참조합니다.
 
 이때 사용하는 MCP Config는 아래와 같습니다.
 
@@ -530,6 +530,24 @@ Diagram을 그리기 위해서는 [Graphviz](https://www.graphviz.org/download/)
 
 ```text
 brew install graphviz
+```
+
+### MCP AWS Documentation
+
+[AWS Documentation MCP Server](https://awslabs.github.io/mcp/servers/aws-documentation-mcp-server/)을 이용하여 AWS 문서들을 조회할 수 있습니다. 이때 사용하는 MCP config는 아래와 같습니다. 상세한 내용은 [mcp_config.py](./application/mcp_config.py)을 참조합니다.
+
+```java
+{
+    "mcpServers": {
+        "awslabs.aws-documentation-mcp-server": {
+            "command": "uvx",
+            "args": ["awslabs.aws-documentation-mcp-server@latest"],
+            "env": {
+                "FASTMCP_LOG_LEVEL": "ERROR"
+            }
+        }
+    }
+}
 ```
 
 
