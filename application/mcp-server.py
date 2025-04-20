@@ -24,10 +24,10 @@ logger = logging.getLogger("mcp-server")
 
 try:
     mcp = FastMCP(
-        name = "Search",
+        name = "tools",
         instructions=(
             "You are a helpful assistant. "
-            "You can search the documentation for the user's question and provide the answer."
+            "You can use tools for the user's question and provide the answer."
         ),
     )
     logger.info("MCP server initialized successfully")
