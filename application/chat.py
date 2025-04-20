@@ -1625,7 +1625,9 @@ def show_status_message(response, st):
             break
 
         if isinstance(re, AIMessage):
-            st.info(f"{re.content}")
+            if re.content:
+                logger.info(f"content: {re.content}")
+                st.info(f"{re.content}")
             if 'tool_calls' in re:
                 logger.info(f"Tool name: {re.tool_calls[0]['name']}")
                 st.info(f"Tool name: {re.tool_call['name']}")
@@ -1633,14 +1635,18 @@ def show_status_message(response, st):
                     logger.info(f"Tool args: {re.tool_call['args']}")
                     st.info(f"Tool args: {re.tool_call['args']}")
         elif isinstance(re, ToolMessage):
-            st.info(f"Tool name: {re.name}")
+            if re.name:
+                logger.info(f"Tool name: {re.name}")
+                st.info(f"Tool name: {re.name}")
+            if re.content:
+                logger.info(f"Tool result: {re.content}")
+                st.info(f"Tool result: {re.content}")
             try: 
                 tool_result = json.loads(re.content)
                 logger.info(f"tool_result: {tool_result}")
 
                 if "path" in tool_result:
                     logger.info(f"Path: {tool_result['path']}")
-                    st.info(f"Path: {tool_result['path']}")
 
                     path = tool_result['path']
                     if isinstance(path, list):
@@ -1669,6 +1675,7 @@ def show_status_message(response, st):
                             logger.error(f"이미지 표시 오류: {str(e)}")
                             st.error(f"이미지를 표시할 수 없습니다: {str(e)}")
             except:
+                logger.info(f"fail to parsing..")
                 pass
     return image_url
             

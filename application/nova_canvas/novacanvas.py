@@ -22,6 +22,7 @@ import random
 import boto3 
 import logging
 import sys
+import chat
 from botocore.config import Config
 
 from .models import (
@@ -73,7 +74,7 @@ def save_generated_images(
     filename: Optional[str] = None,
     number_of_images: int = DEFAULT_NUMBER_OF_IMAGES,
     prefix: str = 'nova_canvas'
-) -> Dict[str, List]:
+) -> List[str]:
     """Save base64-encoded images to files.
 
     Args:
@@ -103,12 +104,13 @@ def save_generated_images(
 
         # Decode the base64 image data
         image_data = base64.b64decode(base64_image_data)
+    
+        url = chat.upload_to_s3(image_data, image_filename)
+        logger.info(f"Uploaded image to S3: {url}")
 
-    import chat
-    url = chat.upload_to_s3(image_data, image_filename)
-    logger.info(f"Uploaded image to S3: {url}")
+        saved_paths.append(url)
 
-    return {'url': url}
+    return saved_paths
 
 async def invoke_nova_canvas(
     request_model_dict: Dict[str, Any]
@@ -227,21 +229,24 @@ async def generate_image_with_text(
             logger.info(f'Received {len(base64_images)} images from Nova Canvas API')
 
             # Save the generated images
-            result = save_generated_images(
+            paths = save_generated_images(
                 base64_images,
                 filename,
                 number_of_images,
                 prefix='nova_canvas'
             )
+            logger.info(f"paths: {paths}")
 
-            logger.info(f"url: {result['url']}")
+            if len(paths) > 0:
+                url_message = f'Generated image url: '
+                url_message += ', '.join(paths)
+            else:
+                url_message = f'No image generated'
 
-            url_message = f'Generated image url: {result["url"]}'
-            # message = f'Generated {len(result["paths"])} image(s)'
             return ImageGenerationResponse(
                 status='success',
                 message=url_message,
-                paths=[result['url']],
+                paths=paths,
                 prompt=prompt,
                 negative_prompt=negative_prompt,
             )
@@ -362,19 +367,24 @@ async def generate_image_with_colors(
             logger.info(f'Received {len(base64_images)} images from Nova Canvas API')
 
             # Save the generated images
-            result = save_generated_images(
+            paths = save_generated_images(
                 base64_images,
                 filename,
                 number_of_images,
                 prefix='nova_canvas_color'
             )
+            logger.info(f"paths: {paths}")
 
-            url_message = f'Generated image url: {result["url"]}'
-            # message = f'Generated {len(result["paths"])} image(s)'
+            if len(paths) > 0:
+                url_message = f'Generated image url: '
+                url_message += ', '.join(paths)
+            else:
+                url_message = f'No image generated'
+
             return ImageGenerationResponse(
                 status='success',
                 message=url_message,
-                paths=[result['url']],
+                paths=paths,
                 prompt=prompt,
                 negative_prompt=negative_prompt,
                 colors=colors,

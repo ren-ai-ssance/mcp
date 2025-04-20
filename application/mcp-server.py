@@ -67,20 +67,6 @@ def repl_coder(code):
     return result
 
 ######################################
-# AWS Cost
-######################################
-@mcp.tool()
-def aws_cost_loader(days: int=30, region: str='us-west-2') -> list:
-    """
-    load aws cost data
-    days: the number of days looking for cost data
-    region: the name of aws region
-    return: cost data during days
-    """
-
-    return cost.get_cost_analysis(days=days, region=region)
-
-######################################
 # AWS Logs
 ######################################
 @mcp.tool()

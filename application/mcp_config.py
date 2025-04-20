@@ -93,3 +93,15 @@ def load_config(mcp_type):
             }
         }
     
+    elif mcp_type == "aws_cost":
+        return {
+            "mcpServers": {
+                "imageGeneration": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_aws_cost.py"
+                    ]
+                }
+            }
+        }    
+    

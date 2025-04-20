@@ -96,15 +96,15 @@ def get_cost_analysis(days: str=30):
         }
         
     except Exception as e:
-        print(f"Error in cost analysis: {str(e)}")
+        logger.info(f"Error in cost analysis: {str(e)}")
         return None
 
 def create_cost_visualizations(cost_data):
     """Cost Visualization"""
-    print("Creating cost visualizations...")
+    logger.info("Creating cost visualizations...")
 
     if not cost_data:
-        print("No cost data available")
+        logger.info("No cost data available")
         return None
         
     visualizations = {}
@@ -137,7 +137,7 @@ def create_cost_visualizations(cost_data):
     )
     visualizations['region_bar'] = fig_bar
     
-    print(f"Visualizations created: {list(visualizations.keys())}")
+    logger.info(f"Visualizations created: {list(visualizations.keys())}")
     return visualizations
 
 def generate_cost_insights():
@@ -183,7 +183,7 @@ def generate_cost_insights():
     ) 
 
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
-    # print('prompt: ', prompt)    
+    # logger.info('prompt: ', prompt)    
 
     llm = chat.get_chat()
     chain = prompt | llm
@@ -221,7 +221,7 @@ def get_visualiation():
             visualizations = create_cost_visualizations(cost_data)
 
     except Exception as e:
-        print(f"Error to earn cost data: {str(e)}")   
+        logger.info(f"Error to earn cost data: {str(e)}")   
 
 get_visualiation() 
 
@@ -249,7 +249,7 @@ def ask_cost_insights(question):
     ) 
 
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
-    # print('prompt: ', prompt)    
+    # logger.info('prompt: ', prompt)    
 
     llm = chat.get_chat()
     chain = prompt | llm
