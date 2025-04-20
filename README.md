@@ -441,6 +441,12 @@ def get_cost_analysis(days: str=30):
     }
 ```
 
+cost의 상기 3가지 결과를 그래프로 사용하기 위해서는 아래 패키지 설치가 필요합니다.
+
+```text
+pip install -U kaleido
+```
+
 ### MCP Image Generation
 
 [mcp_server_image_generation.py](./application/mcp_server_image_generation.py)과 같이 mcp_generate_image와 mcp_generate_image_with_colors을 tool로 등록합니다. 
