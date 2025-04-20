@@ -443,7 +443,24 @@ def get_cost_analysis(days: str=30):
 
 ### MCP Image Genration
 
-[mcp_server_image_generation.py](./application/mcp_server_image_generation.py)과 같이 mcp_generate_image와 mcp_generate_image_with_colors을 tool로 등록합니다. 이후 [mcp_nova_canvas.py](./application/mcp_nova_canvas.py)와 같이 이미지를 생성합니다.
+[mcp_server_image_generation.py](./application/mcp_server_image_generation.py)과 같이 mcp_generate_image와 mcp_generate_image_with_colors을 tool로 등록합니다. 
+
+MCP config는 아래와 같이 설정합니다. [mcp_config.py](./application/mcp_config.py)을 참조합니다.
+
+```java
+{
+    "mcpServers": {
+        "imageGeneration": {
+            "command": "python",
+            "args": [
+                "application/mcp_server_image_generation.py"
+            ]
+        }
+    }
+}
+```
+
+이후 [mcp_nova_canvas.py](./application/mcp_nova_canvas.py)와 같이 이미지를 생성합니다.
 
 ```python
 async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images):
