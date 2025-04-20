@@ -1629,21 +1629,45 @@ def show_status_message(response, st):
             if 'tool_calls' in re:
                 logger.info(f"Tool name: {re.tool_calls[0]['name']}")
                 st.info(f"Tool name: {re.tool_call['name']}")
-                st.info(f"{re.tool_call['args']}")
+                if 'args' in re.tool_call:
+                    logger.info(f"Tool args: {re.tool_call['args']}")
+                    st.info(f"Tool args: {re.tool_call['args']}")
         elif isinstance(re, ToolMessage):
             st.info(f"Tool name: {re.name}")
-
             try: 
                 tool_result = json.loads(re.content)
                 logger.info(f"tool_result: {tool_result}")
 
-                if "url" in tool_result:
-                    st.info(f"URL: {tool_result['url']}")
+                if "path" in tool_result:
+                    logger.info(f"Path: {tool_result['path']}")
+                    st.info(f"Path: {tool_result['path']}")
 
-                    urls = tool_result['url']
-                    for url in urls:
-                        image_url.append(url)
-                        st.image(url)
+                    path = tool_result['path']
+                    if isinstance(path, list):
+                        for p in path:
+                            logger.info(f"image: {p}")
+                            if p.startswith('http') or p.startswith('https'):
+                                st.image(p)
+                                image_url.append(p)
+                            else:
+                                with open(p, 'rb') as f:
+                                    image_data = f.read()
+                                    st.image(image_data)
+                                    image_url.append(p)
+                    else:
+                        logger.info(f"image: {path}")
+                        try:
+                            if path.startswith('http') or path.startswith('https'):
+                                st.image(path)
+                                image_url.append(path)
+                            else:
+                                with open(path, 'rb') as f:
+                                    image_data = f.read()
+                                    st.image(image_data)
+                                    image_url.append(path)
+                        except Exception as e:
+                            logger.error(f"이미지 표시 오류: {str(e)}")
+                            st.error(f"이미지를 표시할 수 없습니다: {str(e)}")
             except:
                 pass
     return image_url

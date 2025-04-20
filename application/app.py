@@ -75,13 +75,18 @@ with st.sidebar:
     if mode=='Agent' or mode=='Agent (Chat)':
         # MCP Config JSON 입력
         st.subheader("⚙️ MCP Config")
-        
+
         mcp_mode = st.radio(
-            label="MCP를 설정하세요.",options=["default", "image generation", "playwright", "obsidian", "airbnb", "사용자 설정"], index=0
+            label="MCP를 설정하세요.",options=["default", "image generation", "playwright", "obsidian", "airbnb", "aws diagram", "aws document", "사용자 설정"], index=0
         )   
 
         if mcp_mode == 'image generation':
             mcp = mcp_config.load_config('image_generation')
+        elif mcp_mode == 'aws diagram':
+            mcp = mcp_config.load_config('aws_diagram')
+        elif mcp_mode == 'aws document':
+            mcp = mcp_config.load_config('aws_documentation')
+
         else:
             mcp = mcp_config.load_config(mcp_mode)
         logger.info(f"mcp: {mcp}")

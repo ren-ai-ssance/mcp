@@ -67,4 +67,29 @@ def load_config(mcp_type):
                 }
             }
         }
+    elif mcp_type == "aws_diagram":
+        return {
+            "mcpServers": {
+                "awslabs.aws-diagram-mcp-server": {
+                    "command": "uvx",
+                    "args": ["awslabs.aws-diagram-mcp-server"],
+                    "env": {
+                        "FASTMCP_LOG_LEVEL": "ERROR"
+                    },
+                }
+            }
+        }
+    
+    elif mcp_type == "aws_documentation":
+        return {
+            "mcpServers": {
+                "awslabs.aws-documentation-mcp-server": {
+                    "command": "uvx",
+                    "args": ["awslabs.aws-documentation-mcp-server@latest"],
+                    "env": {
+                        "FASTMCP_LOG_LEVEL": "ERROR"
+                    }
+                }
+            }
+        }
     

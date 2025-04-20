@@ -42,7 +42,7 @@ async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, heig
 
         if response.status == 'success':
             return {
-                "url": [f'{path}' for path in response.paths]
+                "path": [f'{path}' for path in response.paths]
             } 
         else:
             logger.error(f'Image generation returned error status: {response.message}')
@@ -83,7 +83,7 @@ async def mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, f
 
         if response.status == 'success':
             return {
-                "url": [f'{path}' for path in response.paths]
+                "path": [f'{path}' for path in response.paths]
             } 
         else:
             logger.error(
