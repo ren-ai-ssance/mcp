@@ -15,6 +15,10 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# .streamlit 폴더 생성 및 config.toml 복사
+RUN mkdir -p .streamlit
+COPY config.toml .streamlit/
+
 COPY . .
 
 EXPOSE 8501
