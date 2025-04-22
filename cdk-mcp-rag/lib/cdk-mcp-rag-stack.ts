@@ -33,9 +33,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     const bedrockInvokePolicy = new iam.PolicyStatement({ 
       effect: iam.Effect.ALLOW,
       resources: [
-        `arn:aws:bedrock:us-west-2::foundation-model/*`,
-        `arn:aws:bedrock:us-east-1::foundation-model/*`,
-        `arn:aws:bedrock:us-east-2::foundation-model/*`
+        `arn:aws:bedrock:*::foundation-model/*`
       ],
       // resources: ['*'],
       actions: [
@@ -301,6 +299,12 @@ export class CdkMcpRagStack extends cdk.Stack {
         statements: [BedrockPolicy],
       }),
     );   
+    ec2Role.attachInlinePolicy( // add bedrock policy
+      new iam.Policy(this, `bedrock-policy-ec2-for-${projectName}`, {
+        statements: [BedrockPolicy],
+      }),
+    ); 
+    
     const weatherApiSecret = new secretsmanager.Secret(this, `weather-api-secret-for-${projectName}`, {
       description: 'secret for weather api key', // openweathermap
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -634,6 +638,15 @@ ExecStart=/home/ec2-user/.local/bin/streamlit run /home/ec2-user/mcp/application
 WantedBy=multi-user.target
 EOF"`,
       `runuser -l ec2-user -c "mkdir -p /home/ec2-user/.streamlit"`,        
+      `runuser -l ec2-user -c 'cat <<EOF > /home/ec2-user/.streamlit/config.toml
+[server]
+port=${targetPort}
+maxUploadSize = 50
+
+[theme]
+base="dark"
+primaryColor="#fff700"
+EOF'`,
       `json='${JSON.stringify(environment)}' && echo "$json">/home/config.json`,      
       `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/mcp'`,
       `yum install -y amazon-cloudwatch-agent`,
@@ -644,7 +657,7 @@ EOF"`,
     // EC2 instance
     const appInstance = new ec2.Instance(this, `app-for-${projectName}`, {
       instanceName: `app-for-${projectName}`,
-      instanceType: new ec2.InstanceType('t2.small'), // m5.large
+      instanceType: new ec2.InstanceType('m5.large'), // t2.small
       // instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.SMALL),
       machineImage: new ec2.AmazonLinuxImage({
         generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2023
