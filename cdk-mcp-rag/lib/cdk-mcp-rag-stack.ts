@@ -451,7 +451,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       }
     );
 
-    const targetPort = 8080;
+    const targetPort = 8501;  // 8080 8501
     ec2Sg.connections.allowFrom(albSg, ec2.Port.tcp(targetPort), 'allow traffic from alb') // alb -> ec2
     ec2Sg.connections.allowTo(bedrockEndpoint, ec2.Port.tcp(443), 'allow traffic to bedrock endpoint') // ec2 -> bedrock
 
@@ -585,7 +585,7 @@ After=network-online.target
 User=ec2-user
 Group=ec2-user
 Restart=always
-ExecStart=/home/ec2-user/.local/bin/streamlit run /home/ec2-user/${projectName}/application/app.py
+ExecStart=/home/ec2-user/.local/bin/streamlit run /home/ec2-user/mcp/application/app.py
 
 [Install]
 WantedBy=multi-user.target
