@@ -674,12 +674,12 @@ export class CdkMcpRagStack extends cdk.Stack {
       'systemctl enable docker',
       'usermod -aG docker ec2-user',
       // Chrome 설치
-      'yum install -y chromium chromium-headless chromedriver',
-      'mkdir -p /opt/google/chrome',
-      'ln -s /usr/bin/chromium /opt/google/chrome/chrome',
+      // 'yum install -y chromium chromium-headless chromedriver',
+      // 'mkdir -p /opt/google/chrome',
+      // 'ln -s /usr/bin/chromium /opt/google/chrome/chrome',
       // Playwright 설치
-      'runuser -l ec2-user -c "npm install -g playwright"',
-      'runuser -l ec2-user -c "npx playwright install chrome"',
+    //  'runuser -l ec2-user -c "npm install -g playwright"',
+    //  'runuser -l ec2-user -c "npx playwright install chrome"',
       `json='${JSON.stringify(environment)}' && echo "$json">/home/config.json`,      
       `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/mcp'`,
       `runuser -l ec2-user -c 'cd mcp && docker build -t streamlit-app .'`,
@@ -696,7 +696,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     userData.addCommands(...commands);
     
     // EC2 instance
-  /*  const appInstance = new ec2.Instance(this, `app-for-${projectName}`, {
+    const appInstance = new ec2.Instance(this, `app-for-${projectName}`, {
       instanceName: `app-for-${projectName}`,
       instanceType: new ec2.InstanceType('m5.large'), // t2.small
       // instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.SMALL),
@@ -750,6 +750,6 @@ export class CdkMcpRagStack extends cdk.Stack {
     })
     listener.addAction(`RedirectHttpListener-for-${projectName}`, {
       action: defaultAction
-    });    */
+    });    
   }
 }
