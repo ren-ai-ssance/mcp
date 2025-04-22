@@ -19,6 +19,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN mkdir -p .streamlit
 COPY config.toml .streamlit/
 
+COPY config.json /app/
+
 COPY . .
 
 EXPOSE 8501
