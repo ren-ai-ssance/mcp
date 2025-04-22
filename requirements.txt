@@ -2,8 +2,8 @@ streamlit==1.41.0
 streamlit-chat
 pandas==2.2.3
 numpy==2.2.3
-boto3==1.37.21
-langchain_aws==0.2.15
+boto3
+langchain_aws
 langchain==0.3.20
 langchain_community==0.3.19
 langgraph==0.3.25
