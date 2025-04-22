@@ -408,7 +408,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     // S3 ListBuckets 
     const s3ListBucketsPolicy = new iam.PolicyStatement({
       resources: ['*'],
-      actions: ['s3:ListAllMyBuckets', 's3:ListBuckets'],
+      actions: ['s3:ListAllMyBuckets', 's3:ListBuckets', 's3:ListObjectsV2', 's3:GetObject'],
     });
     ec2Role.attachInlinePolicy(
       new iam.Policy(this, `s3-list-buckets-policy-for-${projectName}`, {
