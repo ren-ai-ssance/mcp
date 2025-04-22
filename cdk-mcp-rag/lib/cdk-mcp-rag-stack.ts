@@ -262,6 +262,36 @@ export class CdkMcpRagStack extends cdk.Stack {
       managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
     });
 
+    // EC2 Role
+    const ec2Role = new iam.Role(this, `role-ec2-for-${projectName}`, {
+      roleName: `role-ec2-for-${projectName}-${region}`,
+      assumedBy: new iam.CompositePrincipal(
+        new iam.ServicePrincipal("ec2.amazonaws.com"),
+        new iam.ServicePrincipal("bedrock.amazonaws.com"),
+      ),
+      managedPolicies: [cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy')] 
+    });
+
+    const secreatManagerPolicy = new iam.PolicyStatement({  
+      resources: ['*'],
+      actions: ['secretsmanager:GetSecretValue'],
+    });       
+    ec2Role.attachInlinePolicy( // for isengard
+      new iam.Policy(this, `secret-manager-policy-ec2-for-${projectName}`, {
+        statements: [secreatManagerPolicy],
+      }),
+    );
+
+    const pvrePolicy = new iam.PolicyStatement({  
+      resources: ['*'],
+      actions: ['ssm:*', 'ssmmessages:*', 'ec2messages:*', 'tag:*'],
+    });       
+    ec2Role.attachInlinePolicy( // for isengard
+      new iam.Policy(this, `pvre-policy-ec2-for-${projectName}`, {
+        statements: [pvrePolicy],
+      }),
+    );  
+
     // Bedrock
     const BedrockPolicy = new iam.PolicyStatement({  
       resources: ['*'],
@@ -313,6 +343,17 @@ export class CdkMcpRagStack extends cdk.Stack {
         code_interpreter_id: cdk.SecretValue.unsafePlainText(''),
       },
     });
+
+    // Cost Explorer Policy
+    const costExplorerPolicy = new iam.PolicyStatement({  
+      resources: ['*'],
+      actions: ['ce:GetCostAndUsage'],
+    });        
+    ec2Role.attachInlinePolicy( // add costExplorerPolicy
+      new iam.Policy(this, `cost-explorer-policy-for-${projectName}`, {
+        statements: [costExplorerPolicy],
+      }),
+    );   
 
     // VPC
     const vpc = new ec2.Vpc(this, `vpc-for-${projectName}`, {
@@ -427,27 +468,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     new cdk.CfnOutput(this, `distribution-sharing-DomainName-for-${projectName}`, {
       value: 'https://'+distribution_sharing.domainName,
       description: 'The domain name of the Distribution Sharing',
-    });      
-
-    // EC2 Role
-    const ec2Role = new iam.Role(this, `role-ec2-for-${projectName}`, {
-      roleName: `role-ec2-for-${projectName}-${region}`,
-      assumedBy: new iam.CompositePrincipal(
-        new iam.ServicePrincipal("ec2.amazonaws.com"),
-        new iam.ServicePrincipal("bedrock.amazonaws.com"),
-      ),
-      managedPolicies: [cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentServerPolicy')] 
-    });
-
-    const secreatManagerPolicy = new iam.PolicyStatement({  
-      resources: ['*'],
-      actions: ['secretsmanager:GetSecretValue'],
-    });       
-    ec2Role.attachInlinePolicy( // for isengard
-      new iam.Policy(this, `secret-manager-policy-ec2-for-${projectName}`, {
-        statements: [secreatManagerPolicy],
-      }),
-    );
+    });          
     
     // lambda-rag
     const roleLambdaRag = new iam.Role(this, `role-lambda-rag-for-${projectName}`, {
