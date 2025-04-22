@@ -672,16 +672,6 @@ ExecStart=/home/ec2-user/.local/bin/streamlit run /home/ec2-user/mcp/application
 [Install]
 WantedBy=multi-user.target
 EOF"`,
-      `runuser -l ec2-user -c "mkdir -p /home/ec2-user/.streamlit"`,        
-      `runuser -l ec2-user -c 'cat <<EOF > /home/ec2-user/.streamlit/config.toml
-[server]
-port=${targetPort}
-maxUploadSize = 50
-
-[theme]
-base="dark"
-primaryColor="#fff700"
-EOF'`,
       `json='${JSON.stringify(environment)}' && echo "$json">/home/config.json`,      
       `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/mcp'`,
       `yum install -y amazon-cloudwatch-agent`,
