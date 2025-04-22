@@ -12,14 +12,14 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
-# .streamlit 폴더 생성 및 config.toml 복사
 RUN mkdir -p .streamlit
 COPY config.toml .streamlit/
-
 COPY . .
+
+RUN npm install -g playwright
+RUN npx playwright install chrome
 
 EXPOSE 8501
 
