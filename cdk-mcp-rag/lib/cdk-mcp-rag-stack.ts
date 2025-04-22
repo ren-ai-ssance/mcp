@@ -408,11 +408,26 @@ export class CdkMcpRagStack extends cdk.Stack {
     // S3 ListBuckets 
     const s3ListBucketsPolicy = new iam.PolicyStatement({
       resources: ['*'],
-      actions: ['s3:ListAllMyBuckets', 's3:ListBuckets', 's3:ListObjectsV2', 's3:GetObject'],
+      actions: ['s3:ListAllMyBuckets', 's3:ListBuckets'],
     });
     ec2Role.attachInlinePolicy(
       new iam.Policy(this, `s3-list-buckets-policy-for-${projectName}`, {
         statements: [s3ListBucketsPolicy],
+      }),
+    );
+
+    // S3 Bucket Access
+    const s3BucketAccessPolicy = new iam.PolicyStatement({
+      resources: [`*`],
+      actions: [
+        's3:ListBucket',
+        's3:ListObjectsV2',
+        's3:GetObject'
+      ],
+    });
+    ec2Role.attachInlinePolicy(
+      new iam.Policy(this, `s3-bucket-access-policy-for-${projectName}`, {
+        statements: [s3BucketAccessPolicy],
       }),
     );
 
