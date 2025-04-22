@@ -405,7 +405,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       }),
     ); 
 
-    // S3 ListBuckets 권한 추가
+    // S3 ListBuckets 
     const s3ListBucketsPolicy = new iam.PolicyStatement({
       resources: ['*'],
       actions: ['s3:ListAllMyBuckets', 's3:ListBuckets'],
@@ -413,6 +413,27 @@ export class CdkMcpRagStack extends cdk.Stack {
     ec2Role.attachInlinePolicy(
       new iam.Policy(this, `s3-list-buckets-policy-for-${projectName}`, {
         statements: [s3ListBucketsPolicy],
+      }),
+    );
+
+    // CloudWatch Logs 
+    const cloudWatchLogsPolicy = new iam.PolicyStatement({
+      resources: ['*'],
+      actions: [
+        'logs:DescribeLogGroups',
+        'logs:DescribeLogStreams',
+        'logs:GetLogEvents',
+        'logs:FilterLogEvents',
+        'logs:GetLogGroupFields',
+        'logs:GetLogRecord',
+        'logs:GetQueryResults',
+        'logs:StartQuery',
+        'logs:StopQuery'
+      ],
+    });
+    ec2Role.attachInlinePolicy(
+      new iam.Policy(this, `cloudwatch-logs-policy-for-${projectName}`, {
+        statements: [cloudWatchLogsPolicy],
       }),
     );
 
