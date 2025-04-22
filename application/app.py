@@ -10,7 +10,7 @@ import swarm
 import mcp_config 
 
 # logging
-logger = utils.CreateLogger("streamlit")
+logger = utils.CreateLogger("MCP")
 
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
