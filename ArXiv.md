@@ -25,11 +25,18 @@
 ```
 
 
-Local에서 실행시 uv를 설치합니다.
+Local에서 실행시 package manager인 uv를 설치합니다.
 
 ```text
 brew install uv
 ```
+
+Docker 환경에서는 uv를 아래와 같이 설치합니다.
+
+```python
+pip install uv
+```
+
 
 arxiv-mcp-server을 설치합니다. 
 
