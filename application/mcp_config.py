@@ -108,15 +108,15 @@ def load_config(mcp_type):
         return {
             "mcpServers": {
                 "arxiv-mcp-server": {
-                "command": "npx",
-                "args": [
-                    "-y",
-                    "@smithery/cli@latest",
-                    "run",
-                    "arxiv-mcp-server",
-                    "--config",
-                    "{\"storagePath\":\"/Users/ksdyb/Downloads/ArXiv\"}"
-                ]
+                    "command": "npx",
+                    "args": [
+                        "-y",
+                        "@smithery/cli@latest",
+                        "run",
+                        "arxiv-mcp-server",
+                        "--config",
+                        "{\"storagePath\":\"/Users/ksdyb/Downloads/ArXiv\"}"
+                    ]
                 }
             }
         }

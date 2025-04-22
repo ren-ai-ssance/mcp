@@ -22,3 +22,4 @@ opensearch-py
 langgraph-supervisor
 langgraph-swarm
 aioboto3
+uv
