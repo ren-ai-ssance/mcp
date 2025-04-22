@@ -673,13 +673,6 @@ export class CdkMcpRagStack extends cdk.Stack {
       'systemctl start docker',
       'systemctl enable docker',
       'usermod -aG docker ec2-user',
-      // Chrome 설치
-      // 'yum install -y chromium chromium-headless chromedriver',
-      // 'mkdir -p /opt/google/chrome',
-      // 'ln -s /usr/bin/chromium /opt/google/chrome/chrome',
-      // Playwright 설치
-    //  'runuser -l ec2-user -c "npm install -g playwright"',
-    //  'runuser -l ec2-user -c "npx playwright install chrome"',
       `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/mcp'`,
       `json='${JSON.stringify(environment)}' && echo "$json">/home/ec2-user/mcp/application/config.json`,
       `runuser -l ec2-user -c 'cd mcp && docker build -t streamlit-app .'`,
