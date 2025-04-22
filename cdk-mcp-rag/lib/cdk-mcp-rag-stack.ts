@@ -18,7 +18,6 @@ const accountId = process.env.CDK_DEFAULT_ACCOUNT;
 const bucketName = `storage-for-${projectName}-${accountId}-${region}`; 
 const vectorIndexName = projectName
 
-
 export class CdkMcpRagStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -452,7 +451,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     );
 
     const targetPort = 8501;  // 8080 8501
-    ec2Sg.connections.allowFrom(albSg, ec2.Port.tcp(targetPort), 'allow traffic from alb') // alb -> ec2
+    // ec2Sg.connections.allowFrom(albSg, ec2.Port.tcp(targetPort), 'allow traffic from alb') // alb -> ec2
     ec2Sg.connections.allowTo(bedrockEndpoint, ec2.Port.tcp(443), 'allow traffic to bedrock endpoint') // ec2 -> bedrock
 
     // cloudfront for sharing s3
@@ -632,7 +631,7 @@ EOF"`,
     targets.push(new elbv2_tg.InstanceTarget(appInstance)); 
     
     // ALB Listener
-    const listener = alb.addListener(`HttpListener-for-${projectName}`, {   
+  /*  const listener = alb.addListener(`HttpListener-for-${projectName}`, {   
       port: 80,
       open: true
     });     
@@ -653,6 +652,6 @@ EOF"`,
     })
     listener.addAction(`RedirectHttpListener-for-${projectName}`, {
       action: defaultAction
-    });    
+    });    */
   }
 }
