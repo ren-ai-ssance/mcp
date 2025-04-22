@@ -304,7 +304,7 @@ export class CdkMcpRagStack extends cdk.Stack {
         statements: [BedrockPolicy],
       }),
     ); 
-    
+
     const weatherApiSecret = new secretsmanager.Secret(this, `weather-api-secret-for-${projectName}`, {
       description: 'secret for weather api key', // openweathermap
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -314,7 +314,8 @@ export class CdkMcpRagStack extends cdk.Stack {
         weather_api_key: cdk.SecretValue.unsafePlainText(''),
       },
     });
-    
+    weatherApiSecret.grantRead(ec2Role) 
+
     // Secret
     const langsmithApiSecret = new secretsmanager.Secret(this, `weather-langsmith-secret-for-${projectName}`, {
       description: 'secret for lamgsmith api key', // openweathermap
@@ -325,6 +326,7 @@ export class CdkMcpRagStack extends cdk.Stack {
         langsmith_api_key: cdk.SecretValue.unsafePlainText(''),
       }, 
     });
+    langsmithApiSecret.grantRead(ec2Role) 
 
     const tavilyApiSecret = new secretsmanager.Secret(this, `weather-tavily-secret-for-${projectName}`, {
       description: 'secret for lamgsmith api key', // openweathermap
@@ -346,6 +348,7 @@ export class CdkMcpRagStack extends cdk.Stack {
         code_interpreter_id: cdk.SecretValue.unsafePlainText(''),
       },
     });
+    codeInterpreterSecret.grantRead(ec2Role) 
 
     // Cost Explorer Policy
     const costExplorerPolicy = new iam.PolicyStatement({  
