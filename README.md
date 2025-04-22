@@ -329,7 +329,7 @@ def create_agent(tools):
 }
 ```
 
-## 실행하기
+### 실행하기
 
 Output의 environmentformcprag의 내용을 복사하여 application/config.json을 생성합니다. "aws configure"로 credential이 설정되어 있어야합니다. 만약 visual studio code 사용자라면 config.json 파일은 아래 명령어를 사용합니다.
 
@@ -351,6 +351,31 @@ pip install boto3 langchain_aws langchain langchain_community langgraph
 ```text
 streamlit run application/app.py
 ```
+
+### EC2에 배포하기
+
+EC2가 private subnet에 있으므로 Session Manger로 접속합니다. 이때 설치는 ec2-user로 진행되었으므로 아래와 같이 code를 업데이트합니다.
+
+```text
+sudo runuser -l ec2-user -c 'cd /home/ec2-user/mcp && git pull'
+```
+
+이제 아래와 같이 docker를 빌드합니다.
+
+```text
+sudo runuser -l ec2-user -c 'cd mcp && docker build -t streamlit-app .'
+```
+
+빌드가 완료되면 "sudo docker ps"로 docker id를 확인후에 "sudo docker kill" 명령어로 종료합니다.
+
+![noname](https://github.com/user-attachments/assets/4afb2af8-d092-4aaa-813a-65975375f7d4)
+
+이후 아래와 같이 다시 실행합니다.
+
+```text
+sudo runuser -l ec2-user -c "docker run -d -p 8501:8501 streamlit-app"
+```
+
 
 ### MCP Inspector
 
