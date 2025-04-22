@@ -354,6 +354,50 @@ export class CdkMcpRagStack extends cdk.Stack {
       }),
     );   
 
+    const ec2Policy = new iam.PolicyStatement({  
+      resources: ['arn:aws:ec2:*:*:instance/*'],
+      actions: ['ec2:*'],
+    });
+    ec2Role.attachInlinePolicy( // add bedrock policy
+      new iam.Policy(this, `ec2-policy-for-${projectName}`, {
+        statements: [ec2Policy],
+      }),
+    );
+
+    // pass role
+    const passRoleResourceArn = knowledge_base_role.roleArn;
+    const passRolePolicy = new iam.PolicyStatement({  
+      resources: [passRoleResourceArn],      
+      actions: ['iam:PassRole'],
+    });      
+    ec2Role.attachInlinePolicy( // add pass role policy
+      new iam.Policy(this, `pass-role-for-${projectName}`, {
+      statements: [passRolePolicy],
+      }), 
+    );  
+
+    // aoss
+    const aossRolePolicy = new iam.PolicyStatement({  
+      resources: ['*'],      
+      actions: ['aoss:*'],
+    }); 
+    ec2Role.attachInlinePolicy( 
+      new iam.Policy(this, `aoss-policy-for-${projectName}`, {
+        statements: [aossRolePolicy],
+      }),
+    ); 
+
+    // getRole
+    const getRolePolicy = new iam.PolicyStatement({  
+      resources: ['*'],      
+      actions: ['iam:GetRole'],
+    }); 
+    ec2Role.attachInlinePolicy( 
+      new iam.Policy(this, `getRole-policy-for-${projectName}`, {
+        statements: [getRolePolicy],
+      }),
+    ); 
+
     // VPC
     const vpc = new ec2.Vpc(this, `vpc-for-${projectName}`, {
       vpcName: `vpc-for-${projectName}`,
