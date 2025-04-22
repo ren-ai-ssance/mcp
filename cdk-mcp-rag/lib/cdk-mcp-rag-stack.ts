@@ -405,6 +405,17 @@ export class CdkMcpRagStack extends cdk.Stack {
       }),
     ); 
 
+    // S3 ListBuckets 권한 추가
+    const s3ListBucketsPolicy = new iam.PolicyStatement({
+      resources: ['*'],
+      actions: ['s3:ListAllMyBuckets', 's3:ListBuckets'],
+    });
+    ec2Role.attachInlinePolicy(
+      new iam.Policy(this, `s3-list-buckets-policy-for-${projectName}`, {
+        statements: [s3ListBucketsPolicy],
+      }),
+    );
+
     // VPC
     const vpc = new ec2.Vpc(this, `vpc-for-${projectName}`, {
       vpcName: `vpc-for-${projectName}`,
