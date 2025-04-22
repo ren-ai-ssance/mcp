@@ -21,3 +21,4 @@ langchain-mcp-adapters
 opensearch-py
 langgraph-supervisor
 langgraph-swarm
+aioboto3
