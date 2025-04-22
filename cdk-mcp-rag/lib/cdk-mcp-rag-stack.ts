@@ -661,17 +661,15 @@ export class CdkMcpRagStack extends cdk.Stack {
       `json='${JSON.stringify(environment)}' && echo "$json">/home/config.json`,      
       `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/mcp'`,
       `runuser -l ec2-user -c 'cd mcp && docker build -t streamlit-app .'`,
-      'yum install -y amazon-cloudwatch-agent',
-      'mkdir -p /opt/aws/amazon-cloudwatch-agent/etc/', 
-      'cp /home/ec2-user/mcp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/',      
-      'systemctl enable amazon-cloudwatch-agent',
-      'systemctl start amazon-cloudwatch-agent',
-      'mkdir -p /etc/docker',
-      'cp /home/ec2-user/daemon.json /etc/docker/',
-
-EOF`,
-      'systemctl restart docker',
-      'sudo runuser -l ec2-user -c "docker run -d -p 8501:8501 streamlit-app"'
+      `yum install -y amazon-cloudwatch-agent`,
+      `mkdir -p /opt/aws/amazon-cloudwatch-agent/etc/`, 
+      `cp /home/ec2-user/mcp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/`,      
+      `systemctl enable amazon-cloudwatch-agent`,
+      `systemctl start amazon-cloudwatch-agent`,
+      `mkdir -p /etc/docker`,
+      `cp /home/ec2-user/mcp/daemon.json /etc/docker/`,
+      `systemctl restart docker`,
+      `runuser -l ec2-user -c 'docker run -d -p 8501:8501 streamlit-app'`
     ];
     userData.addCommands(...commands);
     
