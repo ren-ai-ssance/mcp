@@ -1,16 +1,13 @@
 import json
 import boto3
-import traceback
 import logging
 import sys
 import mcp_log as log
-import mcp_cost as cost
 import mcp_rag as rag
 import mcp_s3 as storage
-import mcp_nova_canvas as canvas
+import mcp_coder as coder
 
 from typing import Dict, Optional, Any
-from langchain_experimental.tools import PythonAstREPLTool
 from mcp.server.fastmcp import FastMCP 
 
 logging.basicConfig(
@@ -47,8 +44,6 @@ def search(keyword: str) -> str:
 ######################################
 # Code Interpreter
 ######################################
-repl = PythonAstREPLTool()
-
 @mcp.tool()
 def repl_coder(code):
     """
@@ -56,15 +51,24 @@ def repl_coder(code):
     If you want to see the output of a value, you should print it out with `print(...)`. This is visible to the user.
     code: the Python code was written in English
     """
-    try:
-        result = repl.run(code)
-    except BaseException as e:
-        return f"Failed to execute. Error: {repr(e)}"
+    logger.info(f"repl_coder --> code: {code}")
     
-    if result is None:
-        result = "It didn't return anything."
+    return coder.repl_coder(code)
 
-    return result
+@mcp.tool()
+def repl_drawer(code):
+    """
+    Execute a Python script for draw a graph.
+    Since Python runtime cannot use external APIs, necessary data must be included in the code.
+    The graph should use English exclusively for all textual elements.
+    Do not save pictures locally bacause the runtime does not have filesystem.
+    When a comparison is made, all arrays must be of the same length.
+    code: the Python code was written in English
+    return: the url of graph
+    """ 
+    logger.info(f"repl_drawer --> code: {code}")
+        
+    return coder.repl_drawer(code)
 
 ######################################
 # AWS Logs
@@ -75,6 +79,8 @@ async def list_groups(
     region: Optional[str] = 'us-west-2'
 ) -> str:
     """List available CloudWatch log groups."""
+    logger.info(f"list_groups --> prefix: {prefix}, region: {region}")
+
     return await log.list_groups(prefix=prefix, region=region)
 
 @mcp.tool()
@@ -87,6 +93,7 @@ async def get_logs(
     region: Optional[str] = 'us-west-2'
 ) -> str:
     """Get CloudWatch logs from a specific log group and stream."""
+    logger.info(f"get_logs --> logGroupName: {logGroupName}, logStreamName: {logStreamName}, startTime: {startTime}, endTime: {endTime}, filterPattern: {filterPattern}, region: {region}")
 
     return await log.get_logs(
         logGroupName=logGroupName,
@@ -112,6 +119,8 @@ async def list_buckets(
     """
     List S3 buckets using async client with pagination
     """
+    logger.info(f"list_buckets --> start_after: {start_after}, max_buckets: {max_buckets}, region: {region}")
+
     return await storage.list_buckets(start_after, max_buckets, region)
     
 @mcp.tool()  
@@ -129,6 +138,8 @@ async def list_objects(
         max_keys: Maximum number of keys to return,
         region: Name of the aws region
     """
+    logger.info(f"list_objects --> bucket_name: {bucket_name}, prefix: {prefix}, max_keys: {max_keys}, region: {region}")
+
     return await storage.list_objects(bucket_name, prefix, max_keys, region)
 
 @mcp.tool()    
@@ -142,6 +153,8 @@ async def list_resources(
     Args:
         start_after: Start listing after this bucket name
     """
+    logger.info(f"list_resources --> start_after: {start_after}, max_buckets: {max_buckets}, region: {region}")
+    
     return await storage.list_resources(start_after, max_buckets, region)
     
 ######################################
