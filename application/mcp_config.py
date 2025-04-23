@@ -7,12 +7,6 @@ def load_config(mcp_type):
                     "args": [
                         "application/mcp-server.py"
                     ]
-                },
-                "playwright": {
-                    "command": "npx",
-                    "args": [
-                        "@playwright/mcp@latest"
-                    ]
                 }
             }
         }
@@ -96,7 +90,7 @@ def load_config(mcp_type):
     elif mcp_type == "aws_cost":
         return {
             "mcpServers": {
-                "imageGeneration": {
+                "aws_cost": {
                     "command": "python",
                     "args": [
                         "application/mcp_server_aws_cost.py"
@@ -104,6 +98,30 @@ def load_config(mcp_type):
                 }
             }
         }    
+    elif mcp_type == "aws_cloudwatch":
+        return {
+            "mcpServers": {
+                "aws_cloudwatch_log": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_aws_log.py"
+                    ]
+                }
+            }
+        }    
+    
+    elif mcp_type == "aws_storage":
+        return {
+            "mcpServers": {
+                "aws_storage": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_aws_s3.py"
+                    ]
+                }
+            }
+        }    
+        
     elif mcp_type == "arxiv":
         return {
             "mcpServers": {
@@ -120,3 +138,6 @@ def load_config(mcp_type):
                 }
             }
         }
+    
+
+    

@@ -149,6 +149,6 @@ async def get_logs(
             }
         )    
 
-    response_json = json.dumps(formatted_events, ensure_ascii=True, default=str)
+    response_json = json.dumps(formatted_events, ensure_ascii=False, default=str)
     logger.info(f"response: {response_json}")
     return response_json

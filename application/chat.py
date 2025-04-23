@@ -1626,16 +1626,24 @@ def show_status_message(response, st):
             break
 
         if isinstance(re, AIMessage):
+            logger.info(f"AIMessage: {re}")
             if re.content:
                 logger.info(f"content: {re.content}")
                 st.info(f"{re.content}")
-            if 'tool_calls' in re:
+            if hasattr(re, 'tool_calls') and re.tool_calls:
                 logger.info(f"Tool name: {re.tool_calls[0]['name']}")
-                st.info(f"Tool name: {re.tool_call['name']}")
-                if 'args' in re.tool_call:
-                    logger.info(f"Tool args: {re.tool_call['args']}")
-                    st.info(f"Tool args: {re.tool_call['args']}")
-        elif isinstance(re, ToolMessage):
+                st.info(f"Tool name: {re.tool_calls[0]['name']}")
+                if 'args' in re.tool_calls[0]:
+                    logger.info(f"Tool args: {re.tool_calls[0]['args']}")
+                    
+                    args = re.tool_calls[0]['args']
+                    if 'code' in args:
+                        logger.info(f"code: {args['code']}")
+                        st.code(args['code'])
+                    else:
+                        st.info(f"Tool args: {re.tool_calls[0]['args']}")
+
+        elif isinstance(re, ToolMessage):            
             if re.name:
                 logger.info(f"Tool name: {re.name}")
                 st.info(f"Tool name: {re.name}")
@@ -1643,8 +1651,13 @@ def show_status_message(response, st):
                 logger.info(f"Tool result: {re.content}")
                 st.info(f"Tool result: {re.content}")
             try: 
-                tool_result = json.loads(re.content)
-                logger.info(f"tool_result: {tool_result}")
+                # check json format
+                if isinstance(re.content, str) and (re.content.strip().startswith('{') or re.content.strip().startswith('[')):
+                    tool_result = json.loads(re.content)
+                    logger.info(f"tool_result: {tool_result}")
+                else:
+                    tool_result = re.content
+                    logger.info(f"tool_result (not JSON): {tool_result}")
 
                 if "path" in tool_result:
                     logger.info(f"Path: {tool_result['path']}")
@@ -1676,10 +1689,43 @@ def show_status_message(response, st):
                             logger.error(f"이미지 표시 오류: {str(e)}")
                             st.error(f"이미지를 표시할 수 없습니다: {str(e)}")
 
-                if "reference" in tool_result:
-                    logger.info(f"Reference: {tool_result['reference']}")
+                # ArXiv
+                if "papers" in tool_result:
+                    logger.info(f"size of papers: {len(tool_result['papers'])}")
 
-                    references.append(tool_result['reference'])
+                    papers = tool_result['papers']
+                    for paper in papers:
+                        url = paper['url']
+                        title = paper['title']
+                        content = paper['abstract'][:100]
+                        logger.info(f"url: {url}, title: {title}, content: {content}")
+
+                        references.append({
+                            "url": url,
+                            "title": title,
+                            "content": content
+                        })
+                
+                # RAG
+                if isinstance(tool_result, list):
+                    logger.info(f"size of tool_result: {len(tool_result)}")
+                    for i, item in enumerate(tool_result):
+                        logger.info(f'item[{i}]: {item}')
+
+                        if "reference" in item:
+                            logger.info(f"Reference: {item['reference']}")
+
+                            infos = item['reference']
+                            url = infos['url']
+                            title = infos['title']
+                            source = infos['from']
+                            logger.info(f"url: {url}, title: {title}, source: {source}")
+
+                            references.append({
+                                "url": url,
+                                "title": title,
+                                "content": item['contents'][:100]
+                            })
 
             except:
                 logger.info(f"fail to parsing..")
@@ -1691,6 +1737,8 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
     logger.info(f"server_params: {server_params}")
 
     async with  MultiServerMCPClient(server_params) as client:
+        references = []
+        ref = ""
         with st.status("thinking...", expanded=True, state="running") as status:                       
             tools = client.get_tools()
             logger.info(f"tools: {tools}")
@@ -1708,11 +1756,17 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
             response = await agent.ainvoke({"messages": query}, config)
             logger.info(f"response: {response}")
 
-            if debug_mode == "Enable":
-                image_url, references = show_status_message(response["messages"], st)
-
             result = response["messages"][-1].content
             logger.info(f"result: {result}")
+
+            image_url, references = show_status_message(response["messages"], st)     
+            
+            if references:
+                ref = "\n\n### Reference\n"
+            for i, reference in enumerate(references):
+                ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
+
+            result += ref
 
         st.markdown(result)
 

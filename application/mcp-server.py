@@ -109,12 +109,12 @@ async def get_logs(
         region=region
     )
 
-from typing import List, Optional
-from mcp.types import Resource
-
 ######################################
 # AWS S3
 ######################################
+from typing import List, Optional
+from mcp.types import Resource
+
 @mcp.tool()
 async def list_buckets(
     start_after: Optional[str] = None,

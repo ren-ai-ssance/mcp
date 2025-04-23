@@ -77,7 +77,7 @@ with st.sidebar:
         st.subheader("⚙️ MCP Config")
 
         mcp_mode = st.radio(
-            label="MCP를 설정하세요.",options=["default", "image generation", "playwright", "obsidian", "airbnb", "ArXiv", "aws cost", "aws diagram", "aws document", "사용자 설정"], index=0
+            label="MCP를 설정하세요.",options=["default", "playwright", "obsidian", "airbnb", "ArXiv", "image generation", "aws cost", "aws document", "aws cloudwatch", "aws storage", "aws diagram", "사용자 설정"], index=0
         )   
 
         if mcp_mode == 'image generation':
@@ -90,6 +90,10 @@ with st.sidebar:
             mcp = mcp_config.load_config('aws_cost')
         elif mcp_mode == 'ArXiv':
             mcp = mcp_config.load_config('arxiv')
+        elif mcp_mode == 'aws cloudwatch':
+            mcp = mcp_config.load_config('aws_cloudwatch')
+        elif mcp_mode == 'aws storage':
+            mcp = mcp_config.load_config('aws_storage')
 
         else:
             mcp = mcp_config.load_config(mcp_mode)
