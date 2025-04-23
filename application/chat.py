@@ -1728,7 +1728,7 @@ def show_status_message(response, st):
                         
                         # RAG
                         if "reference" in item:
-                            logger.info(f"Reference: {item['reference']}")
+                            logger.info(f"reference: {item['reference']}")
 
                             infos = item['reference']
                             url = infos['url']

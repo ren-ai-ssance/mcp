@@ -427,7 +427,7 @@ def lambda_handler(event, context):
                 "contents": doc.page_content,              
                 "reference": {
                     "url": doc.metadata["url"],                   
-                    "name": doc.metadata["name"],
+                    "title": doc.metadata["name"],
                     "from": doc.metadata["from"]
                 }
             })

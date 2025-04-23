@@ -153,4 +153,16 @@ def load_config(mcp_type):
                 }
             }
         }
+    
+    elif mcp_type == "aws_rag":
+        return {
+            "mcpServers": {
+                "aws_storage": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_rag.py"
+                    ]
+                }
+            }
+        }    
    
