@@ -423,9 +423,9 @@ try:
     )
     secret = json.loads(get_firecrawl_secret['SecretString'])
 
-    if "firecrawl_key" in secret:
-        firecrawl_key = secret['firecrawl_key']
-        #print('firecrawl_key: ', firecrawl_key)
+    if "firecrawl_api_key" in secret:
+        firecrawl_key = secret['firecrawl_api_key']
+        # print('firecrawl_api_key: ', firecrawl_key)
 except Exception as e: 
     logger.info(f"Firecrawl credential is required: {e}")
     raise e

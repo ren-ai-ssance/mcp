@@ -1,3 +1,5 @@
+import chat
+
 def load_config(mcp_type):
     if mcp_type == "default":
         return {
@@ -139,5 +141,16 @@ def load_config(mcp_type):
             }
         }
     
-
-    
+    elif mcp_type == "firecrawl":
+        return {
+            "mcpServers": {
+                "firecrawl-mcp": {
+                    "command": "npx",
+                    "args": ["-y", "firecrawl-mcp"],
+                    "env": {
+                        "FIRECRAWL_API_KEY": chat.firecrawl_key
+                    }
+                }
+            }
+        }
+   
