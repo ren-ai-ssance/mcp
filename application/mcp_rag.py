@@ -71,4 +71,4 @@ def retrieve_knowledge_base(query):
         err_msg = traceback.format_exc()
         print(f"error message: {err_msg}")       
 
-    return payload['response'], []   
+    return payload['response']

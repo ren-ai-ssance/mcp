@@ -1364,7 +1364,7 @@ def retrieve_knowledge_base(query):
         err_msg = traceback.format_exc()
         logger.info(f"error message: {err_msg}")       
 
-    return payload['response'], []      
+    return payload['response']
 
 def run_rag_with_knowledge_base(query, st):
     global reference_docs, contentList

@@ -408,13 +408,15 @@ def lambda_handler(event, context):
             err_msg = traceback.format_exc()
             print('error message: ', err_msg)    
     
+    docs = []
     if function == 'search_rag':
         print('keyword: ', keyword)
 
         # retrieve
         relevant_docs = search_by_knowledge_base(keyword, top_k)
 
-        relevant_context = ""
+        # relevant_context = ""
+        
         if grading == "Enable":
             # grade documents
             filtered_docs = grade_documents(model_name, keyword, relevant_docs)
@@ -422,14 +424,17 @@ def lambda_handler(event, context):
             # check duplication
             filtered_docs = check_duplication(filtered_docs) 
             
-            for document in filtered_docs:
-                relevant_context = relevant_context + document.page_content + "\n\n"        
+            docs = filtered_docs
+            # for document in filtered_docs:
+            #     relevant_context = relevant_context + document.page_content + "\n\n"        
             
         else:
-            for document in relevant_docs:
-                relevant_context = relevant_context + document.page_content + "\n\n"        
-        print('relevant_context: ', relevant_context)
+            # for document in relevant_docs:
+            #     relevant_context = relevant_context + document.page_content + "\n\n"        
+            docs = relevant_docs
+
+        # print('relevant_context: ', relevant_context)
         
     return {
-        'response': relevant_context
+        'response': json.dumps(docs)
     }

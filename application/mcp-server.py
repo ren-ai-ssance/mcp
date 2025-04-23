@@ -37,7 +37,12 @@ except Exception as e:
 ######################################
 @mcp.tool()
 def search(keyword: str) -> str:
-    "search keyword"
+    """
+    Search the knowledge base with the given keyword.
+    keyword: the keyword to search
+    return: the result of search
+    """
+    logger.info(f"search --> keyword: {keyword}")
 
     return rag.retrieve_knowledge_base(keyword)
 
