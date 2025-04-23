@@ -410,27 +410,13 @@ def lambda_handler(event, context):
     
     docs = []
     if function == 'search_rag':
-        print('keyword: ', keyword)
-
-        # retrieve
-        relevant_docs = search_by_knowledge_base(keyword, top_k)
-
-        # relevant_context = ""
-        
-        if grading == "Enable":
-            # grade documents
-            filtered_docs = grade_documents(model_name, keyword, relevant_docs)
-
-            # check duplication
-            filtered_docs = check_duplication(filtered_docs) 
-
-            docs = filtered_docs
-            # for document in filtered_docs:
-            #     relevant_context = relevant_context + document.page_content + "\n\n"        
-            
+        print('keyword: ', keyword)        
+        relevant_docs = search_by_knowledge_base(keyword, top_k)  # retrieve
+        if grading == "Enable":            
+            filtered_docs = grade_documents(model_name, keyword, relevant_docs)  # grade documents            
+            filtered_docs = check_duplication(filtered_docs)  # check duplication
+            docs = filtered_docs            
         else:
-            # for document in relevant_docs:
-            #     relevant_context = relevant_context + document.page_content + "\n\n"        
             docs = relevant_docs
 
         json_docs = []
@@ -439,7 +425,7 @@ def lambda_handler(event, context):
 
             json_docs.append({
                 "contents": doc.page_content,
-                "url": doc.metadata["url"],
+                "reference": doc.metadata["url"],
                 "from": doc.metadata["from"]
             })
 
