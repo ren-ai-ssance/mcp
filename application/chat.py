@@ -1618,6 +1618,7 @@ def tool_info(tools, st):
 
 def show_status_message(response, st):
     image_url = []
+    references = []
     for i, re in enumerate(response):
         logger.info(f"message[{i}]: {re}")
 
@@ -1674,10 +1675,16 @@ def show_status_message(response, st):
                         except Exception as e:
                             logger.error(f"이미지 표시 오류: {str(e)}")
                             st.error(f"이미지를 표시할 수 없습니다: {str(e)}")
+
+                if "reference" in tool_result:
+                    logger.info(f"Reference: {tool_result['reference']}")
+
+                    references.append(tool_result['reference'])
+
             except:
                 logger.info(f"fail to parsing..")
                 pass
-    return image_url
+    return image_url, references
             
 async def mcp_rag_agent_multiple(query, historyMode, st):
     server_params = load_multiple_mcp_server_parameters()
@@ -1702,7 +1709,7 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
             logger.info(f"response: {response}")
 
             if debug_mode == "Enable":
-                image_url = show_status_message(response["messages"], st)
+                image_url, references = show_status_message(response["messages"], st)
 
             result = response["messages"][-1].content
             logger.info(f"result: {result}")

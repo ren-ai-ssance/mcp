@@ -425,6 +425,7 @@ def lambda_handler(event, context):
 
             json_docs.append({
                 "contents": doc.page_content,
+                "name": doc.metadata["name"],
                 "reference": doc.metadata["url"],
                 "from": doc.metadata["from"]
             })
