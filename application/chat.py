@@ -1705,13 +1705,13 @@ def show_status_message(response, st):
                             "title": title,
                             "content": content
                         })
-                
-                # RAG
+                                
                 if isinstance(tool_result, list):
                     logger.info(f"size of tool_result: {len(tool_result)}")
                     for i, item in enumerate(tool_result):
                         logger.info(f'item[{i}]: {item}')
-
+                        
+                        # RAG
                         if "reference" in item:
                             logger.info(f"Reference: {item['reference']}")
 
@@ -1726,6 +1726,22 @@ def show_status_message(response, st):
                                 "title": title,
                                 "content": item['contents'][:100]
                             })
+
+                        # Others               
+                        if isinstance(item, str):
+                            try:
+                                item = json.loads(item)
+
+                                # AWS Document
+                                if "rank_order" in item:
+                                    references.append({
+                                        "url": item['url'],
+                                        "title": item['title'],
+                                        "content": item['context'][:100]
+                                    })
+                            except json.JSONDecodeError:
+                                logger.info(f"JSON parsing error: {item}")
+                                continue
 
             except:
                 logger.info(f"fail to parsing..")
