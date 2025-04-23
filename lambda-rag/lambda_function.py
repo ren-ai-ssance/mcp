@@ -423,7 +423,7 @@ def lambda_handler(event, context):
 
             # check duplication
             filtered_docs = check_duplication(filtered_docs) 
-            
+
             docs = filtered_docs
             # for document in filtered_docs:
             #     relevant_context = relevant_context + document.page_content + "\n\n"        
@@ -433,8 +433,18 @@ def lambda_handler(event, context):
             #     relevant_context = relevant_context + document.page_content + "\n\n"        
             docs = relevant_docs
 
-        # print('relevant_context: ', relevant_context)
+        json_docs = []
+        for doc in docs:
+            print('doc: ', doc)
+
+            json_docs.append({
+                "contents": doc.page_content,
+                "url": doc.metadata["url"],
+                "from": doc.metadata["from"]
+            })
+
+        print('json_docs: ', json_docs)
         
     return {
-        'response': json.dumps(docs)
+        'response': json.dumps(json_docs)
     }
