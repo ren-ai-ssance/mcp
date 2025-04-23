@@ -318,7 +318,7 @@ export class CdkMcpRagStack extends cdk.Stack {
 
     // Secret
     const langsmithApiSecret = new secretsmanager.Secret(this, `weather-langsmith-secret-for-${projectName}`, {
-      description: 'secret for lamgsmith api key', // openweathermap
+      description: 'secret for lamgsmith api key', // lamgsmith
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       secretName: `langsmithapikey-${projectName}`,
       secretObjectValue: {
@@ -329,12 +329,22 @@ export class CdkMcpRagStack extends cdk.Stack {
     langsmithApiSecret.grantRead(ec2Role) 
 
     const tavilyApiSecret = new secretsmanager.Secret(this, `weather-tavily-secret-for-${projectName}`, {
-      description: 'secret for lamgsmith api key', // openweathermap
+      description: 'secret for tavily api key', // tavily
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       secretName: `tavilyapikey-${projectName}`,
       secretObjectValue: {
         project_name: cdk.SecretValue.unsafePlainText(projectName),
         tavily_api_key: cdk.SecretValue.unsafePlainText(''),
+      },
+    });
+
+    const firecrawlApiSecret = new secretsmanager.Secret(this, `firecrawl-secret-for-${projectName}`, {
+      description: 'secret for firecrawl api key', // firecrawl
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      secretName: `firecrawlapikey-${projectName}`,
+      secretObjectValue: {
+        project_name: cdk.SecretValue.unsafePlainText(projectName),
+        firecrawl_api_key: cdk.SecretValue.unsafePlainText(''),
       },
     });
 

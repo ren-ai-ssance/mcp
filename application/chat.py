@@ -415,6 +415,21 @@ except Exception as e:
     logger.info(f"Tavily credential is required: {e}")
     raise e
 
+# api key to use Tavily Search
+firecrawl_key = ""
+try:
+    get_firecrawl_secret = secretsmanager.get_secret_value(
+        SecretId=f"firecrawlapikey-{projectName}"
+    )
+    secret = json.loads(get_firecrawl_secret['SecretString'])
+
+    if "firecrawl_key" in secret:
+        firecrawl_key = secret['firecrawl_key']
+        #print('firecrawl_key: ', firecrawl_key)
+except Exception as e: 
+    logger.info(f"Firecrawl credential is required: {e}")
+    raise e
+
 def get_references(docs):    
     reference = ""
     for i, doc in enumerate(docs):
