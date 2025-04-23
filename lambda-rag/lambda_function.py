@@ -446,5 +446,5 @@ def lambda_handler(event, context):
         print('json_docs: ', json_docs)
         
     return {
-        'response': json.dumps(json_docs)
+        'response': json.dumps(json_docs, ensure_ascii=False)
     }
