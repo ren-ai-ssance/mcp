@@ -1666,6 +1666,32 @@ def show_status_message(response, st):
                 logger.info(f"Tool result: {re.content}")
                 st.info(f"Tool result: {re.content}")
             try: 
+                # tavily
+                if isinstance(re.content, str) and "Title:" in re.content and "URL:" in re.content and "Content:" in re.content:
+                    logger.info("Tavily parsing...")                    
+                    items = re.content.split("\n\n")
+                    for i, item in enumerate(items):
+                        logger.info(f"item[{i}]: {item}")
+                        if "Title:" in item and "URL:" in item and "Content:" in item:
+                            try:
+                                # 정규식 대신 문자열 분할 방법 사용
+                                title_part = item.split("Title:")[1].split("URL:")[0].strip()
+                                url_part = item.split("URL:")[1].split("Content:")[0].strip()
+                                content_part = item.split("Content:")[1].strip()
+                                
+                                logger.info(f"title_part: {title_part}")
+                                logger.info(f"url_part: {url_part}")
+                                logger.info(f"content_part: {content_part}")
+                                
+                                references.append({
+                                    "url": url_part,
+                                    "title": title_part,
+                                    "content": content_part[:100] + "..." if len(content_part) > 100 else content_part
+                                })
+                            except Exception as e:
+                                logger.info(f"파싱 오류: {str(e)}")
+                                continue
+                
                 # check json format
                 if isinstance(re.content, str) and (re.content.strip().startswith('{') or re.content.strip().startswith('[')):
                     tool_result = json.loads(re.content)
