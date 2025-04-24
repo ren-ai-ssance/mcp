@@ -363,7 +363,7 @@ sudo runuser -l ec2-user -c 'cd /home/ec2-user/mcp && git pull'
 이제 아래와 같이 docker를 빌드합니다.
 
 ```text
-sudo runuser -l ec2-user -c 'cd mcp && docker build -t streamlit-app .'
+sudo runuser -l ec2-user -c "cd mcp && docker build -t streamlit-app ."
 ```
 
 빌드가 완료되면 "sudo docker ps"로 docker id를 확인후에 "sudo docker kill" 명령어로 종료합니다.
@@ -373,7 +373,13 @@ sudo runuser -l ec2-user -c 'cd mcp && docker build -t streamlit-app .'
 이후 아래와 같이 다시 실행합니다.
 
 ```text
-sudo runuser -l ec2-user -c "docker run -d -p 8501:8501 streamlit-app"
+sudo runuser -l ec2-user -c 'docker run -d -p 8501:8501 streamlit-app'
+```
+
+만약 console에서 debugging할 경우에는 -d 옵션없이 아래와 같이 실행합니다.
+
+```text
+sudo runuser -l ec2-user -c 'docker run -p 8501:8501 streamlit-app'
 ```
 
 
