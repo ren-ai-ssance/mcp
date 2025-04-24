@@ -18,4 +18,7 @@
 
 실행 결과의 예는 다음과 같습니다.
 
+![image](https://github.com/user-attachments/assets/9c787e9f-741c-4275-afbd-4e3f9e0e8ec8)
+
+
 ![image](https://github.com/user-attachments/assets/d9037523-f72d-41b7-a6e0-0457b59d55f1)
