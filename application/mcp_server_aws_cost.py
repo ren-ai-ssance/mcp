@@ -57,9 +57,9 @@ def generate_cost_insights() -> str:
     return cost.generate_cost_insights()
 
 @mcp.tool()
-def ask_cost_insights(question: str) -> str:
+def generate_cost_insights(question: str) -> str:
     """
-    ask cost insights
+    generate cost report only when the user clearly requests
     question: the question to ask
     """
 

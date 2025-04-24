@@ -1479,16 +1479,13 @@ def create_agent(tools, historyMode):
     def should_continue(state: State) -> Literal["continue", "end"]:
         logger.info(f"###### should_continue ######")
 
-        logger.info(f"state: {state}")
         messages = state["messages"]    
-
         last_message = messages[-1]
-        logger.info(f"last_message: {last_message.content}")
-
-        if isinstance(last_message, AIMessage) and last_message.tool_calls:
-            logger.info(f"--- CONTINUE: {last_message.tool_calls[-1]['name']} ---")
-            return "continue"
         
+        if isinstance(last_message, AIMessage) and last_message.tool_calls:
+            tool_name = last_message.tool_calls[-1]['name']
+            logger.info(f"--- CONTINUE: {tool_name} ---")
+            return "continue"
         else:
             logger.info(f"--- END ---")
             return "end"
@@ -1647,27 +1644,43 @@ def show_status_message(response, st):
             logger.info(f"AIMessage: {re}")
             if re.content:
                 logger.info(f"content: {re.content}")
-                st.info(f"{re.content}")
+                content = re.content
+                if len(content) > 500:
+                    content = content[:500] + "..."       
+                if debug_mode == "Enable": 
+                    st.info(f"{content}")
             if hasattr(re, 'tool_calls') and re.tool_calls:
                 logger.info(f"Tool name: {re.tool_calls[0]['name']}")
-                st.info(f"Tool name: {re.tool_calls[0]['name']}")
+                
                 if 'args' in re.tool_calls[0]:
                     logger.info(f"Tool args: {re.tool_calls[0]['args']}")
                     
                     args = re.tool_calls[0]['args']
                     if 'code' in args:
                         logger.info(f"code: {args['code']}")
-                        st.code(args['code'])
-                    else:
-                        st.info(f"Tool args: {re.tool_calls[0]['args']}")
+                        if debug_mode == "Enable": 
+                            st.code(args['code'])
+                    elif re.tool_calls[0]['args']:
+                        if debug_mode == "Enable": 
+                            st.info(f"Tool name: {re.tool_calls[0]['name']}  \nTool args: {re.tool_calls[0]['args']}")
+            # else:
+            #     st.info(f"Tool name: {re.tool_calls[0]['name']}")
 
         elif isinstance(re, ToolMessage):            
             if re.name:
                 logger.info(f"Tool name: {re.name}")
-                st.info(f"Tool name: {re.name}")
-            if re.content:
-                logger.info(f"Tool result: {re.content}")
-                st.info(f"Tool result: {re.content}")
+                
+                if re.content:                
+                    content = re.content
+                    if len(content) > 500:
+                        content = content[:500] + "..."
+                    logger.info(f"Tool result: {content}")
+                    
+                    if debug_mode == "Enable": 
+                        st.info(f"Tool name: {re.name}  \nTool result: {content}")                    
+                else:
+                    if debug_mode == "Enable": 
+                        st.info(f"Tool name: {re.name}")
             try: 
                 # tavily
                 if isinstance(re.content, str) and "Title:" in re.content and "URL:" in re.content and "Content:" in re.content:
