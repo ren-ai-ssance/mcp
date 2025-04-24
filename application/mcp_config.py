@@ -1,5 +1,17 @@
 import chat
+import logging
+import sys
 
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("mcp-cost")
+
+mcp_user_config = {}    
 def load_config(mcp_type):
     if mcp_type == "default":
         return {
@@ -178,4 +190,46 @@ def load_config(mcp_type):
                 }
             }
         }
-   
+    
+    elif mcp_type == "사용자 설정":
+        return mcp_user_config
+
+def load_selected_config(mcp_selections: dict[str, bool]):
+    #logger.info(f"mcp_selections: {mcp_selections}")
+    loaded_config = {}
+
+    # True 값만 가진 키들을 리스트로 변환
+    selected_servers = [server for server, is_selected in mcp_selections.items() if is_selected]
+    logger.info(f"selected_servers: {selected_servers}")
+
+    for server in selected_servers:
+        logger.info(f"server: {server}")
+
+        if server == "image generation":
+            config = load_config('image_generation')
+        elif server == "aws diagram":
+            config = load_config('aws_diagram')
+        elif server == "aws document":
+            config = load_config('aws_documentation')
+        elif server == "aws cost":
+            config = load_config('aws_cost')
+        elif server == "ArXiv":
+            config = load_config('arxiv')
+        elif server == "aws cloudwatch":
+            config = load_config('aws_cloudwatch')
+        elif server == "aws storage":
+            config = load_config('aws_storage')
+        elif server == "knowledge base":
+            config = load_config('aws_rag')
+        else:
+            config = load_config(server)
+        logger.info(f"config: {config}")
+        
+        if config:
+            loaded_config.update(config["mcpServers"])
+
+    logger.info(f"loaded_config: {loaded_config}")
+        
+    return {
+        "mcpServers": loaded_config
+    }

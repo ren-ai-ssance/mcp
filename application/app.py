@@ -76,31 +76,20 @@ with st.sidebar:
         # MCP Config JSON 입력
         st.subheader("⚙️ MCP Config")
 
-        mcp_mode = st.radio(
-            label="MCP를 설정하세요.",options=["default", "knowledge base", "tavily", "playwright", "firecrawl", "obsidian", "airbnb", "ArXiv", "image generation", "aws cost", "aws document", "aws cloudwatch", "aws storage", "aws diagram", "사용자 설정"], index=0
-        )   
+        # radio를 checkbox로 변경
+        mcp_options = ["default", "knowledge base", "tavily", "playwright", "firecrawl", "obsidian", "airbnb", "ArXiv", "image generation", "aws cost", "aws document", "aws cloudwatch", "aws storage", "aws diagram", "사용자 설정"]
+        mcp_selections = {}
+        default_selections = ["default", "tavily", "playwright"]
 
-        if mcp_mode == 'image generation':
-            mcp = mcp_config.load_config('image_generation')
-        elif mcp_mode == 'aws diagram':
-            mcp = mcp_config.load_config('aws_diagram')
-        elif mcp_mode == 'aws document':
-            mcp = mcp_config.load_config('aws_documentation')
-        elif mcp_mode == 'aws cost':
-            mcp = mcp_config.load_config('aws_cost')
-        elif mcp_mode == 'ArXiv':
-            mcp = mcp_config.load_config('arxiv')
-        elif mcp_mode == 'aws cloudwatch':
-            mcp = mcp_config.load_config('aws_cloudwatch')
-        elif mcp_mode == 'aws storage':
-            mcp = mcp_config.load_config('aws_storage')
-        elif mcp_mode == 'knowledge base':
-            mcp = mcp_config.load_config('aws_rag')
-        else:
-            mcp = mcp_config.load_config(mcp_mode)
-        logger.info(f"mcp: {mcp}")
+        with st.expander("MCP 옵션 선택", expanded=True):
+            for option in mcp_options:
+                default_value = option in default_selections
+                mcp_selections[option] = st.checkbox(option, key=f"mcp_{option}", value=default_value)
+        
+        if not any(mcp_selections.values()):
+            mcp_selections["default"] = True
 
-        if mcp_mode=='사용자 설정':
+        if mcp_selections["사용자 설정"]:
             mcp_info = st.text_area(
                 "MCP 설정을 JSON 형식으로 입력하세요",
                 value=mcp,
@@ -108,11 +97,12 @@ with st.sidebar:
             )
             logger.info(f"mcp_info: {mcp_info}")
 
-            if mcp_info and mcp != mcp_info:
-                mcp_json = json.loads(mcp_info)
-                logger.info(f"mcp_json: {mcp_json}")
-
-                mcp = mcp_json
+            if mcp_info:
+                mcp_config.mcp_user_config = json.loads(mcp_info)
+                logger.info(f"mcp_user_config: {mcp_config.mcp_user_config}")
+        
+        mcp = mcp_config.load_selected_config(mcp_selections)
+        logger.info(f"mcp: {mcp}")
 
     # model selection box
     modelName = st.selectbox(
