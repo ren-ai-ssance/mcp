@@ -191,6 +191,32 @@ def load_config(mcp_type):
             }
         }
     
+    elif mcp_type == "terminal":
+        return {
+            "mcpServers": {
+                "iterm-mcp": {
+                    "command": "npx",
+                    "args": [
+                        "-y",
+                        "iterm-mcp"
+                    ]
+                }
+            }
+        }
+    
+    elif mcp_type == "filesystem":
+        return {
+            "mcpServers": {
+                "filesystem": {
+                    "command": "npx",
+                    "args": [
+                        "@modelcontextprotocol/server-filesystem",
+                        "~/"
+                    ]
+                }
+            }
+        }
+    
     elif mcp_type == "사용자 설정":
         return mcp_user_config
 
