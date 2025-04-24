@@ -340,17 +340,20 @@ secretsmanager = boto3.client(
     service_name='secretsmanager',
     region_name=bedrock_region
 )
-# try:
-#     get_weather_api_secret = secretsmanager.get_secret_value(
-#         SecretId=f"openweathermap-{projectName}"
-#     )
-#     #print('get_weather_api_secret: ', get_weather_api_secret)
-#     secret = json.loads(get_weather_api_secret['SecretString'])
-#     #print('secret: ', secret)
-#     weather_api_key = secret['weather_api_key']
 
-# except Exception as e:
-#     raise e
+# api key for weather
+weather_api_key = ""
+try:
+    get_weather_api_secret = secretsmanager.get_secret_value(
+        SecretId=f"openweathermap-{projectName}"
+    )
+    #print('get_weather_api_secret: ', get_weather_api_secret)
+    secret = json.loads(get_weather_api_secret['SecretString'])
+    #print('secret: ', secret)
+    weather_api_key = secret['weather_api_key']
+
+except Exception as e:
+    raise e
 
 # api key to use LangSmith
 langsmith_api_key = ""

@@ -7,7 +7,7 @@ def load_config(mcp_type):
                 "search": {
                     "command": "python",
                     "args": [
-                        "application/mcp-server.py"
+                        "application/mcp_server_basic.py"
                     ]
                 }
             }
