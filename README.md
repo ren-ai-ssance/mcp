@@ -687,6 +687,13 @@ brew install graphviz
 
 ![noname](https://github.com/user-attachments/assets/04191a61-746f-4852-ad2a-e77b6af7cedc)
 
+### Code Interpreter의 활용
+
+"strawberry의 r의 갯수는?"로 질문하면 아래와 같이 Tools 리스트에서 "repl_coder"가 선택되어 활용됩니다.
+
+![image](https://github.com/user-attachments/assets/2575d4b1-8871-4677-a982-82d60ec6036a)
+
+
 
 ## Reference 
 
