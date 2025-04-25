@@ -66,7 +66,7 @@ with st.sidebar:
     
     # radio selection
     mode = st.radio(
-        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi-agent Supervisor (Router)", "LangGraph Supervisor", "LangGraph Swarm", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=0
+        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi-agent Supervisor (Router)", "LangGraph Supervisor", "LangGraph Swarm", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=2
     )   
     st.info(mode_descriptions[mode][0])
     
@@ -77,9 +77,9 @@ with st.sidebar:
         st.subheader("⚙️ MCP Config")
 
         # radio를 checkbox로 변경
-        mcp_options = ["default", "knowledge base", "terminal", "filesystem", "tavily", "playwright", "firecrawl", "obsidian", "airbnb", "ArXiv", "image generation", "aws cost", "aws document", "aws cloudwatch", "aws storage", "aws diagram", "사용자 설정"]
+        mcp_options = ["default", "knowledge base", "terminal", "code interpreter", "filesystem", "tavily", "playwright", "firecrawl", "obsidian", "airbnb", "ArXiv", "image generation", "aws cost", "aws document", "aws cloudwatch", "aws storage", "aws diagram", "사용자 설정"]
         mcp_selections = {}
-        default_selections = ["default", "tavily", "playwright"]
+        default_selections = ["default", "tavily", "playwright", "code interpreter"]
 
         with st.expander("MCP 옵션 선택", expanded=True):
             for option in mcp_options:

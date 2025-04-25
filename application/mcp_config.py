@@ -178,6 +178,18 @@ def load_config(mcp_type):
             }
         }    
     
+    elif mcp_type == "code_interpreter":
+        return {
+            "mcpServers": {
+                "aws_storage": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_coder.py"
+                    ]
+                }
+            }
+        }    
+    
     elif mcp_type == "tavily":
         return {
             "mcpServers": {
@@ -247,6 +259,8 @@ def load_selected_config(mcp_selections: dict[str, bool]):
             config = load_config('aws_storage')
         elif server == "knowledge base":
             config = load_config('aws_rag')
+        elif server == "code interpreter":
+            config = load_config('code_interpreter')
         else:
             config = load_config(server)
         logger.info(f"config: {config}")
