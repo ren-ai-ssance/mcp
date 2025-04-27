@@ -352,6 +352,22 @@ pip install boto3 langchain_aws langchain langchain_community langgraph
 streamlit run application/app.py
 ```
 
+### Local에서 실행환경 구성하기
+
+venv로 환경을 구성하면 편리합니다. 아래와 같이 환경을 설정합니다.
+
+```text
+python -m venv .venv
+source .venv/bin/activate
+pip install uv
+```
+
+이후 다운로드 받은 github 폴더로 이동한 후에 아래와 같이 필요한 패키지를 추가로 설치 합니다.
+
+```text
+pip install -r reuqirements.txt
+```
+
 ### EC2에 배포하기
 
 EC2가 private subnet에 있으므로 Session Manger로 접속합니다. 이때 설치는 ec2-user로 진행되었으므로 아래와 같이 code를 업데이트합니다.
