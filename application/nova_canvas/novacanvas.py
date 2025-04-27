@@ -55,19 +55,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger("mcp-log")
 
-# aws_region = os.environ.get('AWS_REGION', 'us-west-2')
-aws_region = "us-east-1"
-import boto3
-try:
-    if aws_profile := os.environ.get('AWS_PROFILE'):
-        bedrock_runtime_client = boto3.Session(
-            profile_name=aws_profile, region_name=aws_region
-        ).client('bedrock-runtime')
-    else:
-        bedrock_runtime_client = boto3.Session(region_name=aws_region).client('bedrock-runtime')
-except Exception as e:
-    logger.error(f'Error creating bedrock runtime client: {str(e)}')
-    raise
+def load_image_generator_config():
+    config = None
+    try:
+        with open("image_generator_config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+            logger.info(f"image_generator_config: {config}")
+    except Exception:
+        err_msg = traceback.format_exc()
+        logger.info(f"error message: {err_msg}")    
+    return config
 
 import requests
 from PIL import Image
@@ -98,18 +95,45 @@ def resize_image(image_data, min_size=320, max_size=4096):
     
     return image_data
 
-def get_image():
-    url = "https://d2ktwrbyxtrufc.cloudfront.net/images/seed_image.png"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        logger.info(f"success to load: {url}")
-        # Perform image resizing
-        resized_image = resize_image(response.content, min_size=320, max_size=2048)
-        return base64.b64encode(resized_image).decode('utf8')
+def get_seed_image():
+    config = load_image_generator_config()
+    url_seed_image = config["seed_image"]
+    logger.info(f"url_seed_image: {url_seed_image}")
+
+    # for debugging
+    # url = "https://d2ktwrbyxtrufc.cloudfront.net/images/seed_image.png"
+    # url_seed_image = url
+    # logger.info(f"url_seed_image: {url_seed_image}")
+
+    if url_seed_image:        
+        response = requests.get(url_seed_image)
+        logger.info(f"response: {response}")
+        
+        if response.status_code == 200:
+            logger.info(f"success to load: {url_seed_image}")
+            # Perform image resizing
+            resized_image = resize_image(response.content, min_size=320, max_size=2048)
+            return base64.b64encode(resized_image).decode('utf8')
+        else:
+            logger.error(f"Failed to load image: {url_seed_image}")
+            raise Exception(f"Image download failed: {response.status_code}")
     else:
-        logger.error(f"Failed to load image: {url}")
-        raise Exception(f"Image download failed: {response.status_code}")
+        logger.info(f"no seed image")
+        return None
+
+# aws_region = os.environ.get('AWS_REGION', 'us-west-2')
+aws_region = "us-east-1"
+import boto3
+try:
+    if aws_profile := os.environ.get('AWS_PROFILE'):
+        bedrock_runtime_client = boto3.Session(
+            profile_name=aws_profile, region_name=aws_region
+        ).client('bedrock-runtime')
+    else:
+        bedrock_runtime_client = boto3.Session(region_name=aws_region).client('bedrock-runtime')
+except Exception as e:
+    logger.error(f'Error creating bedrock runtime client: {str(e)}')
+    raise
 
 def save_generated_images(
     base64_images: List[str],
@@ -213,8 +237,7 @@ async def generate_image_with_text(
         quality: The quality of the generated image ("standard" or "premium").
         cfg_scale: How strongly the image adheres to the prompt (1.1-10.0).
         seed: Seed for generation (0-858,993,459). Random if not provided.
-        number_of_images: The number of images to generate (1-5).
-
+        number_of_images: The number of images to generate (1-5).        
     Returns:
         ImageGenerationResponse: An object containing the paths to the generated images,
         PIL Image objects, and status information.
@@ -236,10 +259,10 @@ async def generate_image_with_text(
                 numberOfImages=number_of_images,
             )
 
-            # Create text-to-image params
-            # The Nova Canvas API doesn't accept null for negativeText
-            seed_image = get_image()
+            logger.info("loading seed image")
+            seed_image = get_seed_image()
 
+            # Create text-to-image params
             if seed_image is not None:
                 if negative_prompt is not None:
                     text_params = TextToImageParams(text=prompt, negativeText=negative_prompt, conditionImage=seed_image)
@@ -332,7 +355,7 @@ async def generate_image_with_colors(
     quality: str = DEFAULT_QUALITY,
     cfg_scale: float = DEFAULT_CFG_SCALE,
     seed: Optional[int] = None,
-    number_of_images: int = DEFAULT_NUMBER_OF_IMAGES
+    number_of_images: int = DEFAULT_NUMBER_OF_IMAGES    
 ) -> ImageGenerationResponse:
     """Generate an image using Amazon Nova Canvas with color guidance.
 
@@ -351,7 +374,6 @@ async def generate_image_with_colors(
         cfg_scale: How strongly the image adheres to the prompt (1.1-10.0).
         seed: Seed for generation (0-858,993,459). Random if not provided.
         number_of_images: The number of images to generate (1-5).
-
     Returns:
         ImageGenerationResponse: An object containing the paths to the generated images,
         PIL Image objects, and status information.
@@ -375,8 +397,8 @@ async def generate_image_with_colors(
                 numberOfImages=number_of_images,
             )
 
-            # load seed image
-            seed_image = get_image()
+            logger.info("loading seed image")
+            seed_image = get_seed_image()
 
             # Create color-guided params
             # The Nova Canvas API doesn't accept null for negativeText

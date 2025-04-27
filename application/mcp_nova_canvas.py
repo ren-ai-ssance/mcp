@@ -2,6 +2,8 @@ from mcp.server.fastmcp import Context, FastMCP
 import logging
 import os
 import sys
+import json
+import traceback
 from nova_canvas.models import McpImageGenerationResponse
 from nova_canvas.novacanvas import (
     generate_image_with_colors,

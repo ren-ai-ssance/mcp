@@ -7,6 +7,7 @@ import cost_analysis as cost
 import supervisor
 import router
 import swarm
+import traceback
 import mcp_config 
 
 # logging
@@ -50,6 +51,17 @@ mode_descriptions = {
         "Cloud 사용에 대한 분석을 수행합니다."
     ]
 }
+
+def load_image_generator_config():
+    config = None
+    try:
+        with open("image_generator_config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+            logger.info(f"image_generator_config: {config}")
+    except Exception:
+        err_msg = traceback.format_exc()
+        logger.info(f"error message: {err_msg}")    
+    return config
 
 uploaded_seed_image = None
 with st.sidebar:
@@ -242,10 +254,23 @@ if uploaded_file is not None and clear_button==False:
         url = chat.upload_to_s3(uploaded_file.getvalue(), file_name)
         logger.info(f"url: {url}")
 
+config = load_image_generator_config()
 if uploaded_seed_image and clear_button==False and enable_seed==True:
     st.image(uploaded_seed_image, caption="이미지 미리보기", use_container_width=True)    
-    url = chat.upload_to_s3(uploaded_seed_image.getvalue(), "seed_image.png")
-    logger.info(f"url: {url}")
+    
+    url = config["seed_image"]
+    filename = url[url.rfind('/')+1:]
+    if filename != uploaded_seed_image.name:
+        url = chat.upload_to_s3(uploaded_seed_image.getvalue(), uploaded_seed_image.name)
+        logger.info(f"url: {url}")
+        with open("image_generator_config.json", "w", encoding="utf-8") as f:
+            config = {"seed_image": url}
+            json.dump(config, f, ensure_ascii=False, indent=4)
+else:
+    if config["seed_image"]:
+        with open("image_generator_config.json", "w", encoding="utf-8") as f:
+            config = {"seed_image": ""}
+            json.dump(config, f, ensure_ascii=False, indent=4)
 
 if clear_button==False and mode == '비용 분석':
     st.subheader("📈 Cost Analysis")
