@@ -190,6 +190,18 @@ def load_config(mcp_type):
             }
         }    
     
+    elif mcp_type == "aws_cli":
+        return {
+            "mcpServers": {
+                "aw-cli": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_aws_cli.py"
+                    ]
+                }
+            }
+        }    
+    
     elif mcp_type == "tavily":
         return {
             "mcpServers": {
@@ -261,6 +273,8 @@ def load_selected_config(mcp_selections: dict[str, bool]):
             config = load_config('aws_rag')
         elif server == "code interpreter":
             config = load_config('code_interpreter')
+        elif server == "aws cli":
+            config = load_config('aws_cli')
         else:
             config = load_config(server)
         logger.info(f"config: {config}")

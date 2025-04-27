@@ -11,7 +11,7 @@ logging.basicConfig(
         logging.StreamHandler(sys.stderr)
     ]
 )
-logger = logging.getLogger("aws-s3")
+logger = logging.getLogger("aws-server-basic")
 
 try:
     mcp = FastMCP(
