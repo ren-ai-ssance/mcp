@@ -105,7 +105,7 @@ def get_image():
     if response.status_code == 200:
         logger.info(f"success to load: {url}")
         # Perform image resizing
-        resized_image = resize_image(response.content)
+        resized_image = resize_image(response.content, min_size=320, max_size=2048)
         return base64.b64encode(resized_image).decode('utf8')
     else:
         logger.error(f"Failed to load image: {url}")
@@ -414,7 +414,7 @@ async def generate_image_with_colors(
 
             # Convert model to dictionary
             request_model_dict = request_model.to_api_dict()
-            logger.info(f"request_model_dict of generate_image_with_colors: {request_model_dict}")
+            #logger.info(f"request_model_dict of generate_image_with_colors: {request_model_dict}")
 
         except Exception as e:
             logger.error(f'Color-guided parameter validation failed: {str(e)}')
