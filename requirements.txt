@@ -24,3 +24,4 @@ langgraph-swarm
 aioboto3
 uv
 kaleido
+requests
