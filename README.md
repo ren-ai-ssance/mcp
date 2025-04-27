@@ -337,23 +337,6 @@ Output의 environmentformcprag의 내용을 복사하여 application/config.json
 code application/config.json
 ```
 
-아래와 같이 필요한 패키지를 설치합니다.
-
-```text
-python3 -m venv venv
-source venv/bin/activate
-pip install streamlit streamlit_chat 
-pip install boto3 langchain_aws langchain langchain_community langgraph 
-```
-
-[deployment.md](./deployment.md)에 따라 AWS CDK로 Lambda, Knowledge base, Opensearch Serverless와 보안에 필요한 IAM Role을 설치합니다. 이후 아래와 같은 명령어로 streamlit을 실행합니다. 
-
-```text
-streamlit run application/app.py
-```
-
-### Local에서 실행환경 구성하기
-
 venv로 환경을 구성하면 편리합니다. 아래와 같이 환경을 설정합니다.
 
 ```text
@@ -367,6 +350,13 @@ pip install uv
 ```text
 pip install -r reuqirements.txt
 ```
+
+[deployment.md](./deployment.md)에 따라 AWS CDK로 Lambda, Knowledge base, Opensearch Serverless와 보안에 필요한 IAM Role을 설치합니다. 이후 아래와 같은 명령어로 streamlit을 실행합니다. 
+
+```text
+streamlit run application/app.py
+```
+
 
 ### EC2에 배포하기
 
