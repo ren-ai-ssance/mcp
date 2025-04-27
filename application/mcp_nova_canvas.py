@@ -40,6 +40,8 @@ async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, heig
             number_of_images=number_of_images
         )
 
+        logger.info(f'response of mcp_generate_image: {response}')
+
         if response.status == 'success':
             return {
                 "path": [f'{path}' for path in response.paths]
@@ -61,7 +63,7 @@ async def mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, f
     logger.debug(
         f"MCP tool generate_image_with_colors called with prompt: '{prompt[:30]}...', {len(colors)} colors"
     )
-
+    
     try:
         color_hex_list = ', '.join(colors[:3]) + (', ...' if len(colors) > 3 else '')
         logger.info(
@@ -82,16 +84,11 @@ async def mcp_generate_image_with_colors(ctx, prompt, colors, negative_prompt, f
         )
 
         if response.status == 'success':
-            return {
-                "path": [f'{path}' for path in response.paths]
-            } 
+            return {"path": [f'{path}' for path in response.paths]} 
         else:
-            logger.error(
-                f'Color-guided image generation returned error status: {response.message}'
-            )
-            await ctx.error(f'Failed to generate color-guided image: {response.message}')
-            raise Exception(f'Failed to generate color-guided image: {response.message}')
+            logger.error(f'Color-guided image generation returned error status: {response.message}')
+            return {"path": []}
+            
     except Exception as e:
         logger.error(f'Error in mcp_generate_image_with_colors: {str(e)}')
-        await ctx.error(f'Error generating color-guided image: {str(e)}')
-        raise
+        return {"path": []}

@@ -51,6 +51,7 @@ mode_descriptions = {
     ]
 }
 
+uploaded_seed_image = None
 with st.sidebar:
     st.title("🔮 Menu")
     
@@ -100,6 +101,13 @@ with st.sidebar:
             if mcp_info:
                 mcp_config.mcp_user_config = json.loads(mcp_info)
                 logger.info(f"mcp_user_config: {mcp_config.mcp_user_config}")
+        
+        if mcp_selections["image generation"]:
+            enable_seed = st.checkbox("Seed Image", value=False)
+
+            if enable_seed:
+                st.subheader("🌇 이미지 업로드")
+                uploaded_seed_image = st.file_uploader("이미지 생성을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
         
         mcp = mcp_config.load_selected_config(mcp_selections)
         logger.info(f"mcp: {mcp}")
@@ -233,6 +241,11 @@ if uploaded_file is not None and clear_button==False:
         file_name = uploaded_file.name
         url = chat.upload_to_s3(uploaded_file.getvalue(), file_name)
         logger.info(f"url: {url}")
+
+if uploaded_seed_image and clear_button==False and enable_seed==True:
+    st.image(uploaded_seed_image, caption="이미지 미리보기", use_container_width=True)    
+    url = chat.upload_to_s3(uploaded_seed_image.getvalue(), "seed_image.png")
+    logger.info(f"url: {url}")
 
 if clear_button==False and mode == '비용 분석':
     st.subheader("📈 Cost Analysis")

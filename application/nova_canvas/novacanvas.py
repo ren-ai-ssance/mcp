@@ -69,6 +69,48 @@ except Exception as e:
     logger.error(f'Error creating bedrock runtime client: {str(e)}')
     raise
 
+import requests
+from PIL import Image
+import io
+import base64
+import traceback
+
+def resize_image(image_data, min_size=320, max_size=4096):
+    img = Image.open(io.BytesIO(image_data))    
+    width, height = img.size
+    
+    # Check if resizing is necessary
+    if width < min_size or height < min_size or width > max_size or height > max_size:
+        if width < min_size or height < min_size:            
+            scale = min_size / min(width, height) # Need to upscale
+        else:            
+            scale = max_size / max(width, height) # Need to downscale
+        
+        new_width = int(width * scale)
+        new_height = int(height * scale)
+        
+        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        logger.info(f"Image resized from {width}x{height} to {new_width}x{new_height}")
+        
+        buffer = io.BytesIO()
+        img.save(buffer, format=img.format if img.format else 'PNG')
+        return buffer.getvalue()
+    
+    return image_data
+
+def get_image():
+    url = "https://d2ktwrbyxtrufc.cloudfront.net/images/seed_image.png"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        logger.info(f"success to load: {url}")
+        # Perform image resizing
+        resized_image = resize_image(response.content)
+        return base64.b64encode(resized_image).decode('utf8')
+    else:
+        logger.error(f"Failed to load image: {url}")
+        raise Exception(f"Image download failed: {response.status_code}")
+
 def save_generated_images(
     base64_images: List[str],
     filename: Optional[str] = None,
@@ -130,6 +172,7 @@ async def invoke_nova_canvas(
 
     # Convert the request payload to JSON
     request = json.dumps(request_model_dict)
+    # logger.info(f"request_model_dict: {request_model_dict}")
 
     try:
         # Invoke the model
@@ -195,10 +238,19 @@ async def generate_image_with_text(
 
             # Create text-to-image params
             # The Nova Canvas API doesn't accept null for negativeText
-            if negative_prompt is not None:
-                text_params = TextToImageParams(text=prompt, negativeText=negative_prompt)
+            seed_image = get_image()
+
+            if seed_image is not None:
+                if negative_prompt is not None:
+                    text_params = TextToImageParams(text=prompt, negativeText=negative_prompt, conditionImage=seed_image)
+                else:
+                    text_params = TextToImageParams(text=prompt, conditionImage=seed_image)
             else:
-                text_params = TextToImageParams(text=prompt)
+                if negative_prompt is not None:
+                    text_params = TextToImageParams(text=prompt, negativeText=negative_prompt)
+                else:
+                    text_params = TextToImageParams(text=prompt)
+            # logger.info(f"text_params: {text_params}")
 
             # Create the full request
             request_model = TextImageRequest(
@@ -206,8 +258,8 @@ async def generate_image_with_text(
             )
 
             # Convert model to dictionary
-            request_model_dict = request_model.to_api_dict()
-            logger.info('Request validation successful')
+            request_model_dict = request_model.to_api_dict()                        
+            # logger.info(f"request_model_dict of generate_image_with_text: {request_model_dict}")
 
         except Exception as e:
             logger.error(f'Parameter validation failed: {str(e)}')
@@ -323,19 +375,37 @@ async def generate_image_with_colors(
                 numberOfImages=number_of_images,
             )
 
+            # load seed image
+            seed_image = get_image()
+
             # Create color-guided params
             # The Nova Canvas API doesn't accept null for negativeText
-            if negative_prompt is not None:
-                color_params = ColorGuidedGenerationParams(
-                    colors=colors,
-                    text=prompt,
-                    negativeText=negative_prompt,
-                )
+            if seed_image is not None:
+                if negative_prompt is not None:
+                    color_params = ColorGuidedGenerationParams(
+                        colors=colors,
+                        text=prompt,
+                        negativeText=negative_prompt,
+                        referenceImage=seed_image
+                    )
+                else:
+                    color_params = ColorGuidedGenerationParams(
+                        colors=colors,
+                        text=prompt,
+                        referenceImage=seed_image
+                    )
             else:
-                color_params = ColorGuidedGenerationParams(
-                    colors=colors,
-                    text=prompt,
-                )
+                if negative_prompt is not None:
+                    color_params = ColorGuidedGenerationParams(
+                        colors=colors,
+                        text=prompt,
+                        negativeText=negative_prompt,
+                    )
+                else:
+                    color_params = ColorGuidedGenerationParams(
+                        colors=colors,
+                        text=prompt,
+                    )
 
             # Create the full request
             request_model = ColorGuidedRequest(
@@ -344,7 +414,7 @@ async def generate_image_with_colors(
 
             # Convert model to dictionary
             request_model_dict = request_model.to_api_dict()
-            logger.info('Color-guided request validation successful')
+            logger.info(f"request_model_dict of generate_image_with_colors: {request_model_dict}")
 
         except Exception as e:
             logger.error(f'Color-guided parameter validation failed: {str(e)}')

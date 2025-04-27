@@ -116,10 +116,12 @@ class TextToImageParams(BaseModel):
     Attributes:
         text: The text description of the image to generate (1-1024 characters).
         negativeText: Optional text to define what not to include in the image (1-1024 characters).
+        conditionImage: Optional seed image for image-to-image generation (base64 encoded image).
     """
 
     text: str = Field(..., min_length=1, max_length=1024)
     negativeText: Optional[str] = Field(default=None, min_length=1, max_length=1024)
+    conditionImage: Optional[str] = Field(default=None)
 
 class ColorGuidedGenerationParams(BaseModel):
     """Parameters for color-guided generation.
@@ -130,12 +132,13 @@ class ColorGuidedGenerationParams(BaseModel):
         colors: List of hexadecimal color values (e.g., "#FF9800") to guide the image generation.
         text: The text description of the image to generate (1-1024 characters).
         negativeText: Optional text to define what not to include in the image (1-1024 characters).
+        referenceImage: Optional reference image for color-guided generation (base64 encoded image).
     """
 
     colors: List[str] = Field(..., max_length=10)
     text: str = Field(..., min_length=1, max_length=1024)
     negativeText: Optional[str] = Field(default=None, min_length=1, max_length=1024)
-
+    referenceImage: Optional[str] = Field(default=None)
     @field_validator('colors')
     @classmethod
     def validate_hex_colors(cls, v: List[str]) -> List[str]:
@@ -184,9 +187,12 @@ class TextImageRequest(BaseModel):
             A dictionary representation of the model suitable for API requests.
         """
         text_to_image_params = self.textToImageParams.model_dump()
+
         # Remove negativeText if it's None
         if text_to_image_params.get('negativeText') is None:
             text_to_image_params.pop('negativeText', None)
+        if text_to_image_params.get('conditionImage') is None:
+            text_to_image_params.pop('conditionImage', None)        
 
         return {
             'taskType': self.taskType,
@@ -206,6 +212,7 @@ class ColorGuidedRequest(BaseModel):
         taskType: The type of task (COLOR_GUIDED_GENERATION).
         colorGuidedGenerationParams: Parameters for color-guided generation.
         imageGenerationConfig: Configuration for image generation.
+        referenceImage: Optional reference image for color-guided generation (base64 encoded image).
     """
 
     taskType: Literal[TaskType.COLOR_GUIDED_GENERATION] = TaskType.COLOR_GUIDED_GENERATION
@@ -225,6 +232,8 @@ class ColorGuidedRequest(BaseModel):
         # Remove negativeText if it's None
         if color_guided_params.get('negativeText') is None:
             color_guided_params.pop('negativeText', None)
+        if color_guided_params.get('referenceImage') is None:
+            color_guided_params.pop('referenceImage', None)
 
         return {
             'taskType': self.taskType,
