@@ -90,7 +90,7 @@ with st.sidebar:
         st.subheader("⚙️ MCP Config")
 
         # Change radio to checkbox
-        mcp_options = ["default", "aws cli", "knowledge base", "terminal", "code interpreter", "filesystem", "tavily", "playwright", "firecrawl", "obsidian", "airbnb", "ArXiv", "image generation", "aws cost", "aws document", "aws cloudwatch", "aws storage", "aws diagram", "사용자 설정"]
+        mcp_options = ["default", "code interpreter", "aws document", "aws cost", "aws cli", "aws cloudwatch", "aws storage", "image generation", "aws diagram","knowledge base", "filesystem", "terminal", "tavily", "playwright", "firecrawl", "obsidian", "airbnb", "ArXiv", "사용자 설정"]
         mcp_selections = {}
         default_selections = ["default", "tavily", "playwright", "code interpreter"]
 
@@ -222,7 +222,7 @@ if clear_button or "messages" not in st.session_state:
     st.rerun()    
 
 # Preview the uploaded image in the sidebar
-file_name = ""
+file_name = seed_image_url = ""
 state_of_code_interpreter = False
 if uploaded_file is not None and clear_button==False:
     logger.info(f"uploaded_file.name: {uploaded_file.name}")

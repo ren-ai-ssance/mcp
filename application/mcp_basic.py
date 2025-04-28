@@ -6,7 +6,7 @@ import yfinance as yf
 import chat
 import traceback
 import json
-
+import re
 from pytz import timezone
 from bs4 import BeautifulSoup
 
@@ -110,11 +110,12 @@ def get_weather_info(city: str) -> str:
     logger.info(f"weather_str: {weather_str}")                        
     return weather_str
 
-def stock_data_lookup(ticker, country):
+def stock_data_lookup(ticker, country, period="1mo"):
     """
     Retrieve accurate stock data for a given ticker.
     country: the english country name of the stock
-    ticker: the ticker to retrieve price history for. In South Korea, a ticker is a 6-digit number.
+    ticker: the ticker to retrieve stock price history for. In South Korea, a ticker is a 6-digit number.
+    period: the period to retrieve stock price history for. for example, "1mo", "1y", "5y", "max"
     return: the information of ticker
     """ 
     com = re.compile('[a-zA-Z]') 
@@ -133,7 +134,7 @@ def stock_data_lookup(ticker, country):
     stock = yf.Ticker(ticker)
     
     # get the price history for past 1 month
-    history = stock.history(period="1mo")
+    history = stock.history(period=period)
     logger.info(f"history: {history}")
     
     result = f"## Trading History\n{history}"
