@@ -241,6 +241,16 @@ def load_config(mcp_type):
             }
         }
     
+    elif mcp_type == "puppeteer":
+        return {
+            "mcpServers": {
+                "puppeteer": {
+                    "command": "npx",
+                    "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+                }
+            }
+        }
+    
     elif mcp_type == "사용자 설정":
         return mcp_user_config
 
