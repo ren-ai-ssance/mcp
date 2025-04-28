@@ -156,8 +156,14 @@ async def mcp_generate_image_with_colors(
         default=6.5,
         description='How strongly the image adheres to the prompt (1.1-10.0)',
     ),
-    seed: Optional[int] = Field(default=None, description='Seed for generation (0-858,993,459)'),
-    number_of_images: int = Field(default=1, description='The number of images to generate (1-5)')):
+    seed: Optional[int] = Field(
+         default=None, 
+         description='Seed for generation (0-858,993,459)'
+    ),
+    number_of_images: int = Field(
+         default=1, 
+         description='The number of images to generate (1-5)'
+    )):
     """Generate an image using Amazon Nova Canvas with color guidance.
 
     This tool uses Amazon Nova Canvas to generate images based on a text prompt and color palette.
@@ -172,6 +178,7 @@ async def mcp_generate_image_with_colors(
     4. (optional) Lighting description
     5. (optional) Camera position/framing
     6. (optional) The visual style or medium ("photo", "illustration", "painting", etc.)
+    
 
     Do not use negation words like "no", "not", "without" in your prompt. Instead, use the
     negative_prompt parameter to specify what you don't want in the image.

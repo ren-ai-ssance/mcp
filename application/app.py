@@ -86,10 +86,10 @@ with st.sidebar:
     # mcp selection
     mcp = ""
     if mode=='Agent' or mode=='Agent (Chat)':
-        # MCP Config JSON 입력
+        # MCP Config JSON input
         st.subheader("⚙️ MCP Config")
 
-        # radio를 checkbox로 변경
+        # Change radio to checkbox
         mcp_options = ["default", "aws cli", "knowledge base", "terminal", "code interpreter", "filesystem", "tavily", "playwright", "firecrawl", "obsidian", "airbnb", "ArXiv", "image generation", "aws cost", "aws document", "aws cloudwatch", "aws storage", "aws diagram", "사용자 설정"]
         mcp_selections = {}
         default_selections = ["default", "tavily", "playwright", "code interpreter"]
@@ -118,9 +118,22 @@ with st.sidebar:
             enable_seed = st.checkbox("Seed Image", value=False)
 
             if enable_seed:
+                config = load_image_generator_config()
+                url = config.get("seed_image", "") if config else ""
+                logger.info(f"url from config: {url}")
+                
                 st.subheader("🌇 이미지 업로드")
                 uploaded_seed_image = st.file_uploader("이미지 생성을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
-        
+
+                if uploaded_seed_image:
+                    url = chat.upload_to_s3(uploaded_seed_image.getvalue(), uploaded_seed_image.name)
+                    logger.info(f"uploaded url: {url}")
+                
+                seed_image_url = st.text_input("또는 이미지 URL을 입력하세요", value=url, key="seed_image_input")                
+                with open("image_generator_config.json", "w", encoding="utf-8") as f:
+                    config = {"seed_image": seed_image_url}
+                    json.dump(config, f, ensure_ascii=False, indent=4)
+
         mcp = mcp_config.load_selected_config(mcp_selections)
         logger.info(f"mcp: {mcp}")
 
@@ -255,12 +268,17 @@ if uploaded_file is not None and clear_button==False:
         logger.info(f"url: {url}")
 
 config = load_image_generator_config()
-if uploaded_seed_image and clear_button==False and enable_seed==True:
-    st.image(uploaded_seed_image, caption="이미지 미리보기", use_container_width=True)    
+if (uploaded_seed_image or seed_image_url) and clear_button==False and enable_seed==True:
+    if seed_image_url:
+        st.image(seed_image_url, caption="이미지 미리보기", use_container_width=True)
+        logger.info(f"preview: {seed_image_url}")
+    else:
+        st.image(uploaded_seed_image, caption="이미지 미리보기", use_container_width=True)
+        logger.info(f"preview: {uploaded_seed_image}")
     
     url = config["seed_image"]
     filename = url[url.rfind('/')+1:]
-    if filename != uploaded_seed_image.name:
+    if uploaded_seed_image and filename != uploaded_seed_image.name:
         url = chat.upload_to_s3(uploaded_seed_image.getvalue(), uploaded_seed_image.name)
         logger.info(f"url: {url}")
         with open("image_generator_config.json", "w", encoding="utf-8") as f:
