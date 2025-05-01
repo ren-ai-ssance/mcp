@@ -1,3 +1,21 @@
+nova_premier = [
+    {
+        "bedrock_region": "us-west-2", # Oregon
+        "model_type": "nova",
+        "model_id": "us.amazon.nova-premier-v1:0"    
+    },
+    {
+        "bedrock_region": "us-east-1", # N.Virginia
+        "model_type": "nova",
+        "model_id": "us.amazon.nova-premier-v1:0"
+    },
+    {
+        "bedrock_region": "us-east-2", # Ohio
+        "model_type": "nova",
+        "model_id": "us.amazon.nova-premier-v1:0"
+    }
+]
+
 nova_pro_models = [   # Nova Pro
     {   
         "bedrock_region": "us-west-2", # Oregon
@@ -154,6 +172,8 @@ def get_model_info(model_name):
         models = claude_3_5_sonnet_v2_models
     elif model_name == "Claude 3.5 Haiku":
         models = claude_3_5_haiku_models
+    elif model_name == "Nova Premier":
+        models = nova_premier
 
     return models
 

@@ -557,14 +557,14 @@ def traslation(chat, text, input_language, output_language):
 
 def extract_thinking_tag(response, st):
     if response.find('<thinking>') != -1:
-        status = response[response.find('<thinking>')+11:response.find('</thinking>')]
+        status = response[response.find('<thinking>')+10:response.find('</thinking>')]
         logger.info(f"gent_thinking: {status}")
         
         if debug_mode=="Enable":
             st.info(status)
 
         if response.find('<thinking>') == 0:
-            msg = response[response.find('</thinking>')+13:]
+            msg = response[response.find('</thinking>')+12:]
         else:
             msg = response[:response.find('<thinking>')]
         logger.info(f"msg: {msg}")
@@ -1841,6 +1841,9 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
 
             result += ref
 
+        if model_type == "nova":
+            result = extract_thinking_tag(result, st) # for nova
+
         st.markdown(result)
 
         st.session_state.messages.append({
@@ -1909,4 +1912,5 @@ def run_agent(query, historyMode, st):
     #result = asyncio.run(mcp_rag_agent_single(query, historyMode, st))
 
     logger.info(f"result: {result}")
+    
     return result, [], []

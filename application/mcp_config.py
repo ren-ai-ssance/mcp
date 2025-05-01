@@ -70,7 +70,7 @@ def load_config(mcp_type):
                     "run",
                     "mcp-obsidian",
                     "--config",
-                    "{\"vaultPath\":\"/Users/ksdyb/Library/Mobile Documents/iCloud~md~obsidian/Documents/memo\"}"
+                    "{\"vaultPath\":\"/\"}"
                 ]
                 }
             }
