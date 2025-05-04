@@ -12,7 +12,17 @@ from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
 from langgraph.graph import START, END, StateGraph
 from langgraph_supervisor import create_supervisor, create_handoff_tool
 
-logger = utils.CreateLogger('supervisor')
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("supervisor")
 
 ####################### LangGraph #######################
 # Chat Agent Executor

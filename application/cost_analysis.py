@@ -9,8 +9,16 @@ import chat
 from datetime import datetime, timedelta
 from langchain_core.prompts import ChatPromptTemplate
 
-# logging
-logger = utils.CreateLogger("cost_analysis")
+import logging
+import sys
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("cost_analysis")
 
 def get_cost_analysis(days: str=30):
     """Cost analysis data collection"""

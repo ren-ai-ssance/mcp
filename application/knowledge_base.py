@@ -9,7 +9,16 @@ from urllib import parse
 from langchain.docstore.document import Document
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 
-logger = utils.CreateLogger('knowledge_base')
+import logging
+import sys
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("knowledge_base")
 
 try:
     with open("/home/config.json", "r", encoding="utf-8") as f:

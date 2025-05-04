@@ -28,7 +28,17 @@ from langgraph.graph import START, END, StateGraph
 from io import BytesIO
 from langchain_experimental.tools import PythonAstREPLTool
 
-logger = utils.CreateLogger('tool_use')
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("tool_use")
 
 # load config
 config = utils.load_config()
