@@ -1421,10 +1421,9 @@ def run_rag_with_knowledge_base(query, st):
     
     return msg, reference_docs
    
-####################### Bedrock Agent #######################
-# Bedrock Agent (Multi agent collaboration)
-############################################################# 
-
+####################### Agent #######################
+# Agent 
+#####################################################
 def create_agent(tools, historyMode):
     tool_node = ToolNode(tools)
 
@@ -1804,7 +1803,7 @@ def show_status_message(response, st):
                 logger.info(f"fail to parsing..")
                 pass
     return image_url, references
-            
+
 async def mcp_rag_agent_multiple(query, historyMode, st):
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
