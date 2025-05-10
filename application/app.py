@@ -64,11 +64,26 @@ def load_image_generator_config():
     try:
         with open("image_generator_config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
-            logger.info(f"image_generator_config: {config}")
+            logger.info(f"loaded image_generator_config: {config}")
+    except FileNotFoundError:
+        config = {"seed_image": ""}
+        with open("image_generator_config.json", "w", encoding="utf-8") as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+        logger.info("Create new image_generator_config.json")
     except Exception:
         err_msg = traceback.format_exc()
         logger.info(f"error message: {err_msg}")    
     return config
+
+def update_seed_image_url(url):
+    with open("image_generator_config.json", "w", encoding="utf-8") as f:
+        config = {"seed_image": url}
+        json.dump(config, f, ensure_ascii=False, indent=4)
+
+seed_config = load_image_generator_config()
+logger.info(f"seed_config: {seed_config}")
+seed_image_url = seed_config.get("seed_image", "") if seed_config else ""
+logger.info(f"seed_image_url from config: {seed_image_url}")
 
 uploaded_seed_image = None
 with st.sidebar:
@@ -125,24 +140,31 @@ with st.sidebar:
             enable_seed = st.checkbox("Seed Image", value=False)
 
             if enable_seed:
-                config = load_image_generator_config()
-                url = config.get("seed_image", "") if config else ""
-                logger.info(f"url from config: {url}")
-                
                 st.subheader("🌇 이미지 업로드")
                 uploaded_seed_image = st.file_uploader("이미지 생성을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
 
                 if uploaded_seed_image:
                     url = chat.upload_to_s3(uploaded_seed_image.getvalue(), uploaded_seed_image.name)
                     logger.info(f"uploaded url: {url}")
+                    seed_image_url = url
+                    update_seed_image_url(seed_image_url)
                 
-                seed_image_url = st.text_input("또는 이미지 URL을 입력하세요", value=url, key="seed_image_input")                
-                with open("image_generator_config.json", "w", encoding="utf-8") as f:
-                    config = {"seed_image": seed_image_url}
-                    json.dump(config, f, ensure_ascii=False, indent=4)
+                given_image_url = st.text_input("또는 이미지 URL을 입력하세요", value=seed_image_url, key="seed_image_input")       
+                if given_image_url and given_image_url != seed_image_url:       
+                    logger.info(f"given_image_url: {given_image_url}")
+                    seed_image_url = given_image_url
+                    update_seed_image_url(seed_image_url)                    
+            else:
+                if seed_image_url:
+                    logger.info(f"remove seed_image_url")
+                    update_seed_image_url("") 
+        else:
+            if seed_image_url:
+                logger.info(f"remove seed_image_url")
+                update_seed_image_url("") 
 
         mcp = mcp_config.load_selected_config(mcp_selections)
-        logger.info(f"mcp: {mcp}")
+        # logger.info(f"mcp: {mcp}")
 
     # model selection box
     modelName = st.selectbox(
@@ -229,7 +251,7 @@ if clear_button or "messages" not in st.session_state:
     st.rerun()    
 
 # Preview the uploaded image in the sidebar
-file_name = seed_image_url = ""
+file_name = ""
 state_of_code_interpreter = False
 if uploaded_file is not None and clear_button==False:
     logger.info(f"uploaded_file.name: {uploaded_file.name}")
@@ -274,29 +296,10 @@ if uploaded_file is not None and clear_button==False:
         url = chat.upload_to_s3(uploaded_file.getvalue(), file_name)
         logger.info(f"url: {url}")
 
-config = load_image_generator_config()
-if (uploaded_seed_image or seed_image_url) and clear_button==False and enable_seed==True:
-    if seed_image_url:
-        st.image(seed_image_url, caption="이미지 미리보기", use_container_width=True)
-        logger.info(f"preview: {seed_image_url}")
-    else:
-        st.image(uploaded_seed_image, caption="이미지 미리보기", use_container_width=True)
-        logger.info(f"preview: {uploaded_seed_image}")
+if seed_image_url and clear_button==False and enable_seed==True:
+    st.image(seed_image_url, caption="이미지 미리보기", use_container_width=True)
+    logger.info(f"preview: {seed_image_url}")
     
-    url = config["seed_image"]
-    filename = url[url.rfind('/')+1:]
-    if uploaded_seed_image and filename != uploaded_seed_image.name:
-        url = chat.upload_to_s3(uploaded_seed_image.getvalue(), uploaded_seed_image.name)
-        logger.info(f"url: {url}")
-        with open("image_generator_config.json", "w", encoding="utf-8") as f:
-            config = {"seed_image": url}
-            json.dump(config, f, ensure_ascii=False, indent=4)
-else:
-    if config["seed_image"]:
-        with open("image_generator_config.json", "w", encoding="utf-8") as f:
-            config = {"seed_image": ""}
-            json.dump(config, f, ensure_ascii=False, indent=4)
-
 if clear_button==False and mode == '비용 분석':
     st.subheader("📈 Cost Analysis")
 
