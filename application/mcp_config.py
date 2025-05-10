@@ -276,6 +276,26 @@ def load_config(mcp_type):
                 }
             }
         }
+
+    elif mcp_type == "text_editor":
+        return {
+            "mcpServers": {
+                "textEditor": {
+                    "command": "npx",
+                    "args": ["-y", "mcp-server-text-editor"]
+                }
+            }
+        }
+    
+    elif mcp_type == "context7":
+        return {
+            "mcpServers": {
+                "context7": {
+                    "command": "npx",
+                    "args": ["-y", "@upstash/context7-mcp@latest"]
+                }
+            }
+        }
     
     elif mcp_type == "사용자 설정":
         return mcp_user_config
@@ -311,6 +331,8 @@ def load_selected_config(mcp_selections: dict[str, bool]):
             config = load_config('code_interpreter')
         elif server == "aws cli":
             config = load_config('aws_cli')
+        elif server == "text editor":
+            config = load_config('text_editor')
         else:
             config = load_config(server)
         logger.info(f"config: {config}")

@@ -112,9 +112,9 @@ with st.sidebar:
         st.subheader("⚙️ MCP Config")
 
         # Change radio to checkbox
-        mcp_options = ["default", "code interpreter", "aws document", "aws cost", "aws cli", "aws cloudwatch", "aws storage", "image generation", "aws diagram","knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", "filesystem", "terminal", "puppeteer", "playwright", "firecrawl", "obsidian", "airbnb", "사용자 설정"]
+        mcp_options = ["default", "code interpreter", "aws document", "aws cost", "aws cli", "aws cloudwatch", "aws storage", "image generation", "aws diagram","knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", "filesystem", "terminal", "text editor", "context7", "puppeteer", "playwright", "firecrawl", "obsidian", "airbnb", "사용자 설정"]
         mcp_selections = {}
-        default_selections = ["default", "tavily", "playwright", "code interpreter"]
+        default_selections = ["default", "tavily", "aws cli", "code interpreter"]
 
         with st.expander("MCP 옵션 선택", expanded=True):
             for option in mcp_options:
