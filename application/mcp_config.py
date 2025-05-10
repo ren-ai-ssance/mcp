@@ -261,6 +261,22 @@ def load_config(mcp_type):
             }
         }
     
+    elif mcp_type == "image_generator":
+        return {
+            "mcpServers": {
+                "perplexity-mcp": {
+                    "env": {
+                        "PERPLEXITY_API_KEY": chat.perplexity_key,
+                        "PERPLEXITY_MODEL": "sonar"
+                    },
+                        "command": "uvx",
+                        "args": [
+                        "perplexity-mcp"
+                    ]
+                }
+            }
+        }
+    
     elif mcp_type == "사용자 설정":
         return mcp_user_config
 

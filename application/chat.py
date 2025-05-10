@@ -428,7 +428,25 @@ except Exception as e:
     logger.info(f"Tavily credential is required: {e}")
     raise e
 
-# api key to use Tavily Search
+# api key to use perplexity Search
+perplexity_key = ""
+try:
+    get_perplexity_api_secret = secretsmanager.get_secret_value(
+        SecretId=f"perplexityapikey-{projectName}"
+    )
+    #print('get_perplexity_api_secret: ', get_perplexity_api_secret)
+    secret = json.loads(get_perplexity_api_secret['SecretString'])
+    #print('secret: ', secret)
+
+    if "perplexity_api_key" in secret:
+        perplexity_key = secret['perplexity_api_key']
+        #print('perplexity_api_key: ', perplexity_api_key)
+
+except Exception as e: 
+    logger.info(f"perplexity credential is required: {e}")
+    raise e
+
+# api key to use firecrawl Search
 firecrawl_key = ""
 try:
     get_firecrawl_secret = secretsmanager.get_secret_value(

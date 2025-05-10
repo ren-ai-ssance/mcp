@@ -338,6 +338,16 @@ export class CdkMcpRagStack extends cdk.Stack {
       },
     });
 
+    const perplexityApiSecret = new secretsmanager.Secret(this, `perflexity-secret-for-${projectName}`, {
+      description: 'secret for perflexity api key', // tavily
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      secretName: `perplexityapikey-${projectName}`,
+      secretObjectValue: {
+        project_name: cdk.SecretValue.unsafePlainText(projectName),
+        perplexity_api_key: cdk.SecretValue.unsafePlainText(''),
+      },
+    });
+
     const firecrawlApiSecret = new secretsmanager.Secret(this, `firecrawl-secret-for-${projectName}`, {
       description: 'secret for firecrawl api key', // firecrawl
       removalPolicy: cdk.RemovalPolicy.DESTROY,
