@@ -261,18 +261,18 @@ def load_config(mcp_type):
             }
         }
     
-    elif mcp_type == "image_generator":
+    elif mcp_type == "perplexity":
         return {
             "mcpServers": {
-                "perplexity-mcp": {
+                "perplexity-mcp": {                    
+                    "command": "uvx",
+                    "args": [
+                        "perplexity-mcp"
+                    ],
                     "env": {
                         "PERPLEXITY_API_KEY": chat.perplexity_key,
                         "PERPLEXITY_MODEL": "sonar"
-                    },
-                        "command": "uvx",
-                        "args": [
-                        "perplexity-mcp"
-                    ]
+                    }
                 }
             }
         }
