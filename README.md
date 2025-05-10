@@ -699,9 +699,9 @@ brew install graphviz
 
 <img src="https://github.com/user-attachments/assets/2575d4b1-8871-4677-a982-82d60ec6036a" width="650">
 
-### Strage
+### Storage
 
-Tool에서 "aws strage"를 선택하고, "내 s3 전체 사용량은?"이라고 질문합니다. 이때의 결과는 아래와 같습니다. 
+Tool에서 "aws storage"를 선택하고, "내 s3 전체 사용량은?"이라고 질문합니다. 이때의 결과는 아래와 같습니다. 
 
 <img src="https://github.com/user-attachments/assets/a9e41d68-6a2a-4cda-a264-58cc3124f51d" width="650">
 
