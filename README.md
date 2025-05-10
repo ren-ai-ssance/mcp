@@ -705,6 +705,10 @@ Tool에서 "aws storage"를 선택하고, "내 s3 전체 사용량은?"이라고
 
 <img src="https://github.com/user-attachments/assets/a9e41d68-6a2a-4cda-a264-58cc3124f51d" width="650">
 
+"내 aws strorage 사용량은?"이라고 질문하면, S3, EFS, EBS의 용량을 확인하여 아래와 같이 답변할 수 있습니다.
+
+![image](https://github.com/user-attachments/assets/4c390cee-fd91-487e-ba0d-8b99fd7389ae)
+
 
 ## Reference 
 
