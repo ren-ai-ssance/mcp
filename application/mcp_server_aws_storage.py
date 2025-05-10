@@ -1,6 +1,6 @@
 import logging
 import sys
-import mcp_s3 as storage
+import mcp_storage as storage
 
 from typing import Dict, Optional, Any
 from mcp.server.fastmcp import FastMCP 
