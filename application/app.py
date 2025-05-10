@@ -112,14 +112,48 @@ with st.sidebar:
         st.subheader("⚙️ MCP Config")
 
         # Change radio to checkbox
-        mcp_options = ["default", "code interpreter", "aws document", "aws cost", "aws cli", "aws cloudwatch", "aws storage", "image generation", "aws diagram","knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", "filesystem", "terminal", "text editor", "context7", "puppeteer", "playwright", "firecrawl", "obsidian", "airbnb", "사용자 설정"]
+        mcp_options = [
+            "default", "code interpreter", "aws document", "aws cost", "aws cli", 
+            "aws cloudwatch", "aws storage", "image generation", "aws diagram",
+            "knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", 
+            "filesystem", "terminal", "text editor", "context7", "puppeteer", 
+            "playwright", "firecrawl", "obsidian", "airbnb", "사용자 설정"
+        ]
         mcp_selections = {}
         default_selections = ["default", "tavily", "aws cli", "code interpreter"]
 
         with st.expander("MCP 옵션 선택", expanded=True):
-            for option in mcp_options:
-                default_value = option in default_selections
-                mcp_selections[option] = st.checkbox(option, key=f"mcp_{option}", value=default_value)
+            # CSS 스타일 추가
+            st.markdown("""
+                <style>
+                .stCheckbox {
+                    margin-bottom: -0.5rem;
+                }
+                .stCheckbox label {
+                    font-size: 0.9rem;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            
+            # 2개의 컬럼 생성
+            col1, col2 = st.columns(2)
+            
+            # 옵션을 두 그룹으로 나누기
+            mid_point = len(mcp_options) // 2
+            first_half = mcp_options[:mid_point]
+            second_half = mcp_options[mid_point:]
+            
+            # 첫 번째 컬럼에 첫 번째 그룹 표시
+            with col1:
+                for option in first_half:
+                    default_value = option in default_selections
+                    mcp_selections[option] = st.checkbox(option, key=f"mcp_{option}", value=default_value)
+            
+            # 두 번째 컬럼에 두 번째 그룹 표시
+            with col2:
+                for option in second_half:
+                    default_value = option in default_selections
+                    mcp_selections[option] = st.checkbox(option, key=f"mcp_{option}", value=default_value)
         
         if not any(mcp_selections.values()):
             mcp_selections["default"] = True
