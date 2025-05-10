@@ -26,3 +26,4 @@ uv
 kaleido
 requests
 wikipedia
+sarif-om
