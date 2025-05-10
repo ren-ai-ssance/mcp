@@ -1,4 +1,6 @@
-# MCP를 이용해 Amazon S3를 활용하기
+# MCP를 이용해 Amazon Storage 활용하기
+
+## Amazon S3
 
 [Sample S3 Model Context Protocol Server](https://github.com/aws-samples/sample-mcp-server-s3/tree/main)을 참조하여 아래와 같이 S3를 활용합니다. 상세한 내용은 [mcp_s3.py](./application/mcp_s3.py)을 참조합니다.
 
@@ -253,6 +255,414 @@ def format_size(size_bytes):
     return f"{size_bytes:.2f} {size_names[i]}"
 ```
 
+### Amazon EBS
+
+아래와 같이 EBS, EBS Snapshot의 사용량을 확인할 수 있습니다.
+
+```python
+async def get_ebs_volumes_usage(
+    region: Optional[str] = "us-west-2",
+    filters: Optional[List[Dict]] = None
+) -> Dict:
+    """
+    Get EBS volumes usage information
+    
+    Args:
+        region: AWS region name
+        filters: Optional list of filters to apply when retrieving volumes
+                Example: [{'Name': 'status', 'Values': ['available']}]
+    
+    Returns:
+        dict: Dictionary containing total EBS storage information and per-volume details
+    """
+    logger.info("Retrieving EBS volumes usage information")
+    
+    total_size_gb = 0
+    total_size_bytes = 0
+    volumes_info = []
+    
+    try:
+        async with session.client('ec2', region_name=region) as ec2:
+            # Prepare parameters for describe_volumes
+            params = {}
+            if filters:
+                params['Filters'] = filters
+                
+            # Handle pagination for large number of volumes
+            paginator = ec2.get_paginator('describe_volumes')
+            async_iterator = paginator.paginate(**params)
+            
+            async for page in async_iterator:
+                volumes = page.get('Volumes', [])
+                
+                for volume in volumes:
+                    volume_id = volume.get('VolumeId')
+                    volume_size_gb = volume.get('Size', 0)  # Size in GiB
+                    volume_size_bytes = volume_size_gb * 1024 * 1024 * 1024  # Convert GiB to bytes
+                    
+                    # Get volume state and other details
+                    volume_state = volume.get('State', 'unknown')
+                    volume_type = volume.get('VolumeType', 'unknown')
+                    availability_zone = volume.get('AvailabilityZone', 'unknown')
+                    
+                    # Get attached instance information if available
+                    attachments = volume.get('Attachments', [])
+                    attached_instances = []
+                    
+                    for attachment in attachments:
+                        instance_id = attachment.get('InstanceId')
+                        if instance_id:
+                            attached_instances.append({
+                                'instance_id': instance_id,
+                                'device': attachment.get('Device', 'unknown'),
+                                'state': attachment.get('State', 'unknown')
+                            })
+                    
+                    # Add volume information to the list
+                    volumes_info.append({
+                        'volume_id': volume_id,
+                        'size_gb': volume_size_gb,
+                        'size_bytes': volume_size_bytes,
+                        'size_formatted': format_size(volume_size_bytes),
+                        'state': volume_state,
+                        'type': volume_type,
+                        'availability_zone': availability_zone,
+                        'attached_instances': attached_instances,
+                        'encrypted': volume.get('Encrypted', False),
+                        'create_time': str(volume.get('CreateTime', ''))
+                    })
+                    
+                    # Add to total size
+                    total_size_gb += volume_size_gb
+                    total_size_bytes += volume_size_bytes
+    
+        # Calculate summary information
+        total_size_formatted = format_size(total_size_bytes)
+        
+        # Group volumes by state
+        volumes_by_state = {}
+        for volume in volumes_info:
+            state = volume['state']
+            if state not in volumes_by_state:
+                volumes_by_state[state] = {
+                    'count': 0,
+                    'total_size_gb': 0
+                }
+            volumes_by_state[state]['count'] += 1
+            volumes_by_state[state]['total_size_gb'] += volume['size_gb']
+        
+        # Group volumes by type
+        volumes_by_type = {}
+        for volume in volumes_info:
+            vol_type = volume['type']
+            if vol_type not in volumes_by_type:
+                volumes_by_type[vol_type] = {
+                    'count': 0,
+                    'total_size_gb': 0
+                }
+            volumes_by_type[vol_type]['count'] += 1
+            volumes_by_type[vol_type]['total_size_gb'] += volume['size_gb']
+        
+        return {
+            'total_volumes': len(volumes_info),
+            'total_size_gb': total_size_gb,
+            'total_size_bytes': total_size_bytes,
+            'total_size_formatted': total_size_formatted,
+            'volumes_by_state': volumes_by_state,
+            'volumes_by_type': volumes_by_type,
+            'volumes': volumes_info
+        }
+        
+    except Exception as e:
+        logger.error(f"Error retrieving EBS volumes information: {str(e)}")
+        raise
+
+async def get_ebs_snapshots_usage(
+    region: Optional[str] = "us-west-2",
+    owner_ids: Optional[List[str]] = None,
+    filters: Optional[List[Dict]] = None
+) -> Dict:
+    """
+    Get EBS snapshots usage information
+    
+    Args:
+        region: AWS region name
+        owner_ids: Optional list of AWS account IDs that own the snapshots
+        filters: Optional list of filters to apply when retrieving snapshots
+                Example: [{'Name': 'status', 'Values': ['completed']}]
+    
+    Returns:
+        dict: Dictionary containing total EBS snapshots information and per-snapshot details
+    """
+    logger.info("Retrieving EBS snapshots usage information")
+    
+    total_size_bytes = 0
+    snapshots_info = []
+    
+    try:
+        async with session.client('ec2', region_name=region) as ec2:
+            # Prepare parameters for describe_snapshots
+            params = {}
+            if owner_ids:
+                params['OwnerIds'] = owner_ids
+            if filters:
+                params['Filters'] = filters
+                
+            # Handle pagination for large number of snapshots
+            paginator = ec2.get_paginator('describe_snapshots')
+            async_iterator = paginator.paginate(**params)
+            
+            async for page in async_iterator:
+                snapshots = page.get('Snapshots', [])
+                
+                for snapshot in snapshots:
+                    snapshot_id = snapshot.get('SnapshotId')
+                    volume_id = snapshot.get('VolumeId')
+                    volume_size_gb = snapshot.get('VolumeSize', 0)  # Size in GiB
+                    volume_size_bytes = volume_size_gb * 1024 * 1024 * 1024  # Convert GiB to bytes
+                    
+                    # Get snapshot state and other details
+                    snapshot_state = snapshot.get('State', 'unknown')
+                    start_time = snapshot.get('StartTime', '')
+                    description = snapshot.get('Description', '')
+                    
+                    # Add snapshot information to the list
+                    snapshots_info.append({
+                        'snapshot_id': snapshot_id,
+                        'volume_id': volume_id,
+                        'size_gb': volume_size_gb,
+                        'size_bytes': volume_size_bytes,
+                        'size_formatted': format_size(volume_size_bytes),
+                        'state': snapshot_state,
+                        'start_time': str(start_time),
+                        'description': description,
+                        'encrypted': snapshot.get('Encrypted', False),
+                        'owner_id': snapshot.get('OwnerId', '')
+                    })
+                    
+                    # Add to total size
+                    total_size_bytes += volume_size_bytes
+    
+        # Calculate summary information
+        total_size_formatted = format_size(total_size_bytes)
+        
+        # Group snapshots by state
+        snapshots_by_state = {}
+        for snapshot in snapshots_info:
+            state = snapshot['state']
+            if state not in snapshots_by_state:
+                snapshots_by_state[state] = {
+                    'count': 0,
+                    'total_size_gb': 0
+                }
+            snapshots_by_state[state]['count'] += 1
+            snapshots_by_state[state]['total_size_gb'] += snapshot['size_gb']
+        
+        return {
+            'total_snapshots': len(snapshots_info),
+            'total_size_bytes': total_size_bytes,
+            'total_size_formatted': total_size_formatted,
+            'snapshots_by_state': snapshots_by_state,
+            'snapshots': snapshots_info
+        }
+        
+    except Exception as e:
+        logger.error(f"Error retrieving EBS snapshots information: {str(e)}")
+        raise
+```
+
+### Amazon EFS
+
+Cloudwatch matric을 활용합니다.
+
+```python
+async def get_efs_usage(
+    region: Optional[str] = "us-west-2",
+    file_system_ids: Optional[List[str]] = None,
+    period_hours: int = 24
+) -> Dict:
+    """
+    Get EFS file systems usage information using CloudWatch metrics
+    
+    Args:
+        region: AWS region name
+        file_system_ids: Optional list of EFS file system IDs to check
+                        If None, all accessible file systems will be checked
+        period_hours: Period in hours to check for metrics (default: 24 hours)
+    
+    Returns:
+        dict: Dictionary containing EFS storage information and per-file-system details
+    """
+    logger.info("Retrieving EFS usage information")
+    
+    total_size_bytes = 0
+    file_systems_info = []
+    
+    try:
+        # First, get all EFS file systems
+        async with session.client('efs', region_name=region) as efs:
+            file_systems = []
+            
+            if file_system_ids:
+                # If specific file system IDs are provided, get only those
+                for fs_id in file_system_ids:
+                    try:
+                        response = await efs.describe_file_systems(FileSystemId=fs_id)
+                        if 'FileSystems' in response:
+                            file_systems.extend(response['FileSystems'])
+                    except Exception as e:
+                        logger.error(f"Error retrieving EFS file system {fs_id}: {str(e)}")
+            else:
+                # Otherwise, get all file systems
+                paginator = efs.get_paginator('describe_file_systems')
+                async_iterator = paginator.paginate()
+                
+                async for page in async_iterator:
+                    file_systems.extend(page.get('FileSystems', []))
+            
+            logger.info(f"Found {len(file_systems)} EFS file systems")
+            
+            # Now get CloudWatch metrics for each file system
+            async with session.client('cloudwatch', region_name=region) as cloudwatch:
+                # Calculate time range for metrics
+                end_time = datetime.datetime.utcnow()
+                start_time = end_time - datetime.timedelta(hours=period_hours)
+                
+                for fs in file_systems:
+                    fs_id = fs.get('FileSystemId')
+                    name = fs.get('Name', '')
+                    creation_time = fs.get('CreationTime', '')
+                    lifecycle_state = fs.get('LifeCycleState', '')
+                    performance_mode = fs.get('PerformanceMode', '')
+                    throughput_mode = fs.get('ThroughputMode', '')
+                    encrypted = fs.get('Encrypted', False)
+                    
+                    # Get the current size metric
+                    try:
+                        # Get the most recent StorageBytes metric
+                        response = await cloudwatch.get_metric_statistics(
+                            Namespace='AWS/EFS',
+                            MetricName='StorageBytes',
+                            Dimensions=[
+                                {
+                                    'Name': 'FileSystemId',
+                                    'Value': fs_id
+                                }
+                            ],
+                            StartTime=start_time,
+                            EndTime=end_time,
+                            Period=3600,  # 1 hour
+                            Statistics=['Average'],
+                            Unit='Bytes'
+                        )
+                        
+                        # Get the most recent data point
+                        datapoints = response.get('Datapoints', [])
+                        if datapoints:
+                            # Sort by timestamp to get the most recent
+                            datapoints.sort(key=lambda x: x['Timestamp'], reverse=True)
+                            size_bytes = datapoints[0].get('Average', 0)
+                        else:
+                            # If no datapoints, use the SizeInBytes from describe_file_systems
+                            size_bytes = fs.get('SizeInBytes', {}).get('Value', 0)
+                        
+                        # Add to total size
+                        total_size_bytes += size_bytes
+                        
+                        # Get additional metrics: burst credit balance, IO operations
+                        burst_credit_response = await cloudwatch.get_metric_statistics(
+                            Namespace='AWS/EFS',
+                            MetricName='BurstCreditBalance',
+                            Dimensions=[
+                                {
+                                    'Name': 'FileSystemId',
+                                    'Value': fs_id
+                                }
+                            ],
+                            StartTime=start_time,
+                            EndTime=end_time,
+                            Period=3600,  # 1 hour
+                            Statistics=['Average'],
+                            Unit='Bytes'
+                        )
+                        
+                        burst_credits = 0
+                        if burst_credit_response.get('Datapoints'):
+                            burst_credit_datapoints = burst_credit_response['Datapoints']
+                            burst_credit_datapoints.sort(key=lambda x: x['Timestamp'], reverse=True)
+                            burst_credits = burst_credit_datapoints[0].get('Average', 0)
+                        
+                        # Add file system information to the list
+                        file_systems_info.append({
+                            'file_system_id': fs_id,
+                            'name': name,
+                            'size_bytes': size_bytes,
+                            'size_formatted': format_size(size_bytes),
+                            'lifecycle_state': lifecycle_state,
+                            'performance_mode': performance_mode,
+                            'throughput_mode': throughput_mode,
+                            'encrypted': encrypted,
+                            'creation_time': str(creation_time),
+                            'burst_credit_balance': burst_credits,
+                            'burst_credit_balance_formatted': format_size(burst_credits)
+                        })
+                        
+                    except Exception as e:
+                        logger.error(f"Error retrieving CloudWatch metrics for EFS {fs_id}: {str(e)}")
+                        # Still add the file system to the list with available information
+                        file_systems_info.append({
+                            'file_system_id': fs_id,
+                            'name': name,
+                            'size_bytes': 0,
+                            'size_formatted': '0 B',
+                            'lifecycle_state': lifecycle_state,
+                            'performance_mode': performance_mode,
+                            'throughput_mode': throughput_mode,
+                            'encrypted': encrypted,
+                            'creation_time': str(creation_time),
+                            'error': str(e)
+                        })
+        
+        # Calculate summary information
+        total_size_formatted = format_size(total_size_bytes)
+        
+        # Group file systems by lifecycle state
+        fs_by_state = {}
+        for fs in file_systems_info:
+            state = fs['lifecycle_state']
+            if state not in fs_by_state:
+                fs_by_state[state] = {
+                    'count': 0,
+                    'total_size_bytes': 0
+                }
+            fs_by_state[state]['count'] += 1
+            fs_by_state[state]['total_size_bytes'] += fs['size_bytes']
+        
+        # Group file systems by performance mode
+        fs_by_performance = {}
+        for fs in file_systems_info:
+            perf_mode = fs['performance_mode']
+            if perf_mode not in fs_by_performance:
+                fs_by_performance[perf_mode] = {
+                    'count': 0,
+                    'total_size_bytes': 0
+                }
+            fs_by_performance[perf_mode]['count'] += 1
+            fs_by_performance[perf_mode]['total_size_bytes'] += fs['size_bytes']
+        
+        return {
+            'total_file_systems': len(file_systems_info),
+            'total_size_bytes': total_size_bytes,
+            'total_size_formatted': total_size_formatted,
+            'file_systems_by_state': fs_by_state,
+            'file_systems_by_performance': fs_by_performance,
+            'file_systems': file_systems_info
+        }
+        
+    except Exception as e:
+        logger.error(f"Error retrieving EFS usage information: {str(e)}")
+        raise
+```
 
 ## 실행 결과
 
@@ -263,3 +673,11 @@ def format_size(size_bytes):
 아래와 같이 특정 S3 bucket의 정보를 조회할 수 있습니다.
 
 ![image](https://github.com/user-attachments/assets/70b02242-c98c-486a-840a-ccc4f54ee721)
+
+"내 EBS 사용량은?"로 입력후 결과를 확인합니다. 
+
+![image](https://github.com/user-attachments/assets/db7bd44e-d529-408a-b19e-c1b3518e3b23)
+
+"내 EFS 사용량은?"으로 입력후 결과를 확인합니다.
+
+![image](https://github.com/user-attachments/assets/afae3ab0-d417-4346-b1bf-64a6a2b0f3f4)
