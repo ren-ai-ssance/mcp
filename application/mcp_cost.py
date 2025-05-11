@@ -24,20 +24,74 @@ logging.basicConfig(
 logger = logging.getLogger("mcp-cost")
 
 cost_data = {}
-def get_service_cost(days: int=30, region: str="us-west-2", service_name: str = None):
+def normalize_service_name(service_name: str) -> str:
+    """
+    Normalize AWS service names to their official names
+    Parameters:
+        service_name: Input service name (e.g., 'S3', 'EC2')
+    Returns:
+        Normalized service name (e.g., 'Amazon S3', 'Amazon EC2')
+    """
+    service_mapping = {
+        'S3': 'Amazon S3',
+        'EC2': 'Amazon EC2',
+        'RDS': 'Amazon RDS',
+        'LAMBDA': 'AWS Lambda',
+        'CLOUDWATCH': 'Amazon CloudWatch',
+        'CLOUDFRONT': 'Amazon CloudFront',
+        'DYNAMODB': 'Amazon DynamoDB',
+        'SQS': 'Amazon SQS',
+        'SNS': 'Amazon SNS',
+        'EBS': 'Amazon EBS',
+        'ELB': 'Elastic Load Balancing',
+        'ECS': 'Amazon ECS',
+        'EKS': 'Amazon EKS',
+        'API GATEWAY': 'Amazon API Gateway',
+        'ROUTE53': 'Amazon Route 53',
+        'ELASTICACHE': 'Amazon ElastiCache',
+        'REDSHIFT': 'Amazon Redshift',
+        'SES': 'Amazon SES',
+        'SNS': 'Amazon SNS',
+        'SQS': 'Amazon SQS',
+        'BEDROCK': 'Amazon Bedrock',
+        'AMAZON BEDROCK': 'Amazon Bedrock',
+        'SIMPLE STORAGE SERVICE': 'Amazon S3',
+        'ELASTIC COMPUTE CLOUD': 'Amazon EC2',
+        'RELATIONAL DATABASE SERVICE': 'Amazon RDS',
+        'DYNAMO DB': 'Amazon DynamoDB',
+        'SIMPLE QUEUE SERVICE': 'Amazon SQS',
+        'SIMPLE NOTIFICATION SERVICE': 'Amazon SNS',
+        'ELASTIC BLOCK STORE': 'Amazon EBS',
+        'ELASTIC CONTAINER SERVICE': 'Amazon ECS',
+        'ELASTIC KUBERNETES SERVICE': 'Amazon EKS',
+        'SIMPLE EMAIL SERVICE': 'Amazon SES'
+    }
+    
+    if not service_name:
+        return None
+        
+    # Convert to uppercase for case-insensitive matching
+    service_name = service_name.upper()
+    
+    # Check if the service name is in our mapping
+    if service_name in service_mapping:
+        return service_mapping[service_name]
+    
+    # If not found in mapping, return the original name
+    return service_name
+
+def get_service_cost(start_date: str, end_date: str, granularity: str = "MONTHLY", region: str="us-west-2"):
     """
     Get AWS service cost data
     Parameters:
-        days: the period of the data, e.g., 30
+        start_date: Start date in YYYY-MM-DD format
+        end_date: End date in YYYY-MM-DD format
+        granularity: Granularity of the cost data (DAILY, MONTHLY, HOURLY)
         region: The region of aws infrastructure, e.g., us-west-2
-        service_name: Optional service name to filter costs (e.g., 'Amazon EC2', 'Amazon S3')
     Returns:
-        DataFrame containing service costs
+        JSON containing service costs
     """
     try:
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days)
-
         # cost explorer
         ce = boto3.client(
             service_name='ce',
@@ -46,35 +100,39 @@ def get_service_cost(days: int=30, region: str="us-west-2", service_name: str = 
 
         service_response = ce.get_cost_and_usage(
             TimePeriod={
-                'Start': start_date.strftime('%Y-%m-%d'),
-                'End': end_date.strftime('%Y-%m-%d')
+                'Start': start_date,
+                'End': end_date
             },
-            Granularity='MONTHLY',
+            Granularity=granularity,
             Metrics=['UnblendedCost'],
             GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
         )
         
-        service_costs = pd.DataFrame([
-            {
-                'SERVICE': group['Keys'][0],
-                'cost': float(group['Metrics']['UnblendedCost']['Amount'])
+        # Convert response to JSON format
+        service_costs = []
+        for time_period in service_response['ResultsByTime']:
+            period_data = {
+                'time_period': time_period['TimePeriod'],
+                'services': []
             }
-            for group in service_response['ResultsByTime'][0]['Groups']
-        ])
-        
-        # 특정 서비스가 지정된 경우 해당 서비스만 필터링
-        if service_name:
-            service_costs = service_costs[service_costs['SERVICE'] == service_name]
-            if service_costs.empty:
-                logger.info(f"No cost data found for service: {service_name}")
-                return pd.DataFrame(columns=['SERVICE', 'cost'])
-        
-        service_costs_df = pd.DataFrame(service_costs)
-        logger.info(f"Service Cost (df): {service_costs_df}")
-
-        global service_cost_data
-        service_cost_data = {
-            'service_costs': service_costs_df
+            
+            for group in time_period['Groups']:
+                service_data = {
+                    'service': group['Keys'][0],
+                    'cost': float(group['Metrics']['UnblendedCost']['Amount']),
+                    'unit': group['Metrics']['UnblendedCost']['Unit']
+                }
+                period_data['services'].append(service_data)
+            
+            service_costs.append(period_data)
+            
+        return {
+            'service_costs': service_costs,
+            'granularity': granularity,
+            'time_period': {
+                'start': start_date,
+                'end': end_date
+            }
         }
 
     except Exception as e:
@@ -135,8 +193,8 @@ def get_daily_cost(days: int=30, region: str="us-west-2"):
     """
     Get AWS daily cost data
     Parameters:
-        start_date: Start date for cost analysis
-        end_date: End date for cost analysis
+        days: the period of the data, e.g., 30
+        region: The region of aws infrastructure, e.g., us-west-2
     Returns:
         DataFrame containing daily costs
     """
@@ -170,7 +228,7 @@ def get_daily_cost(days: int=30, region: str="us-west-2"):
                     'SERVICE': group['Keys'][0],
                     'cost': float(group['Metrics']['UnblendedCost']['Amount'])
                 })
-    
+        
         daily_costs_df = pd.DataFrame(daily_costs)
         logger.info(f"Daily Cost (df): {daily_costs_df}")
 
@@ -183,7 +241,7 @@ def get_daily_cost(days: int=30, region: str="us-west-2"):
 
     except Exception as e:
         logger.info(f"Error in cost analysis: {str(e)}")
-        return None       
+        return None
 
 def get_url(figure, prefix):
     # Convert fig_pie to base64 image
@@ -224,7 +282,7 @@ def create_service_cost_visualizations():
     }
 
 def create_daily_cost_visualizations():
-    """Cost Visualization of daily AWS cost"""
+    """Visualize daily AWS costs showing total costs and service-wise breakdown"""
     logger.info("Creating daily cost visualizations...")
 
     if not daily_cost_data or 'daily_costs' not in daily_cost_data:
@@ -233,13 +291,13 @@ def create_daily_cost_visualizations():
     
     paths = []
     
-    # daily trend cost (line chart)
+    # Get daily costs DataFrame
     daily_costs_df = daily_cost_data['daily_costs']
     
-    # 일별 총 비용 계산
+    # Calculate daily total costs
     daily_totals = daily_costs_df.groupby('date')['cost'].sum().reset_index()
     
-    # 총 비용 추이 그래프
+    # Total cost trend graph
     fig_total = px.line(
         daily_totals,
         x='date',
@@ -248,7 +306,7 @@ def create_daily_cost_visualizations():
     )
     paths.append(get_url(fig_total, "daily_total_costs"))
 
-    # 서비스별 비용 추이 그래프
+    # Service-wise cost trend graph
     fig_service = px.line(
         daily_costs_df,
         x='date',
@@ -258,7 +316,7 @@ def create_daily_cost_visualizations():
     )
     paths.append(get_url(fig_service, "daily_service_costs"))
 
-    # 일별 서비스 비용 히트맵
+    # Daily service cost heatmap
     pivot_df = daily_costs_df.pivot_table(
         index='date',
         columns='SERVICE',
@@ -316,35 +374,35 @@ def generate_cost_insights():
         return "Not available"
 
     system = (
-        "당신의 AWS solutions architect입니다."
-        "다음의 Cost Data을 이용하여 user의 질문에 답변합니다."
-        "모르는 질문을 받으면 솔직히 모른다고 말합니다."
-        "답변의 이유를 풀어서 명확하게 설명합니다."
+        "You are an AWS solutions architect."
+        "Using the following Cost Data, answer user's questions."
+        "If you don't know the answer, you can honestly say you don't know."
+        "You will explain the answer in detail and clearly."
     )
     human = (
-        "다음 AWS 비용 데이터를 분석하여 상세한 인사이트를 제공해주세요:"
+        "Please analyze the following AWS cost data and provide detailed insights:"
         "Cost Data:"
         "{raw_cost}"
         
-        "다음 항목들에 대해 분석해주세요:"
-        "1. 주요 비용 발생 요인"
-        "2. 비정상적인 패턴이나 급격한 비용 증가"
-        "3. 비용 최적화가 가능한 영역"
-        "4. 전반적인 비용 추세와 향후 예측"
+        "Please analyze the following items:"
+        "1. Main cost drivers"
+        "2. Unusual patterns or sudden cost increases"
+        "3. Areas where cost optimization is possible"
+        "4. Overall cost trend and future prediction"
         
-        "분석 결과를 다음과 같은 형식으로 제공해주세요:"
+        "Please provide the analysis results in the following format:"
 
-        "### 주요 비용 발생 요인"
-        "- [구체적인 분석 내용]"
+        "### Main cost drivers"
+        "- [Detailed analysis content]"
 
-        "### 이상 패턴 분석"
-        "- [비정상적인 비용 패턴 설명]"
+        "### Unusual pattern analysis"
+        "- [Description of unusual cost pattern]"
 
-        "### 최적화 기회"
-        "- [구체적인 최적화 방안]"
+        "### Cost optimization opportunities"
+        "- [Detailed cost optimization plan]"
 
-        "### 비용 추세"
-        "- [추세 분석 및 예측]"
+        "### Cost trend"
+        "- [Trend analysis and prediction]"
     ) 
 
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
@@ -378,13 +436,13 @@ def ask_cost_insights(question):
             'daily_costs': cost_data['daily_costs'].to_dict(orient='records') if 'daily_costs' in cost_data else []
         }
     else:
-        return "Cost 데이터를 가져오는데 실패하였습니다."
+        return "Failed to retrieve cost data."
 
     system = (
-        "당신의 AWS solutions architect입니다."
-        "다음의 Cost Data을 이용하여 user의 질문에 답변합니다."
-        "모르는 질문을 받으면 솔직히 모른다고 말합니다."
-        "답변의 이유를 풀어서 명확하게 설명합니다."
+        "You are an AWS solutions architect."
+        "Using the following Cost Data, answer user's questions."
+        "If you don't know the answer, you can honestly say you don't know."
+        "You will explain the answer in detail and clearly."
     )
     human = (
         "Question: {question}"

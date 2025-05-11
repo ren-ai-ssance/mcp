@@ -55,17 +55,18 @@ def get_region_cost(days: int=30, region: str='us-west-2'):
     return cost.get_region_cost(days=days, region=region)
 
 @mcp.tool()
-def get_service_cost(days: int=30, region: str='us-west-2', service_name: str = None):
+def get_service_cost(start_date: str, end_date: str, granularity: str = "MONTHLY", region: str="us-west-2"):
     """
     Get AWS service cost data
     Parameters:
-        days: the period of the data, e.g., 30
+        start_date: Start date in YYYY-MM-DD format
+        end_date: End date in YYYY-MM-DD format
+        granularity: Granularity of the cost data (DAILY, MONTHLY, HOURLY)
         region: The region of aws infrastructure, e.g., us-west-2
-        service_name: Optional service name to filter costs (e.g., 'Amazon EC2', 'Amazon S3')
     Returns:
-        DataFrame containing service costs
+        JSON containing service costs
     """
-    return cost.get_service_cost(days=days, region=region, service_name=service_name)
+    return cost.get_service_cost(start_date=start_date, end_date=end_date, granularity=granularity, region=region)
 
 @mcp.tool()
 def create_daily_cost_visualizations() -> list:

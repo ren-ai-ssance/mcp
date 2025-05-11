@@ -63,6 +63,74 @@ def run_aws_cli(command: str, subcommand: str, options: str) -> str:
         logger.error(error_message)
         return error_message
 
+@mcp.tool()    
+def retrieve_aws_cost(start_date: str, end_date: str, granularity: str = "MONTHLY") -> str:
+    """
+    Retrieve AWS costs using AWS Cost Explorer for the specified period.
+    
+    Args:
+        start_date: Start date in YYYY-MM-DD format
+        end_date: End date in YYYY-MM-DD format
+        granularity: Data grouping unit (DAILY, MONTHLY, HOURLY)
+    
+    Returns:
+        AWS cost information in JSON format
+    """
+    logger.info(f"retrieve_aws_cost --> start_date: {start_date}, end_date: {end_date}, granularity: {granularity}")
+    
+    cmd = [
+        'aws', 'ce', 'get-cost-and-usage',
+        '--time-period', f'Start={start_date},End={end_date}',
+        '--granularity', granularity,
+        '--metrics', 'UnblendedCost',
+        '--group-by', 'Type=DIMENSION,Key=SERVICE'
+    ]
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        error_message = f"Cost retrieval execution error: {e.stderr}"
+        logger.error(error_message)
+        return error_message
+    except Exception as e:
+        error_message = f"{str(e)}"
+        logger.error(error_message)
+        return error_message
+
+@mcp.tool()    
+def list_objects(bucket_name: str, prefix: str = "", delimiter: str = "") -> str:
+    """
+    List objects in an S3 bucket using list-objects-v2 command.
+    
+    Args:
+        bucket_name: Name of the S3 bucket
+        prefix: Optional prefix to filter objects (e.g., 'folder/')
+        delimiter: Optional delimiter to group objects (e.g., '/')
+    
+    Returns:
+        List of objects in the bucket in JSON format
+    """
+    logger.info(f"list_objects --> bucket_name: {bucket_name}, prefix: {prefix}, delimiter: {delimiter}")
+    
+    cmd = ['aws', 's3api', 'list-objects-v2', '--bucket', bucket_name]
+    
+    if prefix:
+        cmd.extend(['--prefix', prefix])
+    if delimiter:
+        cmd.extend(['--delimiter', delimiter])
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to list objects: {e.stderr}"
+        logger.error(error_message)
+        return error_message
+    except Exception as e:
+        error_message = f"{str(e)}"
+        logger.error(error_message)
+        return error_message
 
 if __name__ =="__main__":
     print(f"###### main ######")
