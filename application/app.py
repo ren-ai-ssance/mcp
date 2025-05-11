@@ -394,10 +394,14 @@ if prompt := st.chat_input("메시지를 입력하세요."):
         
         elif mode == 'Agent':
             sessionState = ""
+            chat.references = []
+            chat.image_url = []
             response = chat.run_agent(prompt, "Disable", st)
 
         elif mode == 'Agent (Chat)':
             sessionState = ""
+            chat.references = []
+            chat.image_url = []
             response = chat.run_agent(prompt, "Enable", st)
 
         elif mode == "Multi-agent Supervisor (Router)":

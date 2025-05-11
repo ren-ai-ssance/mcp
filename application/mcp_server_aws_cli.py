@@ -99,7 +99,7 @@ def retrieve_aws_cost(start_date: str, end_date: str, granularity: str = "MONTHL
         return error_message
 
 @mcp.tool()    
-def list_objects(bucket_name: str, prefix: str = "", delimiter: str = "") -> str:
+def list_objects_by_cli(bucket_name: str, prefix: str = "", delimiter: str = "") -> str:
     """
     List objects in an S3 bucket using list-objects-v2 command.
     
