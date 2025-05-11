@@ -2,8 +2,10 @@ import logging
 import sys
 import mcp_basic
 import subprocess
+import json
 
 from mcp.server.fastmcp import FastMCP 
+from typing import List, Optional
 
 logging.basicConfig(
     level=logging.INFO,  # Default to INFO level
@@ -129,6 +131,34 @@ def list_objects_by_cli(bucket_name: str, prefix: str = "", delimiter: str = "")
         return error_message
     except Exception as e:
         error_message = f"{str(e)}"
+        logger.error(error_message)
+        return error_message
+
+@mcp.tool()    
+def get_ec2_instances(region: str = "us-west-2") -> str:
+    """
+    Retrieve EC2 instance information using AWS CLI.
+    
+    Args:
+        region: AWS region (e.g., 'us-west-2'). Default is us-west-2.
+    
+    Returns:
+        EC2 instance information in JSON format
+    """
+    logger.info(f"get_ec2_instances --> region: {region}")
+    
+    cmd = ['aws', 'ec2', 'describe-instances', '--region', region]
+    logger.info(f"get_ec2_instances --> cmd: {cmd}")
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        error_message = f"Failed to get EC2 instances: {e.stderr}"
+        logger.error(error_message)
+        return error_message
+    except Exception as e:
+        error_message = f"Error executing EC2 command: {str(e)}"
         logger.error(error_message)
         return error_message
 
