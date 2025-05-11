@@ -29,32 +29,60 @@ except Exception as e:
 ######################################
 # AWS Cost
 ######################################
-@mcp.tool()
-def aws_cost_loader(days: int=30, region: str='us-west-2') -> list:
-    """
-    load aws cost data
-    days: the number of days looking for cost data
-    region: the name of aws region
-    return: cost data during days
-    """
-
-    return cost.get_cost_analysis(days=days, region=region)
 
 @mcp.tool()
-def create_cost_visualizations() -> list:
+def get_daily_cost(days: int=30, region: str='us-west-2'):
     """
-    create aws cost visualizations
+    Get AWS daily cost data
+    Parameters:
+        days: the period of the data, e.g., 30
+        region: The region of aws infrastructure, e.g., us-west-2
+    Returns:
+        DataFrame containing daily costs
     """
-
-    return cost.create_cost_visualizations()
+    return cost.get_daily_cost(days=days, region=region)
 
 @mcp.tool()
-def generate_cost_insights() -> str:
+def get_region_cost(days: int=30, region: str='us-west-2'):
     """
-    generate cost insights
+    Get AWS region cost data
+    Parameters:
+        days: the period of the data, e.g., 30
+        region: The region of aws infrastructure, e.g., us-west-2
+    Returns:
+        DataFrame containing region costs
+    """
+    return cost.get_region_cost(days=days, region=region)
+
+@mcp.tool()
+def get_service_cost(days: int=30, region: str='us-west-2', service_name: str = None):
+    """
+    Get AWS service cost data
+    Parameters:
+        days: the period of the data, e.g., 30
+        region: The region of aws infrastructure, e.g., us-west-2
+        service_name: Optional service name to filter costs (e.g., 'Amazon EC2', 'Amazon S3')
+    Returns:
+        DataFrame containing service costs
+    """
+    return cost.get_service_cost(days=days, region=region, service_name=service_name)
+
+@mcp.tool()
+def create_daily_cost_visualizations() -> list:
+    """
+    create a graph to show daily aws cost 
     """
 
-    return cost.generate_cost_insights()
+    return cost.create_daily_cost_visualizations()
+
+@mcp.tool()
+def create_region_cost_visualizations() -> list:
+    """
+    create a graph to show region aws cost
+    """
+
+    return cost.create_region_cost_visualizations()
+
 
 @mcp.tool()
 def generate_cost_insights(question: str) -> str:

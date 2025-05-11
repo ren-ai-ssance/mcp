@@ -24,24 +24,26 @@ logging.basicConfig(
 logger = logging.getLogger("mcp-cost")
 
 cost_data = {}
-def get_cost_analysis(days: int=30, region: str="us-west-2"):
+def get_service_cost(days: int=30, region: str="us-west-2", service_name: str = None):
     """
-    Cost analysis data collection
+    Get AWS service cost data
     Parameters:
         days: the period of the data, e.g., 30
         region: The region of aws infrastructure, e.g., us-west-2
-    """   
+        service_name: Optional service name to filter costs (e.g., 'Amazon EC2', 'Amazon S3')
+    Returns:
+        DataFrame containing service costs
+    """
     try:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
-        
+
         # cost explorer
         ce = boto3.client(
             service_name='ce',
             region_name=region
         )
 
-        # service cost
         service_response = ce.get_cost_and_usage(
             TimePeriod={
                 'Start': start_date.strftime('%Y-%m-%d'),
@@ -59,9 +61,45 @@ def get_cost_analysis(days: int=30, region: str="us-west-2"):
             }
             for group in service_response['ResultsByTime'][0]['Groups']
         ])
-        logger.info(f"Service Cost: {service_response}")
         
-        # region cost
+        # 특정 서비스가 지정된 경우 해당 서비스만 필터링
+        if service_name:
+            service_costs = service_costs[service_costs['SERVICE'] == service_name]
+            if service_costs.empty:
+                logger.info(f"No cost data found for service: {service_name}")
+                return pd.DataFrame(columns=['SERVICE', 'cost'])
+        
+        service_costs_df = pd.DataFrame(service_costs)
+        logger.info(f"Service Cost (df): {service_costs_df}")
+
+        global service_cost_data
+        service_cost_data = {
+            'service_costs': service_costs_df
+        }
+
+    except Exception as e:
+        logger.info(f"Error in service cost analysis: {str(e)}")
+        return None
+
+def get_region_cost(days: int=30, region: str="us-west-2"):
+    """
+    Get AWS region cost data
+    Parameters:
+        days: the period of the data, e.g., 30
+        region: The region of aws infrastructure, e.g., us-west-2
+    Returns:
+        DataFrame containing region costs
+    """
+    try:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # cost explorer
+        ce = boto3.client(
+            service_name='ce',
+            region_name=region
+        )
+
         region_response = ce.get_cost_and_usage(
             TimePeriod={
                 'Start': start_date.strftime('%Y-%m-%d'),
@@ -80,8 +118,38 @@ def get_cost_analysis(days: int=30, region: str="us-west-2"):
             }
             for group in region_response['ResultsByTime'][0]['Groups']
         ])
-        
-        # Daily Cost
+
+        region_costs_df = pd.DataFrame(region_costs)
+        logger.info(f"Region Cost (df): {region_costs_df}")
+
+        global region_cost_data
+        region_cost_data = {
+            'region_costs': region_costs_df
+        }
+
+    except Exception as e:
+        logger.info(f"Error in region cost analysis: {str(e)}")
+        return None
+
+def get_daily_cost(days: int=30, region: str="us-west-2"):
+    """
+    Get AWS daily cost data
+    Parameters:
+        start_date: Start date for cost analysis
+        end_date: End date for cost analysis
+    Returns:
+        DataFrame containing daily costs
+    """
+    try:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # cost explorer
+        ce = boto3.client(
+            service_name='ce',
+            region_name=region
+        )
+
         daily_response = ce.get_cost_and_usage(
             TimePeriod={
                 'Start': start_date.strftime('%Y-%m-%d'),
@@ -92,7 +160,7 @@ def get_cost_analysis(days: int=30, region: str="us-west-2"):
             GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
         )
         logger.info(f"Daily Cost: {daily_response}")
-        
+
         daily_costs = []
         for time_period in daily_response['ResultsByTime']:
             date = time_period['TimePeriod']['Start']
@@ -102,21 +170,20 @@ def get_cost_analysis(days: int=30, region: str="us-west-2"):
                     'SERVICE': group['Keys'][0],
                     'cost': float(group['Metrics']['UnblendedCost']['Amount'])
                 })
-        
+    
         daily_costs_df = pd.DataFrame(daily_costs)
         logger.info(f"Daily Cost (df): {daily_costs_df}")
-        
-        global cost_data
-        cost_data = {
-            'service_costs': service_costs,
-            'region_costs': region_costs,
+
+        global daily_cost_data
+        daily_cost_data = {
             'daily_costs': daily_costs_df
         }
-        return cost_data
-        
+
+        return daily_cost_data
+
     except Exception as e:
         logger.info(f"Error in cost analysis: {str(e)}")
-        return None
+        return None       
 
 def get_url(figure, prefix):
     # Convert fig_pie to base64 image
@@ -133,11 +200,11 @@ def get_url(figure, prefix):
     
     return url
 
-def create_cost_visualizations():
-    """Cost Visualization"""
+def create_service_cost_visualizations():
+    """Cost Visualization of aws services"""
     logger.info("Creating cost visualizations...")
 
-    if not cost_data:
+    if not service_cost_data:
         logger.info("No cost data available")
         return None
         
@@ -152,15 +219,76 @@ def create_cost_visualizations():
     )    
     paths.append(get_url(fig_pie, "service_costs"))
             
+    return {
+        "path": paths
+    }
+
+def create_daily_cost_visualizations():
+    """Cost Visualization of daily AWS cost"""
+    logger.info("Creating daily cost visualizations...")
+
+    if not daily_cost_data or 'daily_costs' not in daily_cost_data:
+        logger.info("No cost data available")
+        return None        
+    
+    paths = []
+    
     # daily trend cost (line chart)
-    fig_line = px.line(
-        cost_data['daily_costs'],
+    daily_costs_df = daily_cost_data['daily_costs']
+    
+    # 일별 총 비용 계산
+    daily_totals = daily_costs_df.groupby('date')['cost'].sum().reset_index()
+    
+    # 총 비용 추이 그래프
+    fig_total = px.line(
+        daily_totals,
+        x='date',
+        y='cost',
+        title='Daily Total Cost Trend'
+    )
+    paths.append(get_url(fig_total, "daily_total_costs"))
+
+    # 서비스별 비용 추이 그래프
+    fig_service = px.line(
+        daily_costs_df,
         x='date',
         y='cost',
         color='SERVICE',
-        title='Daily Cost Trend'
+        title='Daily Cost Trend by Service'
     )
-    paths.append(get_url(fig_line, "daily_costs"))
+    paths.append(get_url(fig_service, "daily_service_costs"))
+
+    # 일별 서비스 비용 히트맵
+    pivot_df = daily_costs_df.pivot_table(
+        index='date',
+        columns='SERVICE',
+        values='cost',
+        fill_value=0
+    )
+    
+    fig_heatmap = px.imshow(
+        pivot_df,
+        title='Daily Cost Heatmap by Service',
+        labels=dict(x="Service", y="Date", color="Cost"),
+        aspect="auto"
+    )
+    paths.append(get_url(fig_heatmap, "daily_cost_heatmap"))
+        
+    logger.info(f"paths: {paths}")
+
+    return {
+        "path": paths
+    }
+
+def create_region_cost_visualizations():
+    """Cost Visualization of region AWS cost"""
+    logger.info("Creating region cost visualizations...")
+
+    if not region_cost_data:
+        logger.info("No cost data available")
+        return None
+        
+    paths = []
     
     # region cost (bar chart)
     fig_bar = px.bar(
