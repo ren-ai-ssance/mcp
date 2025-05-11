@@ -2027,18 +2027,32 @@ def tool_info(tools, st):
 #                 pass
 #     return image_url, references
 
+# Add global variables for caching
+cached_mcp_json = None
+cached_tools = None
+
 async def mcp_rag_agent_multiple(query, historyMode, st):
+    global cached_mcp_json, cached_tools
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
-    async with  MultiServerMCPClient(server_params) as client:
+    async with MultiServerMCPClient(server_params) as client:
         ref = ""
-        with st.status("thinking...", expanded=True, state="running") as status:                       
-            tools = client.get_tools()
-            logger.info(f"tools: {tools}")
+        with st.status("thinking...", expanded=True, state="running") as status:
+            # Check if mcp_json has changed
+            if cached_mcp_json != mcp_json:
+                logger.info("Loading new tools due to mcp_json change")
+                tools = client.get_tools()
+                cached_tools = tools
+                cached_mcp_json = mcp_json
 
-            if debug_mode == "Enable":
-                tool_info(tools, st)
+                if debug_mode == "Enable":
+                    tool_info(tools, st)
+            else:
+                logger.info("Using cached tools as mcp_json has not changed")
+                tools = cached_tools
+
+            logger.info(f"tools: {tools}")
 
             # react agent
             # model = get_chat(extended_thinking="Disable")
@@ -2051,7 +2065,7 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
             logger.info(f"response: {response}")
 
             result = response["messages"][-1].content
-            logger.info(f"result: {result}")
+            # logger.info(f"result: {result}")
 
             debug_msgs = get_debug_messages()
             for msg in debug_msgs:
@@ -2061,7 +2075,7 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
                 elif "text" in msg:
                     st.info(msg["text"])
 
-            logger.info(f"references: {references}")
+            #logger.info(f"references: {references}")
 
             #image_url, references = show_status_message(response["messages"], st)     
             

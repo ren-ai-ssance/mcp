@@ -23,6 +23,15 @@ logger = logging.getLogger("streamlit")
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
 
+# 사이드바 너비 조정을 위한 CSS
+st.markdown("""
+    <style>
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        width: 400px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 mode_descriptions = {
     "일상적인 대화": [
         "대화이력을 바탕으로 챗봇과 일상의 대화를 편안히 즐길수 있습니다."
@@ -31,10 +40,10 @@ mode_descriptions = {
         "Bedrock Knowledge Base를 이용해 구현한 RAG로 필요한 정보를 검색합니다."
     ],
     "Agent": [
-        "Agent를 이용하여 Workflow를 구현합니다."
+        "MCP를 활용한 Agent를 이용합니다. 왼쪽 메뉴에서 필요한 MCP를 선택하세요."
     ],
     "Agent (Chat)": [
-        "Agent를 이용하여 Workflow를 구현합니다. 채팅 히스토리를 이용해 interative한 대화를 즐길 수 있습니다."
+        "MCP를 활용한 Agent를 이용합니다. 채팅 히스토리를 이용해 interative한 대화를 즐길 수 있습니다."
     ],
     "Multi-agent Supervisor (Router)": [
         "Multi-agent Supervisor (Router)에 기반한 대화입니다. 여기에서는 Supervisor/Collaborators의 구조를 가지고 있습니다."
@@ -122,19 +131,7 @@ with st.sidebar:
         mcp_selections = {}
         default_selections = ["default", "tavily", "aws cli", "code interpreter"]
 
-        with st.expander("MCP 옵션 선택", expanded=True):
-            # CSS 스타일 추가
-            st.markdown("""
-                <style>
-                .stCheckbox {
-                    margin-bottom: -0.5rem;
-                }
-                .stCheckbox label {
-                    font-size: 0.9rem;
-                }
-                </style>
-            """, unsafe_allow_html=True)
-            
+        with st.expander("MCP 옵션 선택", expanded=True):            
             # 2개의 컬럼 생성
             col1, col2 = st.columns(2)
             
@@ -193,6 +190,7 @@ with st.sidebar:
                     logger.info(f"remove seed_image_url")
                     update_seed_image_url("") 
         else:
+            enable_seed = False
             if seed_image_url:
                 logger.info(f"remove seed_image_url")
                 update_seed_image_url("") 
@@ -406,6 +404,8 @@ if prompt := st.chat_input("메시지를 입력하세요."):
 
         elif mode == "Multi-agent Supervisor (Router)":
             sessionState = ""
+            chat.references = []
+            chat.image_url = []
             with st.status("thinking...", expanded=True, state="running") as status:
                 response, image_url, reference_docs = router.run_router_supervisor(prompt, st)
                 st.write(response)
@@ -422,6 +422,8 @@ if prompt := st.chat_input("메시지를 입력하세요."):
 
         elif mode == "LangGraph Supervisor":
             sessionState = ""
+            chat.references = []
+            chat.image_url = []
             with st.status("thinking...", expanded=True, state="running") as status:
                 response, image_url, reference_docs = supervisor.run_langgraph_supervisor(prompt, st)
                 st.write(response)
