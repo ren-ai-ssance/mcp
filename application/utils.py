@@ -67,10 +67,13 @@ def stcode(st, code):
 def load_config():
     config = None
     try:
+        with open("/home/config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+            environment = "aws"
+            # print(f"config: {config}")
+    except Exception:
         with open("application/config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
-            print(f"config: {config}")
-    except Exception:
-        err_msg = traceback.format_exc()
-        print(f"error message: {err_msg}")    
-    return config
+            environment = "local"
+            # print(f"config: {config}")
+    return config, environment

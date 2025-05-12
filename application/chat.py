@@ -282,16 +282,16 @@ def initiate():
 
 initiate()
 
-config = utils.load_config()
+config, environment = utils.load_config()
+print(f"config: {config}")
+print(f"environment: {environment}")
 
 bedrock_region = config["region"] if "region" in config else "us-west-2"
-
 projectName = config["projectName"] if "projectName" in config else "mcp-rag"
-
 accountId = config["accountId"] if "accountId" in config else None
+
 if accountId is None:
     raise Exception ("No accountId")
-
 region = config["region"] if "region" in config else "us-west-2"
 logger.info(f"region: {region}")
 
@@ -2027,105 +2027,66 @@ def tool_info(tools, st):
 #                 pass
 #     return image_url, references
 
-# Add global variables for caching
-cached_mcp_json = None
-cached_tools = None
-
 async def mcp_rag_agent_multiple(query, historyMode, st):
     global cached_mcp_json, cached_tools
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
-    max_retries = 3
-    retry_count = 0
+    async with MultiServerMCPClient(server_params) as client:
+        ref = ""
+        with st.status("thinking...", expanded=True, state="running") as status:
+            tools = client.get_tools()
+            if debug_mode == "Enable":
+                tool_info(tools, st)
+                logger.info(f"tools: {tools}")
 
-    while retry_count < max_retries:
-        try:
-            async with MultiServerMCPClient(server_params) as client:
-                ref = ""
-                with st.status("thinking...", expanded=True, state="running") as status:
-                    # Check if mcp_json has changed
-                    if cached_mcp_json != mcp_json:
-                        logger.info("Loading new tools due to mcp_json change")
-                        try:
-                            tools = client.get_tools()
-                            cached_tools = tools
-                            cached_mcp_json = mcp_json
+            # react agent
+            # model = get_chat(extended_thinking="Disable")
+            # agent = create_react_agent(model, client.get_tools())
 
-                            if debug_mode == "Enable":
-                                tool_info(tools, st)
-                        except Exception as e:
-                            logger.error(f"Error loading tools: {str(e)}")
-                            raise Exception(f"Failed to load tools: {str(e)}")
-                    else:
-                        logger.info("Using cached tools as mcp_json has not changed")
-                        tools = cached_tools
+            # langgraph agent
+            agent, config = create_agent(tools, historyMode)
 
-                    logger.info(f"tools: {tools}")
+            try:
+                response = await agent.ainvoke({"messages": query}, config)
+                logger.info(f"response: {response}")
 
-                    # react agent
-                    # model = get_chat(extended_thinking="Disable")
-                    # agent = create_react_agent(model, client.get_tools())
+                result = response["messages"][-1].content
+                # logger.info(f"result: {result}")
 
-                    # langgraph agent
-                    agent, config = create_agent(tools, historyMode)
+                debug_msgs = get_debug_messages()
+                for msg in debug_msgs:
+                    logger.info(f"debug_msg: {msg}")
+                    if "image" in msg:
+                        st.image(msg["image"])
+                    elif "text" in msg:
+                        st.info(msg["text"])
 
-                    try:
-                        response = await agent.ainvoke({"messages": query}, config)
-                        logger.info(f"response: {response}")
+                #logger.info(f"references: {references}")
+                #image_url, references = show_status_message(response["messages"], st)     
+                
+                if references:
+                    ref = "\n\n### Reference\n"
+                for i, reference in enumerate(references):
+                    ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
 
-                        result = response["messages"][-1].content
-                        # logger.info(f"result: {result}")
+                result += ref
 
-                        debug_msgs = get_debug_messages()
-                        for msg in debug_msgs:
-                            logger.info(f"debug_msg: {msg}")
-                            if "image" in msg:
-                                st.image(msg["image"])
-                            elif "text" in msg:
-                                st.info(msg["text"])
+                if model_type == "nova":
+                    result = extract_thinking_tag(result, st) # for nova
 
-                        #logger.info(f"references: {references}")
+                st.markdown(result)
 
-                        #image_url, references = show_status_message(response["messages"], st)     
-                        
-                        if references:
-                            ref = "\n\n### Reference\n"
-                        for i, reference in enumerate(references):
-                            ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": result,
+                    "images": image_url if image_url else []
+                })
 
-                        result += ref
-
-                        if model_type == "nova":
-                            result = extract_thinking_tag(result, st) # for nova
-
-                        st.markdown(result)
-
-                        st.session_state.messages.append({
-                            "role": "assistant", 
-                            "content": result,
-                            "images": image_url if image_url else []
-                        })
-
-                        return result
-                    except Exception as e:
-                        logger.error(f"Error during agent invocation: {str(e)}")
-                        if "ClosedResourceError" in str(e):
-                            retry_count += 1
-                            if retry_count < max_retries:
-                                logger.info(f"Retrying... (attempt {retry_count + 1}/{max_retries})")
-                                continue
-                        raise Exception(f"Agent invocation failed: {str(e)}")
-        except Exception as e:
-            logger.error(f"Error in MCP client session: {str(e)}")
-            if "ClosedResourceError" in str(e):
-                retry_count += 1
-                if retry_count < max_retries:
-                    logger.info(f"Retrying... (attempt {retry_count + 1}/{max_retries})")
-                    continue
-            raise Exception(f"MCP client session failed: {str(e)}")
-
-    raise Exception(f"Failed after {max_retries} attempts")
+                return result
+            except Exception as e:
+                logger.error(f"Error during agent invocation: {str(e)}")
+                raise Exception(f"Agent invocation failed: {str(e)}")
 
 async def mcp_rag_agent_single(query, historyMode, st):
     server_params = load_mcp_server_parameters()
