@@ -174,10 +174,11 @@ def status_messages(message):
                 if isinstance(path, list):
                     for p in path:
                         logger.info(f"image: {p}")
-                        if p.startswith('http') or p.startswith('https'):
-                            push_debug_messages("image", p)
-                            image_url.append(p)
-                        else:
+                        # if p.startswith('http') or p.startswith('https'):
+                        #     push_debug_messages("image", p)
+                        #     image_url.append(p)
+                        # else:
+                        if not (p.startswith('http') or p.startswith('https')):
                             with open(p, 'rb') as f:
                                 image_data = f.read()
                                 push_debug_messages("image", image_data)
@@ -185,10 +186,11 @@ def status_messages(message):
                 else:
                     logger.info(f"image: {path}")
                     try:
-                        if path.startswith('http') or path.startswith('https'):
-                            push_debug_messages("image", path)
-                            image_url.append(path)
-                        else:
+                        # if path.startswith('http') or path.startswith('https'):
+                        #     push_debug_messages("image", path)
+                        #     image_url.append(path)
+                        # else:
+                        if not (path.startswith('http') or path.startswith('https')):
                             with open(path, 'rb') as f:
                                 image_data = f.read()
                                 push_debug_messages("image", image_data)
@@ -1648,13 +1650,41 @@ def create_agent(tools, historyMode):
 
     class State(TypedDict):
         messages: Annotated[list, add_messages]
+        image_url: list
 
     def call_model(state: State, config):
         logger.info(f"###### call_model ######")
         logger.info(f"state: {state['messages']}")
 
         last_message = state['messages'][-1]
-        logger.info(f"last message: {last_message}")
+        if isinstance(last_message.content, list):
+            content = str(last_message.content)
+        else:
+            content = last_message.content.encode().decode('unicode_escape')
+        logger.info(f"last message: {content}")
+        
+        # image_url
+        image_url = state['image_url'] if 'image_url' in state else []
+        if isinstance(content, str) and (content.strip().startswith('{') or content.strip().startswith('[')):
+            tool_result = json.loads(content)
+            try:                 
+                if "path" in tool_result:
+                    logger.info(f"path: {tool_result['path']}")
+
+                    path = tool_result['path']
+                    if isinstance(path, list):
+                        for p in path:
+                            logger.info(f"image: {p}")
+                            if p.startswith('http') or p.startswith('https'):
+                                image_url.append(p)
+                    else:
+                        logger.info(f"image: {path}")
+                        if path.startswith('http') or path.startswith('https'):
+                            image_url.append(path)
+            except Exception as e:
+                logger.error(f"error: {str(e)}")
+        if image_url:
+            logger.info(f"image_url: {image_url}")
         
         if debug_mode == "Enable":
             status_messages(last_message)
@@ -1692,7 +1722,7 @@ def create_agent(tools, historyMode):
             logger.info(f"error message: {err_msg}")
             # raise Exception ("Not able to request to LLM")
 
-        return {"messages": [response]}
+        return {"messages": [response], "image_url": image_url}
 
     def should_continue(state: State) -> Literal["continue", "end"]:
         logger.info(f"###### should_continue ######")
@@ -2028,7 +2058,6 @@ def tool_info(tools, st):
 #     return image_url, references
 
 async def mcp_rag_agent_multiple(query, historyMode, st):
-    global cached_mcp_json, cached_tools
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
@@ -2061,6 +2090,12 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
                         st.image(msg["image"])
                     elif "text" in msg:
                         st.info(msg["text"])
+
+                image_url = response["image_url"] if "image_url" in response else []
+                logger.info(f"image_url: {image_url}")
+
+                for image in image_url:
+                    st.image(image)
 
                 #logger.info(f"references: {references}")
                 #image_url, references = show_status_message(response["messages"], st)     
