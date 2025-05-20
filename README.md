@@ -8,6 +8,7 @@ MCP(Model Context Protocal)은 생성형 AI application이 외부 데이터를 �
 <img src="https://github.com/user-attachments/assets/a263f0fa-22f1-483b-8936-a59429ace173" width="750">
 
 
+
 ## MCP 활용
 
 ### MCP Basic
