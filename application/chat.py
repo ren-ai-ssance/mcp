@@ -2010,20 +2010,16 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
                 for image in image_url:
                     st.image(image)
 
-                #logger.info(f"references: {references}")
-                #image_url, references = show_status_message(response["messages"], st)     
-                references = extract_reference(response["messages"])
-                
-                if references:
-                    ref = "\n\n### Reference\n"
-                for i, reference in enumerate(references):
-                    ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
-                logger.info(f"ref: {ref}")
-
                 if model_type == "nova":
                     result = extract_thinking_tag(result, st) # for nova
 
-                result += ref
+                references = extract_reference(response["messages"])                
+                if references:
+                    ref = "\n\n### Reference\n"
+                    for i, reference in enumerate(references):
+                        ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
+                    logger.info(f"ref: {ref}")
+                    result += ref
 
                 st.markdown(result)
 
