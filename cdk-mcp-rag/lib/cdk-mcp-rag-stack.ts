@@ -536,23 +536,48 @@ export class CdkMcpRagStack extends cdk.Stack {
     // CloudFront
     const CUSTOM_HEADER_NAME = "X-Custom-Header"
     const CUSTOM_HEADER_VALUE = `${projectName}_12dab15e4s31` // Temporary value
-    const origin = new origins.LoadBalancerV2Origin(alb, {      
+    const albOrigin = new origins.LoadBalancerV2Origin(alb, {      
       httpPort: 80,
       customHeaders: {[CUSTOM_HEADER_NAME] : CUSTOM_HEADER_VALUE},
       originShieldEnabled: false,
       protocolPolicy: cloudFront.OriginProtocolPolicy.HTTP_ONLY      
     });
+    const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(s3Bucket);
+
     const distribution = new cloudFront.Distribution(this, `cloudfront-for-${projectName}`, {
       comment: `CloudFront-for-${projectName}`,
       defaultBehavior: {
-        origin: origin,
+        origin: albOrigin,
         viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
         cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
         originRequestPolicy: cloudFront.OriginRequestPolicy.ALL_VIEWER        
       },
+      additionalBehaviors: {
+        '/sharing/*': {
+          origin: s3Origin,
+          viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudFront.OriginRequestPolicy.CORS_S3_ORIGIN
+        }
+      },
       priceClass: cloudFront.PriceClass.PRICE_CLASS_200
     }); 
+
+    // S3 버킷 정책 추가
+    s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['s3:GetObject'],
+      resources: [s3Bucket.arnForObjects('*')],
+      principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+      conditions: {
+        StringEquals: {
+          'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
+        }
+      }
+    }));
+
     new cdk.CfnOutput(this, `distributionDomainName-for-${projectName}`, {
       value: 'https://'+distribution.domainName,
       description: 'The domain name of the Distribution'
@@ -571,21 +596,6 @@ export class CdkMcpRagStack extends cdk.Stack {
     const targetPort = 8501;  // 8080 8501
     ec2Sg.connections.allowFrom(albSg, ec2.Port.tcp(targetPort), 'allow traffic from alb') // alb -> ec2
     ec2Sg.connections.allowTo(bedrockEndpoint, ec2.Port.tcp(443), 'allow traffic to bedrock endpoint') // ec2 -> bedrock
-
-    // cloudfront for sharing s3
-    const distribution_sharing = new cloudFront.Distribution(this, `sharing-for-${projectName}`, {
-      defaultBehavior: {
-        origin: origins.S3BucketOrigin.withOriginAccessControl(s3Bucket),
-        allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
-        cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-        viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      },
-      priceClass: cloudFront.PriceClass.PRICE_CLASS_200,  
-    });
-    new cdk.CfnOutput(this, `distribution-sharing-DomainName-for-${projectName}`, {
-      value: 'https://'+distribution_sharing.domainName,
-      description: 'The domain name of the Distribution Sharing',
-    });          
     
     // lambda-rag
     const roleLambdaRag = new iam.Role(this, `role-lambda-rag-for-${projectName}`, {
@@ -645,29 +655,12 @@ export class CdkMcpRagStack extends cdk.Stack {
       environment: {
         bedrock_region: String(region),
         projectName: projectName,
-        "sharing_url": 'https://'+distribution_sharing.domainName,
+        "sharing_url": 'https://'+distribution.domainName+'/sharing',
       }
     });     
     
     lambdaRag.grantInvoke(new cdk.aws_iam.ServicePrincipal("bedrock.amazonaws.com")); 
     
-    const mcp_config = JSON.stringify(`{
-  "mcpServers": {
-    "search": {
-      "command": "python",
-      "args": [
-        "application/mcp-server.py"
-      ]
-    },
-    "playwright": {
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest"
-      ]
-    }
-  }
-}`)
-
     const userData = ec2.UserData.forLinux();
     const environment = {
       "projectName": projectName,
@@ -678,8 +671,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       "opensearch_url": OpenSearchCollection.attrCollectionEndpoint,
       "s3_bucket": s3Bucket.bucketName,      
       "s3_arn": s3Bucket.bucketArn,
-      "sharing_url": 'https://'+distribution_sharing.domainName,
-      "mcp": mcp_config
+      "sharing_url": 'https://'+distribution.domainName+'/sharing',
     }    
     new cdk.CfnOutput(this, `environment-for-${projectName}`, {
       value: JSON.stringify(environment),
