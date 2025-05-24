@@ -211,7 +211,8 @@ export class CdkMcpRagStack extends cdk.Stack {
             'ETag',
             'x-amz-server-side-encryption',
             'x-amz-request-id',
-            'x-amz-id-2'
+            'x-amz-id-2',
+            'Access-Control-Allow-Origin'
           ],
           maxAge: 3000
         }
@@ -582,22 +583,12 @@ export class CdkMcpRagStack extends cdk.Stack {
       priceClass: cloudFront.PriceClass.PRICE_CLASS_200
     }); 
 
-    // S3 bucket policy for CloudFront
+    // S3 bucket policy
     s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: [
-        's3:GetObject',
-        's3:ListBucket',
-        's3:GetBucketLocation',
-        's3:GetObjectVersion'
-      ],
-      resources: [
-        s3Bucket.arnForObjects('*'),
-        s3Bucket.bucketArn
-      ],
-      principals: [
-        new iam.ServicePrincipal('cloudfront.amazonaws.com')
-      ],
+      actions: ['s3:GetObject'],
+      resources: [s3Bucket.arnForObjects('*')],
+      principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
       conditions: {
         StringEquals: {
           'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
