@@ -570,12 +570,12 @@ export class CdkMcpRagStack extends cdk.Stack {
       }
     });
 
-    // Create S3 Origin with OAC
-    const s3Origin = new origins.S3Origin(s3Bucket, {
-      originAccessIdentity: new cloudFront.OriginAccessIdentity(this, `OAI-${projectName}`, {
-        comment: `OAI for ${projectName}`
-      })
+    // Create OAI once and reuse it
+    const oai = new cloudFront.OriginAccessIdentity(this, `OAI-${projectName}`, {
+      comment: `OAI for ${projectName}`
     });
+
+    const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(s3Bucket);
 
     const distribution = new cloudFront.Distribution(this, `cloudfront-for-${projectName}`, {
       comment: `CloudFront-for-${projectName}`,
@@ -623,10 +623,6 @@ export class CdkMcpRagStack extends cdk.Stack {
     }));
 
     // Add bucket policy for OAI
-    const oai = new cloudFront.OriginAccessIdentity(this, `OAI-${projectName}`, {
-      comment: `OAI for ${projectName}`
-    });
-
     s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
