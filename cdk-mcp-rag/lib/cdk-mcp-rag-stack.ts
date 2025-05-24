@@ -570,7 +570,12 @@ export class CdkMcpRagStack extends cdk.Stack {
       }
     });
 
-    const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(s3Bucket);
+    // Create S3 Origin with OAC
+    const s3Origin = new origins.S3Origin(s3Bucket, {
+      originAccessIdentity: new cloudFront.OriginAccessIdentity(this, `OAI-${projectName}`, {
+        comment: `OAI for ${projectName}`
+      })
+    });
 
     const distribution = new cloudFront.Distribution(this, `cloudfront-for-${projectName}`, {
       comment: `CloudFront-for-${projectName}`,
@@ -594,7 +599,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       priceClass: cloudFront.PriceClass.PRICE_CLASS_200
     }); 
 
-    // S3 bucket policy
+    // S3 bucket policy for CloudFront
     s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
@@ -617,17 +622,26 @@ export class CdkMcpRagStack extends cdk.Stack {
       }
     }));
 
-    // Add bucket policy for public access
+    // Add bucket policy for OAI
+    const oai = new cloudFront.OriginAccessIdentity(this, `OAI-${projectName}`, {
+      comment: `OAI for ${projectName}`
+    });
+
     s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: ['s3:GetObject'],
-      resources: [s3Bucket.arnForObjects('*')],
-      principals: [new iam.AnyPrincipal()],
-      conditions: {
-        StringEquals: {
-          'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
-        }
-      }
+      actions: [
+        's3:GetObject',
+        's3:ListBucket'
+      ],
+      resources: [
+        s3Bucket.arnForObjects('*'),
+        s3Bucket.bucketArn
+      ],
+      principals: [
+        new iam.CanonicalUserPrincipal(
+          oai.cloudFrontOriginAccessIdentityS3CanonicalUserId
+        )
+      ]
     }));
 
     new cdk.CfnOutput(this, `distributionDomainName-for-${projectName}`, {
