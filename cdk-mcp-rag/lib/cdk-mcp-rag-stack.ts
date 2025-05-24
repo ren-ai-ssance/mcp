@@ -559,22 +559,6 @@ export class CdkMcpRagStack extends cdk.Stack {
       originShieldEnabled: false,
       protocolPolicy: cloudFront.OriginProtocolPolicy.HTTP_ONLY      
     });
-
-    // CloudFront Origin Access Control
-    const originAccessControl = new cloudFront.CfnOriginAccessControl(this, `OAC-${projectName}`, {
-      originAccessControlConfig: {
-        name: `OAC-${projectName}`,
-        originAccessControlOriginType: 's3',
-        signingBehavior: 'always',
-        signingProtocol: 'sigv4'
-      }
-    });
-
-    // Create OAI once and reuse it
-    const oai = new cloudFront.OriginAccessIdentity(this, `OAI-${projectName}`, {
-      comment: `OAI for ${projectName}`
-    });
-
     const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(s3Bucket);
 
     const distribution = new cloudFront.Distribution(this, `cloudfront-for-${projectName}`, {
@@ -592,8 +576,7 @@ export class CdkMcpRagStack extends cdk.Stack {
           viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-          originRequestPolicy: cloudFront.OriginRequestPolicy.CORS_S3_ORIGIN,
-          compress: true
+          originRequestPolicy: cloudFront.OriginRequestPolicy.CORS_S3_ORIGIN
         }
       },
       priceClass: cloudFront.PriceClass.PRICE_CLASS_200
@@ -620,24 +603,6 @@ export class CdkMcpRagStack extends cdk.Stack {
           'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
         }
       }
-    }));
-
-    // Add bucket policy for OAI
-    s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        's3:GetObject',
-        's3:ListBucket'
-      ],
-      resources: [
-        s3Bucket.arnForObjects('*'),
-        s3Bucket.bucketArn
-      ],
-      principals: [
-        new iam.CanonicalUserPrincipal(
-          oai.cloudFrontOriginAccessIdentityS3CanonicalUserId
-        )
-      ]
     }));
 
     new cdk.CfnOutput(this, `distributionDomainName-for-${projectName}`, {
