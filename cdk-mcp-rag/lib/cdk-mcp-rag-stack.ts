@@ -596,6 +596,14 @@ export class CdkMcpRagStack extends cdk.Stack {
       }
     }));
 
+    // Add bucket policy for public access
+    s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['s3:GetObject'],
+      resources: [s3Bucket.arnForObjects('sharing/*')],
+      principals: [new iam.AnyPrincipal()]
+    }));
+
     new cdk.CfnOutput(this, `distributionDomainName-for-${projectName}`, {
       value: 'https://'+distribution.domainName,
       description: 'The domain name of the Distribution'
