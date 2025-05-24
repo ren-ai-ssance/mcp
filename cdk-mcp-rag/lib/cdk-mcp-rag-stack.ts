@@ -587,7 +587,8 @@ export class CdkMcpRagStack extends cdk.Stack {
           viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-          originRequestPolicy: cloudFront.OriginRequestPolicy.CORS_S3_ORIGIN
+          originRequestPolicy: cloudFront.OriginRequestPolicy.CORS_S3_ORIGIN,
+          compress: true
         }
       },
       priceClass: cloudFront.PriceClass.PRICE_CLASS_200
@@ -609,6 +610,19 @@ export class CdkMcpRagStack extends cdk.Stack {
       principals: [
         new iam.ServicePrincipal('cloudfront.amazonaws.com')
       ],
+      conditions: {
+        StringEquals: {
+          'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
+        }
+      }
+    }));
+
+    // Add bucket policy for public access
+    s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['s3:GetObject'],
+      resources: [s3Bucket.arnForObjects('*')],
+      principals: [new iam.AnyPrincipal()],
       conditions: {
         StringEquals: {
           'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
