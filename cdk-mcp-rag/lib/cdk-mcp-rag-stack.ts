@@ -571,7 +571,8 @@ export class CdkMcpRagStack extends cdk.Stack {
       effect: iam.Effect.ALLOW,
       actions: [
         's3:GetObject',
-        's3:ListBucket'
+        's3:ListBucket',
+        's3:GetBucketLocation'
       ],
       resources: [
         s3Bucket.arnForObjects('*'),
