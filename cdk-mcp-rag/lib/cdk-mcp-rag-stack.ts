@@ -174,7 +174,8 @@ export class CdkMcpRagStack extends cdk.Stack {
             }
           ],
           Principal: [
-            account.arn
+            account.arn,
+            knowledge_base_role.roleArn
           ], 
         },
       ]),
