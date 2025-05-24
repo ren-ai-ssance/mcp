@@ -191,14 +191,30 @@ export class CdkMcpRagStack extends cdk.Stack {
       versioned: false,
       cors: [
         {
-          allowedHeaders: ['*'],
+          allowedHeaders: [
+            '*',
+            'Authorization',
+            'Content-Type',
+            'Origin',
+            'Access-Control-Request-Method',
+            'Access-Control-Request-Headers'
+          ],
           allowedMethods: [
             s3.HttpMethods.GET,
-            s3.HttpMethods.POST,
+            s3.HttpMethods.HEAD,
             s3.HttpMethods.PUT,
+            s3.HttpMethods.POST,
+            s3.HttpMethods.DELETE
           ],
           allowedOrigins: ['*'],
-        },
+          exposedHeaders: [
+            'ETag',
+            'x-amz-server-side-encryption',
+            'x-amz-request-id',
+            'x-amz-id-2'
+          ],
+          maxAge: 3000
+        }
       ],
     });
     new cdk.CfnOutput(this, 'bucketName', {
