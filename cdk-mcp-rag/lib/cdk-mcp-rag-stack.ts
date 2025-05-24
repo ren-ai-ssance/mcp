@@ -193,6 +193,7 @@ export class CdkMcpRagStack extends cdk.Stack {
         {
           allowedHeaders: ['*'],
           allowedMethods: [
+            s3.HttpMethods.GET,
             s3.HttpMethods.POST,
             s3.HttpMethods.PUT,
           ],
@@ -565,7 +566,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       priceClass: cloudFront.PriceClass.PRICE_CLASS_200
     }); 
 
-    // S3 버킷 정책 추가
+    // S3 bucket policy
     s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ['s3:GetObject'],
