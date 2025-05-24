@@ -191,31 +191,14 @@ export class CdkMcpRagStack extends cdk.Stack {
       versioned: false,
       cors: [
         {
-          allowedHeaders: [
-            '*',
-            'Authorization',
-            'Content-Type',
-            'Origin',
-            'Access-Control-Request-Method',
-            'Access-Control-Request-Headers'
-          ],
+          allowedHeaders: ['*'],
           allowedMethods: [
             s3.HttpMethods.GET,
-            s3.HttpMethods.HEAD,
-            s3.HttpMethods.PUT,
             s3.HttpMethods.POST,
-            s3.HttpMethods.DELETE
+            s3.HttpMethods.PUT,
           ],
           allowedOrigins: ['*'],
-          exposedHeaders: [
-            'ETag',
-            'x-amz-server-side-encryption',
-            'x-amz-request-id',
-            'x-amz-id-2',
-            'Access-Control-Allow-Origin'
-          ],
-          maxAge: 3000
-        }
+        },
       ],
     });
     new cdk.CfnOutput(this, 'bucketName', {
@@ -594,14 +577,6 @@ export class CdkMcpRagStack extends cdk.Stack {
           'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
         }
       }
-    }));
-
-    // Add bucket policy for public access
-    s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: ['s3:GetObject'],
-      resources: [s3Bucket.arnForObjects('sharing/*')],
-      principals: [new iam.AnyPrincipal()]
     }));
 
     new cdk.CfnOutput(this, `distributionDomainName-for-${projectName}`, {
