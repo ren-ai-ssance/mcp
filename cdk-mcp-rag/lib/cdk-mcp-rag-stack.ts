@@ -22,6 +22,31 @@ export class CdkMcpRagStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // s3 
+    const s3Bucket = new s3.Bucket(this, `storage-${projectName}`,{
+      bucketName: bucketName,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      publicReadAccess: false,
+      versioned: false,
+      cors: [
+        {
+          allowedHeaders: ['*'],
+          allowedMethods: [
+            s3.HttpMethods.GET,
+            s3.HttpMethods.POST,
+            s3.HttpMethods.PUT,
+          ],
+          allowedOrigins: ['*'],
+        },
+      ],
+    });
+    new cdk.CfnOutput(this, 'bucketName', {
+      value: s3Bucket.bucketName,
+      description: 'The nmae of bucket',
+    });
+
     // Knowledge Base Role
     const knowledge_base_role = new iam.Role(this,  `role-knowledge-base-for-${projectName}`, {
       roleName: `role-knowledge-base-for-${projectName}-${region}`,
@@ -51,20 +76,11 @@ export class CdkMcpRagStack extends cdk.Stack {
     
     const bedrockKnowledgeBaseS3Policy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      resources: ['*'],
-      actions: [
-        "s3:GetBucketLocation",
-        "s3:GetObject",
-        "s3:ListBucket",
-        "s3:ListBucketMultipartUploads",
-        "s3:ListMultipartUploadParts",
-        "s3:AbortMultipartUpload",
-        "s3:CreateBucket",
-        "s3:PutObject",
-        "s3:PutBucketLogging",
-        "s3:PutBucketVersioning",
-        "s3:PutBucketNotification",
+      resources: [
+        s3Bucket.bucketArn,
+        `${s3Bucket.bucketArn}/*`
       ],
+      actions: ["s3:*"],
     });
     knowledge_base_role.attachInlinePolicy( 
       new iam.Policy(this, `knowledge-base-s3-policy-for-${projectName}`, {
@@ -181,31 +197,6 @@ export class CdkMcpRagStack extends cdk.Stack {
       ]),
     });
     OpenSearchCollection.addDependency(dataAccessPolicy);
-
-    // s3 
-    const s3Bucket = new s3.Bucket(this, `storage-${projectName}`,{
-      bucketName: bucketName,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      publicReadAccess: false,
-      versioned: false,
-      cors: [
-        {
-          allowedHeaders: ['*'],
-          allowedMethods: [
-            s3.HttpMethods.GET,
-            s3.HttpMethods.POST,
-            s3.HttpMethods.PUT,
-          ],
-          allowedOrigins: ['*'],
-        },
-      ],
-    });
-    new cdk.CfnOutput(this, 'bucketName', {
-      value: s3Bucket.bucketName,
-      description: 'The nmae of bucket',
-    });
 
     // agent role
     const agent_role = new iam.Role(this,  `role-agent-for-${projectName}`, {
@@ -556,7 +547,14 @@ export class CdkMcpRagStack extends cdk.Stack {
         originRequestPolicy: cloudFront.OriginRequestPolicy.ALL_VIEWER        
       },
       additionalBehaviors: {
-        '/sharing/*': {
+        '/docs/*': {
+          origin: s3Origin,
+          viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudFront.OriginRequestPolicy.CORS_S3_ORIGIN
+        },
+        '/images/*': {
           origin: s3Origin,
           viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
@@ -567,11 +565,15 @@ export class CdkMcpRagStack extends cdk.Stack {
       priceClass: cloudFront.PriceClass.PRICE_CLASS_200
     }); 
 
-    // S3 bucket policy
+    // Update S3 bucket policy to allow access from CloudFront
     s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ['s3:GetObject'],
-      resources: [s3Bucket.arnForObjects('*')],
+      resources: [
+        s3Bucket.arnForObjects('*'),
+        s3Bucket.arnForObjects('docs/*'),
+        s3Bucket.arnForObjects('images/*')        
+      ],
       principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
       conditions: {
         StringEquals: {
