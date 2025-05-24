@@ -569,9 +569,17 @@ export class CdkMcpRagStack extends cdk.Stack {
     // S3 bucket policy
     s3Bucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: ['s3:GetObject'],
-      resources: [s3Bucket.arnForObjects('*')],
-      principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+      actions: [
+        's3:GetObject',
+        's3:ListBucket'
+      ],
+      resources: [
+        s3Bucket.arnForObjects('*'),
+        s3Bucket.bucketArn
+      ],
+      principals: [
+        new iam.ServicePrincipal('cloudfront.amazonaws.com')
+      ],
       conditions: {
         StringEquals: {
           'AWS:SourceArn': `arn:aws:cloudfront::${accountId}:distribution/${distribution.distributionId}`
