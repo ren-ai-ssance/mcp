@@ -661,7 +661,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       environment: {
         bedrock_region: String(region),
         projectName: projectName,
-        "sharing_url": 'https://'+distribution.domainName+'/sharing',
+        "sharing_url": 'https://'+distribution.domainName,
       }
     });     
     
