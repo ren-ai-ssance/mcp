@@ -173,6 +173,8 @@ export class CdkMcpRagStack extends cdk.Stack {
                 "aoss:DeleteCollectionItems",
                 "aoss:UpdateCollectionItems",
                 "aoss:DescribeCollectionItems",
+                "aoss:ReadDocument",
+                "aoss:WriteDocument"
               ],
               ResourceType: "collection",
             },

@@ -17,7 +17,7 @@ plotly_express==0.4.1
 matplotlib==3.10.0
 PyPDF2==3.0.1
 mcp
-langchain-mcp-adapters
+langchain-mcp-adapters==0.0.9
 opensearch-py
 langgraph-supervisor
 langgraph-swarm
