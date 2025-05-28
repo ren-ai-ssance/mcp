@@ -163,35 +163,40 @@ export class CdkMcpRagStack extends cdk.Stack {
     const dataAccessPolicy = new opensearchserverless.CfnAccessPolicy(this, `opensearch-data-collection-policy-for-${projectName}`, {
       name: dataAccessPolicyName,
       type: "data",
-      policy: JSON.stringify({
-        Rules: [
-          {
-            Resource: [`collection/${collectionName}`],
-            Permission: [
-              "aoss:CreateCollectionItems",
-              "aoss:DeleteCollectionItems",
-              "aoss:UpdateCollectionItems",
-              "aoss:DescribeCollectionItems",
-              "aoss:ReadDocument",
-              "aoss:WriteDocument"
-            ],
-            ResourceType: "collection"
-          },
-          {
-            Resource: [`index/${collectionName}/*`],
-            Permission: [
-              "aoss:CreateIndex",
-              "aoss:DeleteIndex",
-              "aoss:UpdateIndex",
-              "aoss:DescribeIndex",
-              "aoss:ReadDocument",
-              "aoss:WriteDocument"
-            ],
-            ResourceType: "index"
-          }
-        ],
-        Principal: [knowledge_base_role.roleArn]
-      })
+      policy: JSON.stringify([
+        {
+          Rules: [
+            {
+              Resource: [`collection/${collectionName}`],
+              Permission: [
+                "aoss:CreateCollectionItems",
+                "aoss:DeleteCollectionItems",
+                "aoss:UpdateCollectionItems",
+                "aoss:DescribeCollectionItems",
+                "aoss:ReadDocument",
+                "aoss:WriteDocument"
+              ],
+              ResourceType: "collection",
+            },
+            {
+              Resource: [`index/${collectionName}/*`],
+              Permission: [
+                "aoss:CreateIndex",
+                "aoss:DeleteIndex",
+                "aoss:UpdateIndex",
+                "aoss:DescribeIndex",
+                "aoss:ReadDocument",
+                "aoss:WriteDocument",
+              ], 
+              ResourceType: "index",
+            }
+          ],
+          Principal: [
+            account.arn,
+            knowledge_base_role.roleArn
+          ], 
+        },
+      ]),
     });
     OpenSearchCollection.addDependency(dataAccessPolicy);
 
