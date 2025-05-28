@@ -167,27 +167,15 @@ export class CdkMcpRagStack extends cdk.Stack {
         {
           Rules: [
             {
-              Resource: [`collection/${collectionName}`],
-              Permission: [
-                "aoss:CreateCollectionItems",
-                "aoss:DeleteCollectionItems",
-                "aoss:UpdateCollectionItems",
-                "aoss:DescribeCollectionItems",
-                "aoss:ReadDocument",
-                "aoss:WriteDocument"
-              ],
-              ResourceType: "collection",
-            },
-            {
               Resource: [`index/${collectionName}/*`],
               Permission: [
+                "aoss:ReadDocument",
+                "aoss:WriteDocument",
                 "aoss:CreateIndex",
                 "aoss:DeleteIndex",
                 "aoss:UpdateIndex",
-                "aoss:DescribeIndex",
-                "aoss:ReadDocument",
-                "aoss:WriteDocument",
-              ], 
+                "aoss:DescribeIndex"
+              ],
               ResourceType: "index",
             }
           ],
