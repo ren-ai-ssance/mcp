@@ -340,9 +340,8 @@ code application/config.json
 venv로 환경을 구성하면 편리합니다. 아래와 같이 환경을 설정합니다.
 
 ```text
-python -m venv .venv
-source .venv/bin/activate
-pip install uv
+python -m venv venv
+source venv/bin/activate
 ```
 
 이후 다운로드 받은 github 폴더로 이동한 후에 아래와 같이 필요한 패키지를 추가로 설치 합니다.
