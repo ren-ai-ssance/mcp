@@ -1488,12 +1488,12 @@ def create_agent(tools, historyMode):
                     if isinstance(path, list):
                         for p in path:
                             logger.info(f"image: {p}")
-                            if p.startswith('http') or p.startswith('https'):
-                                image_url.append(p)
+                            #if p.startswith('http') or p.startswith('https'):
+                            image_url.append(p)
                     else:
                         logger.info(f"image: {path}")
-                        if path.startswith('http') or path.startswith('https'):
-                            image_url.append(path)
+                        #if path.startswith('http') or path.startswith('https'):
+                        image_url.append(path)
             except json.JSONDecodeError:
                 tool_result = last_message
         if image_url:
