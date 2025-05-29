@@ -310,14 +310,15 @@ def initiate_knowledge_base():
                         }
                     },
                     'parsingConfiguration': {
-                        # 'bedrockFoundationModelConfiguration': {
-                        #     'modelArn': parsingModelArn
-                        # },
-                        # 'parsingStrategy': 'BEDROCK_FOUNDATION_MODEL'
-                        'bedrockDataAutomationConfiguration': {
+                        'bedrockFoundationModelConfiguration': {
+                            'modelArn': parsingModelArn,
                             'parsingModality': 'MULTIMODAL'
                         },
-                        'parsingStrategy': 'BEDROCK_DATA_AUTOMATION'
+                        'parsingStrategy': 'BEDROCK_FOUNDATION_MODEL'
+                        # 'bedrockDataAutomationConfiguration': {
+                        #     'parsingModality': 'MULTIMODAL'
+                        # },
+                        # 'parsingStrategy': 'BEDROCK_DATA_AUTOMATION'
                     }
                 }
             )
