@@ -154,9 +154,8 @@ def initiate():
 
 initiate()
 
-config, environment = utils.load_config()
+config = utils.load_config()
 print(f"config: {config}")
-print(f"environment: {environment}")
 
 bedrock_region = config["region"] if "region" in config else "us-west-2"
 projectName = config["projectName"] if "projectName" in config else "mcp-rag"

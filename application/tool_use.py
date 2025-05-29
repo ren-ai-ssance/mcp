@@ -41,9 +41,8 @@ logging.basicConfig(
 logger = logging.getLogger("tool_use")
 
 # load config
-config, environment = utils.load_config()
+config = utils.load_config()
 print(f"config: {config}")
-print(f"environment: {environment}")
 
 # variables
 bedrock_region = config["region"] if "region" in config else "us-west-2"

@@ -21,9 +21,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("streamlit")
 
-config, environment = utils.load_config()
-logger.info(f"environment: {environment}")
-
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
 
