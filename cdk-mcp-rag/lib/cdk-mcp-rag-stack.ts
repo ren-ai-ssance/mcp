@@ -329,6 +329,7 @@ export class CdkMcpRagStack extends cdk.Stack {
         tavily_api_key: cdk.SecretValue.unsafePlainText(''),
       },
     });
+    tavilyApiSecret.grantRead(ec2Role) 
 
     const perplexityApiSecret = new secretsmanager.Secret(this, `perflexity-secret-for-${projectName}`, {
       description: 'secret for perflexity api key', // tavily
@@ -339,6 +340,7 @@ export class CdkMcpRagStack extends cdk.Stack {
         perplexity_api_key: cdk.SecretValue.unsafePlainText(''),
       },
     });
+    perplexityApiSecret.grantRead(ec2Role) 
 
     const firecrawlApiSecret = new secretsmanager.Secret(this, `firecrawl-secret-for-${projectName}`, {
       description: 'secret for firecrawl api key', // firecrawl
@@ -349,6 +351,7 @@ export class CdkMcpRagStack extends cdk.Stack {
         firecrawl_api_key: cdk.SecretValue.unsafePlainText(''),
       },
     });
+    firecrawlApiSecret.grantRead(ec2Role) 
 
     const codeInterpreterSecret = new secretsmanager.Secret(this, `code-interpreter-secret-for-${projectName}`, {
       description: 'secret for code interpreter api key', // code interpreter
@@ -382,6 +385,14 @@ export class CdkMcpRagStack extends cdk.Stack {
         statements: [ec2Policy],
       }),
     );
+
+    // Lambda Invoke
+    ec2Role.addToPolicy(new iam.PolicyStatement({
+      resources: ['*'],
+      actions: [
+        'lambda:InvokeFunction'
+      ]
+    }));
 
     // pass role
     const passRoleResourceArn = knowledge_base_role.roleArn;
