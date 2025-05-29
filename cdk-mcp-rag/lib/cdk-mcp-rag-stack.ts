@@ -398,7 +398,8 @@ export class CdkMcpRagStack extends cdk.Stack {
     ec2Role.addToPolicy(new iam.PolicyStatement({
       resources: ['*'],
       actions: [
-        'ec2:DescribeFileSystems'
+        'ec2:DescribeFileSystems',
+        'elasticfilesystem:DescribeFileSystems'
       ]
     }));
 
