@@ -709,7 +709,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       'systemctl enable docker',
       'usermod -aG docker ec2-user',
       `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/mcp'`,
-      `json='${JSON.stringify(environment)}' && echo "$json">/home/ec2-user/mcp/application/config.json`,
+      `json='${JSON.stringify(environment)}' && echo "$json">/home/config.json`,
       `runuser -l ec2-user -c 'cd mcp && docker build -t streamlit-app .'`,
       `yum install -y amazon-cloudwatch-agent`,
       `mkdir -p /opt/aws/amazon-cloudwatch-agent/etc/`, 
