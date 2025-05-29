@@ -70,10 +70,10 @@ def load_config():
         with open("/home/config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
             environment = "aws"
-            # print(f"config: {config}")
+            print(f"{environment} -> config: {config}")
     except Exception:
         with open("application/config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
             environment = "local"
-            # print(f"config: {config}")
+            print(f"{environment} -> config: {config}")
     return config, environment
