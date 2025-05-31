@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
     python3-dev \
+    sarif-om==1.0.4 \
+    graphviz \
     && apt-get install -y nodejs \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
