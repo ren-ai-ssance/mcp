@@ -234,4 +234,4 @@ async def get_logs(
     }
     response_json = json.dumps(response, ensure_ascii=False, default=str)
     logger.info(f"response: {response_json}")
-    return response_json
+    return response_json[:1000]
