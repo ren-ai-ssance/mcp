@@ -347,7 +347,7 @@ source venv/bin/activate
 이후 다운로드 받은 github 폴더로 이동한 후에 아래와 같이 필요한 패키지를 추가로 설치 합니다.
 
 ```text
-pip install -r reuqirements.txt
+pip install -r requirements.txt
 ```
 
 [deployment.md](./deployment.md)에 따라 AWS CDK로 Lambda, Knowledge base, Opensearch Serverless와 보안에 필요한 IAM Role을 설치합니다. 이후 아래와 같은 명령어로 streamlit을 실행합니다. 
