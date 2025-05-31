@@ -10,7 +10,7 @@
             {
               "file_path": "/var/lib/docker/containers/*/*.log",
               "log_group_name": "mcp-rag",
-              "log_stream_name": "{timestamp:%Y/%m/%d}/{instance_id}/{random}",
+              "log_stream_name": "{timestamp:%Y/%m/%d}/{instance_id}/{container_id}",
               "timezone": "UTC",
               "timestamp_format": "%Y-%m-%dT%H:%M:%S.%f"
             }
