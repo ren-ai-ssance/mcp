@@ -1,13 +1,21 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
-# Node.js 설치를 위한 의존성 패키지 설치
 RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
+    unzip \
+    build-essential \
+    gcc \
+    python3-dev \
+    && apt-get install -y nodejs \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
+    && curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf aws awscliv2.zip \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*    
 
 WORKDIR /app
 

@@ -24,7 +24,7 @@ logger = logging.getLogger("streamlit")
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
 
-# 사이드바 너비 조정을 위한 CSS
+# CSS for adjusting sidebar width
 st.markdown("""
     <style>
     [data-testid="stSidebar"][aria-expanded="true"] {
@@ -140,21 +140,21 @@ with st.sidebar:
         default_selections = ["default", "tavily", "aws cli", "code interpreter"]
 
         with st.expander("MCP 옵션 선택", expanded=True):            
-            # 2개의 컬럼 생성
+            # Create two columns
             col1, col2 = st.columns(2)
             
-            # 옵션을 두 그룹으로 나누기
+            # Split options into two groups
             mid_point = len(mcp_options) // 2
             first_half = mcp_options[:mid_point]
             second_half = mcp_options[mid_point:]
             
-            # 첫 번째 컬럼에 첫 번째 그룹 표시
+            # Display first group in the first column
             with col1:
                 for option in first_half:
                     default_value = option in default_selections
                     mcp_selections[option] = st.checkbox(option, key=f"mcp_{option}", value=default_value)
             
-            # 두 번째 컬럼에 두 번째 그룹 표시
+            # Display second group in the second column
             with col2:
                 for option in second_half:
                     default_value = option in default_selections
