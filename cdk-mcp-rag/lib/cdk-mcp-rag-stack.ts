@@ -703,23 +703,24 @@ export class CdkMcpRagStack extends cdk.Stack {
       exportName: `environment-${projectName}`
     });
     
+    const gitName = 'mcp'
     const commands = [
       'yum install git python-pip docker -y',
       'pip install pip --upgrade',
       'systemctl start docker',
       'systemctl enable docker',
       'usermod -aG docker ec2-user',
-      `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/${projectName}'`,
-      `json='${JSON.stringify(environment)}' && echo "$json">/home/ec2-user/${projectName}/application/config.json`,
-      `runuser -l ec2-user -c 'cd ${projectName} && docker build -t streamlit-app .'`,
+      `runuser -l ec2-user -c 'cd && git clone https://github.com/kyopark2014/${gitName}'`,
+      `json='${JSON.stringify(environment)}' && echo "$json">/home/ec2-user/${gitName}/application/config.json`,
+      `runuser -l ec2-user -c 'cd ${gitName} && docker build -t streamlit-app .'`,
       `yum install -y amazon-cloudwatch-agent`,
       `mkdir -p /opt/aws/amazon-cloudwatch-agent/etc/`, 
-      `cp /home/ec2-user/${projectName}/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/`,
+      `cp /home/ec2-user/${gitName}/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/`,
       `chmod 644 /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json`,
       `systemctl enable amazon-cloudwatch-agent`,
       `systemctl start amazon-cloudwatch-agent`,
       `mkdir -p /etc/docker`,
-      `cp /home/ec2-user/${projectName}/daemon.json /etc/docker/`,
+      `cp /home/ec2-user/${gitName}/daemon.json /etc/docker/`,
       `systemctl restart docker`,
       `runuser -l ec2-user -c 'docker run -d -p 8501:8501 streamlit-app'`
     ];
