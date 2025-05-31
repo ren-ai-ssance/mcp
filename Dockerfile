@@ -11,18 +11,23 @@ RUN apt-get update && apt-get install -y \
     graphviz-dev \
     pkg-config \
     terminator \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get update \
     && apt-get install -y nodejs \
-    && npm install -g npm@latest \
-    && npm install -g playwright \
-    && npx playwright install chrome \
-    && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && rm -rf /var/lib/apt/lists/*    
+
+# Install npm and playwright
+RUN npm install -g npm@latest 
+
+# Install AWS CLI
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
     && unzip awscliv2.zip \
     && ./aws/install \
-    && rm -rf aws awscliv2.zip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*    
- 
+    && rm -rf aws awscliv2.zip 
+     
 WORKDIR /app
 
 # COPY requirements.txt .
@@ -44,6 +49,16 @@ COPY config.toml .streamlit/
 COPY . .
 
 EXPOSE 8501
+
+RUN npm install -g playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npx playwright install --with-deps chromium && npx playwright install --force chrome
+
+# Set environment variables for Playwright
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome
+ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox"
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
