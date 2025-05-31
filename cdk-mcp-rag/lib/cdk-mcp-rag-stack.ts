@@ -686,8 +686,8 @@ export class CdkMcpRagStack extends cdk.Stack {
       value: JSON.stringify(environment),
       description: `environment-${projectName}`,
       exportName: `environment-${projectName}`
-    }); 
-    /*
+    });
+    
     const gitName = 'mcp'
     const commands = [
       'yum install git python-pip docker -y',
@@ -766,6 +766,6 @@ export class CdkMcpRagStack extends cdk.Stack {
     })
     listener.addAction(`RedirectHttpListener-for-${projectName}`, {
       action: defaultAction
-    });  */
+    });  
   }
 }
