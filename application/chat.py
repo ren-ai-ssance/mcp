@@ -216,8 +216,9 @@ client = boto3.client(
 )  
 
 mcp_json = ""
-def update(modelName, debugMode, multiRegion, mcp):    
-    global model_name, model_id, model_type, debug_mode, multi_region
+reasoning_mode = 'Disable'
+def update(modelName, debugMode, multiRegion, mcp, reasoningMode):    
+    global model_name, model_id, model_type, debug_mode, multi_region, reasoning_mode
     global models, mcp_json
     
     if model_name != modelName:
@@ -238,6 +239,10 @@ def update(modelName, debugMode, multiRegion, mcp):
 
     mcp_json = mcp
     logger.info(f"mcp_json: {mcp_json}")
+
+    if reasoning_mode != reasoningMode:
+        reasoning_mode = reasoningMode
+        logger.info(f"reasoning_mode: {reasoning_mode}")
 
 def clear_chat_history():
     memory_chain = []
@@ -334,7 +339,7 @@ def print_doc(i, doc):
     logger.info(f"{i}: {text}, metadata:{doc.metadata}")
 
 def translate_text(text):
-    chat = get_chat(extended_thinking="Disable")
+    chat = get_chat(extended_thinking=reasoning_mode)
 
     system = (
         "You are a helpful assistant that translates {input_language} to {output_language} in <article> tags. Put it in <result> tags."
@@ -370,7 +375,7 @@ def translate_text(text):
     return msg[msg.find('<result>')+8:len(msg)-9] # remove <result> tag
     
 def check_grammer(text):
-    chat = get_chat(extended_thinking="Disable")
+    chat = get_chat(extended_thinking=reasoning_mode)
 
     if isKorean(text)==True:
         system = (
@@ -775,7 +780,7 @@ def grade_documents(question, documents):
 # General Conversation
 #########################################################
 def general_conversation(query):
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     system = (
         "당신의 이름은 서연이고, 질문에 대해 친절하게 답변하는 사려깊은 인공지능 도우미입니다."
@@ -916,7 +921,7 @@ def load_csv_document(s3_file_name):
     return docs
 
 def get_summary(docs):    
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     text = ""
     for doc in docs:
@@ -1010,7 +1015,7 @@ def summary_of_code(code, mode):
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
     # print('prompt: ', prompt)
     
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     chain = prompt | llm    
     try: 
@@ -1030,7 +1035,7 @@ def summary_of_code(code, mode):
     return summary
 
 def summary_image(img_base64, instruction):      
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     if instruction:
         logger.info(f"instruction: {instruction}")
@@ -1071,7 +1076,7 @@ def summary_image(img_base64, instruction):
     return extracted_text
 
 def extract_text(img_base64):    
-    multimodal = get_chat(extended_thinking="Disable")
+    multimodal = get_chat(extended_thinking=reasoning_mode)
     query = "텍스트를 추출해서 markdown 포맷으로 변환하세요. <result> tag를 붙여주세요."
     
     extracted_text = ""
@@ -1323,7 +1328,7 @@ def get_image_summarization(object_name, prompt, st):
 ############################################################# 
 def get_rag_prompt(text):
     # print("###### get_rag_prompt ######")
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
     # print('model_type: ', model_type)
     
     if model_type == "nova":
@@ -1487,7 +1492,7 @@ def run_rag_with_knowledge_base(query, st):
 def create_agent(tools, historyMode):
     tool_node = ToolNode(tools)
 
-    chatModel = get_chat(extended_thinking="Disable")
+    chatModel = get_chat(extended_thinking=reasoning_mode)
     model = chatModel.bind_tools(tools)
 
     class State(TypedDict):

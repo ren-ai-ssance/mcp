@@ -222,6 +222,11 @@ with st.sidebar:
     multiRegion = 'Enable' if select_multiRegion else 'Disable'
     #print('multiRegion: ', multiRegion)
 
+    # extended thinking of claude 3.7 sonnet
+    select_reasoning = st.checkbox('Reasoning', value=False)
+    reasoningMode = 'Enable' if select_reasoning else 'Disable'
+    # logger.info(f"reasoningMode: {reasoningMode}")
+
     uploaded_file = None
     if mode=='이미지 분석':
         st.subheader("🌇 이미지 업로드")
@@ -231,7 +236,7 @@ with st.sidebar:
         # print('fileId: ', chat.fileId)
         uploaded_file = st.file_uploader("RAG를 위한 파일을 선택합니다.", type=["pdf", "txt", "py", "md", "csv", "json"], key=chat.fileId)
 
-    chat.update(modelName, debugMode, multiRegion, mcp)
+    chat.update(modelName, debugMode, multiRegion, mcp, reasoningMode)
 
     st.success(f"Connected to {modelName}", icon="💚")
     clear_button = st.button("대화 초기화", key="clear")
