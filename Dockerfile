@@ -22,6 +22,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 # Install npm and Playwright
 RUN npm install -g npm@latest 
+RUN npm install -g @playwright/mcp@0.0.27
 
 # Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
