@@ -686,7 +686,7 @@ export class CdkMcpRagStack extends cdk.Stack {
       value: JSON.stringify(environment),
       description: `environment-${projectName}`,
       exportName: `environment-${projectName}`
-    });
+    }); 
     /*
     const gitName = 'mcp'
     const commands = [
