@@ -377,7 +377,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     );   
 
     const ec2Policy = new iam.PolicyStatement({  
-      resources: ['arn:aws:ec2:*:*:instance/*'],
+      resources: ['*'],
       actions: ['ec2:*'],
     });
     ec2Role.attachInlinePolicy( // add bedrock policy
