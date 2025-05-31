@@ -8,12 +8,11 @@
         "files": {
           "collect_list": [
             {
-              "file_path": "/var/lib/docker/containers/*/*.log",
+              "file_path": "/var/lib/docker/containers/*/*-json.log",
               "log_group_name": "/docker/containers",
               "log_stream_name": "{container_name}",
               "timezone": "UTC",
               "timestamp_format": "%Y-%m-%dT%H:%M:%S.%f",
-              "multi_line_start_pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}",
               "initial_position": "start_of_file"
             }
           ]
