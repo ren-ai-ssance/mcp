@@ -12,7 +12,7 @@ import logging
 import utils
 import sys
 import os
-import pwd  # Unix/Mac 시스템에서 사용자 정보를 가져오기 위한 모듈
+import pwd 
 
 logging.basicConfig(
     level=logging.INFO,  # Default to INFO level
@@ -23,13 +23,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("streamlit")
 
-# 현재 사용자 정보 확인
-try:
-    current_user = os.getlogin()
-except OSError:
-    current_user = os.environ.get('USER', 'root')  # Docker 컨테이너에서는 기본적으로 root
-
-# Mac/Unix 시스템에서 추가 사용자 정보 확인
 try:
     user_info = pwd.getpwuid(os.getuid())
     username = user_info.pw_name
@@ -37,9 +30,15 @@ try:
     logger.info(f"Username: {username}")
     logger.info(f"Home directory: {home_dir}")
 except (ImportError, KeyError):
-    pass  # Windows나 Docker 환경에서는 무시
+    username = "root"
+    logger.info(f"Username: {username}")
+    pass  
 
-logger.info(f"Current user: {current_user}")
+if username == "root":
+    environment = "system"
+else:
+    environment = "user"
+logger.info(f"environment: {environment}")
 
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
@@ -142,20 +141,22 @@ with st.sidebar:
         st.subheader("⚙️ MCP Config")
 
         # Change radio to checkbox
-        mcp_options = [
-            "default", "code interpreter", "aws document", "aws cost", "aws cli", 
-            "aws cloudwatch", "aws storage", "image generation", "aws diagram",
-            "knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", 
-            "filesystem", "terminal", "text editor", "context7", "puppeteer", 
-            "playwright", "firecrawl", "obsidian", "airbnb", "사용자 설정"
-        ]
-        # mcp_options = [ 
-        #     "default", "code interpreter", "aws document", "aws cost", "aws cli", 
-        #     "aws cloudwatch", "aws storage", "image generation",
-        #     "knowledge base", "tavily", "ArXiv", "wikipedia", 
-        #     "filesystem", "terminal", "text editor", 
-        #     "playwright", "firecrawl", "airbnb", "사용자 설정"
-        # ]
+        if environment == "user":        
+            mcp_options = [
+                "default", "code interpreter", "aws document", "aws cost", "aws cli", 
+                "aws cloudwatch", "aws storage", "image generation", "aws diagram",
+                "knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", 
+                "filesystem", "terminal", "text editor", "context7", "puppeteer", 
+                "playwright", "firecrawl", "obsidian", "airbnb", "사용자 설정"
+            ]
+        else:
+            mcp_options = [ 
+                "default", "code interpreter", "aws document", "aws cost", "aws cli", 
+                "aws cloudwatch", "aws storage", "image generation", "aws diagram",
+                "knowledge base", "tavily", "ArXiv", "wikipedia", 
+                "filesystem", "terminal", "text editor", 
+                "playwright", "airbnb", "사용자 설정"
+            ]
         mcp_selections = {}
         default_selections = ["default", "tavily", "aws cli", "code interpreter"]
 
