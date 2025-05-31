@@ -8,9 +8,9 @@
         "files": {
           "collect_list": [
             {
-              "file_path": "/var/lib/docker/containers/*/*-json.log",
-              "log_group_name": "/docker/containers",
-              "log_stream_name": "{container_name}",
+              "file_path": "/var/lib/docker/containers/*/*.log",
+              "log_group_name": "/mcp-rag",
+              "log_stream_name": "{year}/{month}/{day}/[$LATEST]{instance_id}",
               "timezone": "UTC",
               "timestamp_format": "%Y-%m-%dT%H:%M:%S.%f"
             }
