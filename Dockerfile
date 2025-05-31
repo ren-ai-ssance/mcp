@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     graphviz \
+    graphviz-dev \
+    pkg-config \
     && apt-get install -y nodejs \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
@@ -22,7 +24,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir sarif-om==1.0.4
+RUN pip install --no-cache-dir sarif-om==1.0.4 diagrams
 
 RUN mkdir -p .streamlit
 COPY config.toml .streamlit/
