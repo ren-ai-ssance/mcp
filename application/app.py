@@ -23,7 +23,10 @@ logging.basicConfig(
 logger = logging.getLogger("streamlit")
 
 # 현재 사용자 정보 확인
-current_user = os.getlogin()
+try:
+    current_user = os.getlogin()
+except OSError:
+    current_user = os.environ.get('USER', 'root')  # Docker 컨테이너에서는 기본적으로 root
 logger.info(f"Current user: {current_user}")
 
 
