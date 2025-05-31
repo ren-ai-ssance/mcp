@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     graphviz \
     graphviz-dev \
     pkg-config \
+    terminator \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g npm@latest \
