@@ -25,13 +25,22 @@ RUN apt-get update && apt-get install -y \
  
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir sarif-om==1.0.4
-RUN pip install --no-cache-dir diagrams
-RUN pip install --no-cache-dir -r requirements.txt
+# COPY requirements.txt .
+# RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install streamlit==1.41.0 streamlit-chat pandas numpy boto3
+RUN pip install langchain_aws langchain langchain_community langgraph langchain_experimental
+RUN pip install langgraph-supervisor langgraph-swarm
+RUN pip install tavily-python==0.5.0 yfinance==0.2.52 rizaio==0.8.0 pytz==2024.2 beautifulsoup4==4.12.3
+RUN pip install plotly_express==0.4.1 matplotlib==3.10.0
+RUN pip install PyPDF2==3.0.1 opensearch-py
+RUN pip install mcp langchain-mcp-adapters==0.0.9 wikipedia
+RUN pip install aioboto3 requests uv kaleido diagrams
+RUN pip install graphviz sarif-om==1.0.4
 
 RUN mkdir -p .streamlit
 COPY config.toml .streamlit/
+
 COPY . .
 
 EXPOSE 8501

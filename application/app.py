@@ -9,8 +9,9 @@ import swarm
 import traceback
 import mcp_config 
 import logging
-import sys
 import utils
+import sys
+import os
 
 logging.basicConfig(
     level=logging.INFO,  # Default to INFO level
@@ -20,6 +21,13 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("streamlit")
+
+# 현재 사용자 정보 확인
+current_user = os.getlogin()
+logger.info(f"Current user: {current_user}")
+
+
+
 
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
