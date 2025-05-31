@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && apt-get install -y nodejs \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
     && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
     && unzip awscliv2.zip \
     && ./aws/install \
@@ -23,8 +22,10 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir sarif-om==1.0.4
+RUN pip install --no-cache-dir diagrams
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir sarif-om==1.0.4 diagrams
 
 RUN mkdir -p .streamlit
 COPY config.toml .streamlit/
