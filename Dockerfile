@@ -84,7 +84,12 @@ RUN npx playwright install --with-deps chromium && npx playwright install --forc
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome
-ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox"
+ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-setuid-sandbox --no-zygote --single-process"
+ENV PLAYWRIGHT_LAUNCH_OPTIONS='{"args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-software-rasterizer", "--disable-setuid-sandbox", "--no-zygote", "--single-process"]}'
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /ms-playwright && chmod -R 777 /ms-playwright
+RUN mkdir -p /tmp/playwright && chmod -R 777 /tmp/playwright
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
