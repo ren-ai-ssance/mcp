@@ -18,17 +18,17 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get update \
     && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*    
+    && rm -rf /var/lib/apt/lists/*
 
-# Install npm and playwright
+# Install npm and Playwright
 RUN npm install -g npm@latest 
 
 # Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
     && unzip awscliv2.zip \
     && ./aws/install \
-    && rm -rf aws awscliv2.zip 
-     
+    && rm -rf aws awscliv2.zip
+ 
 WORKDIR /app
 
 # Install Chrome and Playwright dependencies
@@ -46,19 +46,15 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     libgbm1 \
     libasound2 \
-    libxshmfence1 \
-    libglib2.0-0 \
-    libnss3-tools \
-    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list \
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get update \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
-    
+
 # COPY requirements.txt .
 # RUN pip install --no-cache-dir -r requirements.txt
 
@@ -72,14 +68,13 @@ RUN pip install mcp langchain-mcp-adapters==0.0.9 wikipedia
 RUN pip install aioboto3 requests uv kaleido diagrams
 RUN pip install graphviz sarif-om==1.0.4
 
-RUN mkdir -p .streamlit
-COPY config.toml .streamlit/
+RUN mkdir -p /root/.streamlit
+COPY config.toml /root/.streamlit/
 
 COPY . .
 
 EXPOSE 8501
 
-# Set up Playwright
 RUN npm install -g playwright
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN npx playwright install --with-deps chromium && npx playwright install --force chrome
@@ -88,15 +83,8 @@ RUN npx playwright install --with-deps chromium && npx playwright install --forc
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome
-ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer"
-
-# Create a non-root user
-RUN useradd -m -s /bin/bash playwright
-RUN chown -R playwright:playwright /ms-playwright
-
-# Switch to non-root user
-USER playwright
+ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox"
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "application/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["python", "-m", "streamlit", "run", "application/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
