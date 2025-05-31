@@ -46,6 +46,10 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     libgbm1 \
     libasound2 \
+    libxshmfence1 \
+    libglib2.0-0 \
+    libnss3-tools \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Chrome
@@ -75,6 +79,7 @@ COPY . .
 
 EXPOSE 8501
 
+# Set up Playwright
 RUN npm install -g playwright
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN npx playwright install --with-deps chromium && npx playwright install --force chrome
@@ -83,7 +88,14 @@ RUN npx playwright install --with-deps chromium && npx playwright install --forc
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome
-ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox"
+ENV PLAYWRIGHT_CHROMIUM_ARGS="--no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer"
+
+# Create a non-root user
+RUN useradd -m -s /bin/bash playwright
+RUN chown -R playwright:playwright /ms-playwright
+
+# Switch to non-root user
+USER playwright
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
