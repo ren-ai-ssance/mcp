@@ -12,8 +12,7 @@
               "log_group_name": "/docker/containers",
               "log_stream_name": "{container_name}",
               "timezone": "UTC",
-              "timestamp_format": "%Y-%m-%dT%H:%M:%S.%f",
-              "initial_position": "start_of_file"
+              "timestamp_format": "%Y-%m-%dT%H:%M:%S.%f"
             }
           ]
         }
