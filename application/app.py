@@ -13,6 +13,7 @@ import utils
 import sys
 import os
 import pwd 
+import asyncio
 
 logging.basicConfig(
     level=logging.INFO,  # Default to INFO level
@@ -428,13 +429,13 @@ if prompt := st.chat_input("메시지를 입력하세요."):
             sessionState = ""
             chat.references = []
             chat.image_url = []
-            response = chat.run_agent(prompt, "Disable", st)
+            response = asyncio.run(chat.run_agent(prompt, "Disable", st))
 
         elif mode == 'Agent (Chat)':
             sessionState = ""
             chat.references = []
             chat.image_url = []
-            response = chat.run_agent(prompt, "Enable", st)
+            response = asyncio.run(chat.run_agent(prompt, "Enable", st))
 
         elif mode == "Multi-agent Supervisor (Router)":
             sessionState = ""
