@@ -44,6 +44,8 @@ async def call_model(state: State, config):
 
     last_message = state['messages'][-1]
     logger.info(f"last message: {last_message}")
+    
+    image_url = state['image_url'] if 'image_url' in state else []
 
     status_container = config.get("configurable", {}).get("status_container", None)
     response_container = config.get("configurable", {}).get("response_container", None)
@@ -54,6 +56,25 @@ async def call_model(state: State, config):
         tool_content = last_message.content
         logger.info(f"tool_name: {tool_name}, content: {tool_content[:800]}")
 
+        try:
+            json_data = json.loads(tool_content)
+            logger.info(f"json_data: {json_data}")
+            if isinstance(json_data, dict) and "path" in json_data:
+                path = json_data["path"]
+                if isinstance(path, list):
+                    for url in path:
+                        image_url.append(url)
+                else:
+                    image_url.append(path)
+
+                logger.info(f"image_url: {image_url}")
+                if chat.debug_mode == "Enable":
+                    response_container.info(f"Added path to image_url: {json_data['path']}")
+                    response_msg.append(f"Added path to image_url: {json_data['path']}")
+
+        except json.JSONDecodeError:
+            pass
+
         if chat.debug_mode == "Enable":
             response_container.info(f"{tool_name}: {tool_content[:800]}")
             response_msg.append(f"{tool_name}: {tool_content[:800]}")
@@ -62,23 +83,8 @@ async def call_model(state: State, config):
         if chat.debug_mode == "Enable":
             status_container.info(get_status_msg(f"{last_message.name}"))
             response_container.info(f"{last_message.content[:800]}")
-            response_msg.append(last_message.content[:800])
+            response_msg.append(last_message.content[:800])    
         
-    # Get image_url from state
-    image_url = state['image_url'] if 'image_url' in state else []
-    
-    # Check if last_message is JSON and contains path
-    if isinstance(last_message, str):
-        try:
-            message_data = json.loads(last_message)
-            if chat.debug_mode=="Enable" and isinstance(message_data, dict) and "path" in message_data:
-                image_url.append(message_data["path"])
-                logger.info(f"Added path to image_url: {message_data['path']}")
-                response_container.info(f"Added path to image_url: {message_data['path']}")
-                response_msg.append(f"Added path to image_url: {message_data['path']}")
-        except json.JSONDecodeError:
-            pass
-    
     system = (
         "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
         "상황에 맞는 구체적인 세부 정보를 충분히 제공합니다."
@@ -341,4 +347,6 @@ async def run(question, tools, status_container, response_container, key_contain
             ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
         result += ref
 
-    return result
+    image_url = value["image_url"] if "image_url" in value else []
+
+    return result, image_url
