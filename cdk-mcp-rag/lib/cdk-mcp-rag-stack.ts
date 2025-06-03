@@ -57,16 +57,8 @@ export class CdkMcpRagStack extends cdk.Stack {
     
     const bedrockInvokePolicy = new iam.PolicyStatement({ 
       effect: iam.Effect.ALLOW,
-      resources: [
-        `arn:aws:bedrock:*::foundation-model/*`
-      ],
-      // resources: ['*'],
-      actions: [
-        "bedrock:InvokeModel", 
-        "bedrock:Retrieve", 
-        "bedrock:InvokeModelEndpoint", 
-        "bedrock:InvokeModelEndpointAsync",        
-      ],
+      resources: [`*`],
+      actions: ["bedrock:*"],
     });        
     knowledge_base_role.attachInlinePolicy( 
       new iam.Policy(this, `bedrock-invoke-policy-for-${projectName}`, {
@@ -76,18 +68,14 @@ export class CdkMcpRagStack extends cdk.Stack {
     
     const bedrockKnowledgeBaseS3Policy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      resources: [
-        s3Bucket.bucketArn,
-        `${s3Bucket.bucketArn}/*`
-      ],
+      resources: ['*'],
       actions: ["s3:*"],
     });
     knowledge_base_role.attachInlinePolicy( 
       new iam.Policy(this, `knowledge-base-s3-policy-for-${projectName}`, {
         statements: [bedrockKnowledgeBaseS3Policy],
       }),
-    );  
-    
+    );      
     const knowledgeBaseOpenSearchPolicy = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       resources: ['*'],
