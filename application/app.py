@@ -14,6 +14,9 @@ import sys
 import os
 import pwd 
 import asyncio
+import random
+import string
+import aws_cost.implementation as aws_cost
 
 logging.basicConfig(
     level=logging.INFO,  # Default to INFO level
@@ -110,6 +113,64 @@ def update_seed_image_url(url):
         config = {"seed_image": url}
         json.dump(config, f, ensure_ascii=False, indent=4)
 
+def cost_analysis():
+    st.subheader("📈 Cost Analysis")
+
+    if not cost.visualizations:
+        cost.get_visualiation()
+
+    if 'service_pie' in cost.visualizations:
+        st.plotly_chart(cost.visualizations['service_pie'])
+    if 'daily_trend' in cost.visualizations:
+        st.plotly_chart(cost.visualizations['daily_trend'])
+    if 'region_bar' in cost.visualizations:
+        st.plotly_chart(cost.visualizations['region_bar'])
+
+    with st.status("thinking...", expanded=True, state="running") as status:
+        if not cost.cost_data:
+            st.info("비용 데이터를 가져옵니다.")
+            cost_data = cost.get_cost_analysis()
+            logger.info(f"cost_data: {cost_data}")
+            cost.cost_data = cost_data
+        else:
+            if not cost.insights:        
+                st.info("잠시만 기다리세요. 지난 한달간의 사용량을 분석하고 있습니다...")
+                insights = cost.generate_cost_insights()
+                logger.info(f"insights: {insights}")
+                cost.insights = insights
+            
+            st.markdown(cost.insights)
+            st.session_state.messages.append({"role": "assistant", "content": cost.insights})
+
+def cost_analysis_with_reflection():
+    request_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+
+    template = open(os.path.join(os.path.dirname(__file__), f"aws_cost/report.html")).read()
+    template = template.replace("{request_id}", request_id)
+    template = template.replace("{sharing_url}", chat.path)
+    key = f"artifacts/{request_id}.html"
+    chat.create_object(key, template)
+    
+    report_url = chat.path + "/artifacts/" + request_id + ".html"
+    logger.info(f"report_url: {report_url}")
+    st.info(f"report_url: {report_url}")
+    
+    # show status and response
+    status_container = st.empty()
+    response_container = st.empty()
+    
+    response = aws_cost.run(request_id, status_container, response_container)
+    logger.info(f"response: {response}")
+
+    if aws_cost.response_msg:
+        with st.expander(f"수행 결과"):
+            response_msgs = '\n\n'.join(aws_cost.response_msg)  
+            st.markdown(response_msgs)
+
+    st.write(response)
+
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
 seed_config = load_image_generator_config()
 logger.info(f"seed_config: {seed_config}")
 seed_image_url = seed_config.get("seed_image", "") if seed_config else ""
@@ -137,7 +198,7 @@ with st.sidebar:
     
     # mcp selection
     mcp = ""
-    if mode=='Agent' or mode=='Agent (Chat)':
+    if mode=='Agent' or mode=='Agent (Chat)' or mode=='비용 분석':
         # MCP Config JSON input
         st.subheader("⚙️ MCP Config")
 
@@ -253,7 +314,7 @@ with st.sidebar:
     if mode=='이미지 분석':
         st.subheader("🌇 이미지 업로드")
         uploaded_file = st.file_uploader("이미지 요약을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
-    elif mode=='RAG' or mode=="Agent" or mode=="Agent (Chat)":
+    elif mode=='RAG' or mode=="Agent" or mode=="Agent (Chat)" or mode=='비용 분석':
         st.subheader("📋 문서 업로드")
         # print('fileId: ', chat.fileId)
         uploaded_file = st.file_uploader("RAG를 위한 파일을 선택합니다.", type=["pdf", "txt", "py", "md", "csv", "json"], key=chat.fileId)
@@ -368,33 +429,7 @@ if seed_image_url and clear_button==False and enable_seed==True:
     logger.info(f"preview: {seed_image_url}")
     
 if clear_button==False and mode == '비용 분석':
-    st.subheader("📈 Cost Analysis")
-
-    if not cost.visualizations:
-        cost.get_visualiation()
-
-    if 'service_pie' in cost.visualizations:
-        st.plotly_chart(cost.visualizations['service_pie'])
-    if 'daily_trend' in cost.visualizations:
-        st.plotly_chart(cost.visualizations['daily_trend'])
-    if 'region_bar' in cost.visualizations:
-        st.plotly_chart(cost.visualizations['region_bar'])
-
-    with st.status("thinking...", expanded=True, state="running") as status:
-        if not cost.cost_data:
-            st.info("비용 데이터를 가져옵니다.")
-            cost_data = cost.get_cost_analysis()
-            logger.info(f"cost_data: {cost_data}")
-            cost.cost_data = cost_data
-        else:
-            if not cost.insights:        
-                st.info("잠시만 기다리세요. 지난 한달간의 사용량을 분석하고 있습니다...")
-                insights = cost.generate_cost_insights()
-                logger.info(f"insights: {insights}")
-                cost.insights = insights
-            
-            st.markdown(cost.insights)
-            st.session_state.messages.append({"role": "assistant", "content": cost.insights})
+    cost_analysis_with_reflection()
 
 # Always show the chat input
 if prompt := st.chat_input("메시지를 입력하세요."):
