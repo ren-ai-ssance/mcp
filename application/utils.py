@@ -71,3 +71,12 @@ def load_config():
         config = json.load(f)
     
     return config
+
+def load_mcp_env():
+    with open("application/mcp.env", "r", encoding="utf-8") as f:
+        mcp_env = json.load(f)
+    return mcp_env
+
+def save_mcp_env(mcp_env):
+    with open("application/mcp.env", "w", encoding="utf-8") as f:
+        json.dump(mcp_env, f)

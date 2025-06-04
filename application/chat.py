@@ -217,8 +217,9 @@ client = boto3.client(
 
 mcp_json = ""
 reasoning_mode = 'Disable'
-def update(modelName, debugMode, multiRegion, mcp, reasoningMode):    
-    global model_name, model_id, model_type, debug_mode, multi_region, reasoning_mode
+grading_mode = 'Disable'
+def update(modelName, debugMode, multiRegion, mcp, reasoningMode, gradingMode):    
+    global model_name, model_id, model_type, debug_mode, multi_region, reasoning_mode, grading_mode
     global models, mcp_json
     
     if model_name != modelName:
@@ -232,17 +233,30 @@ def update(modelName, debugMode, multiRegion, mcp, reasoningMode):
     if debug_mode != debugMode:
         debug_mode = debugMode
         logger.info(f"debug_mode: {debug_mode}")
-
-    if multi_region != multiRegion:
-        multi_region = multiRegion
-        logger.info(f"multi_region: {multi_region}")
-
+        
     mcp_json = mcp
     logger.info(f"mcp_json: {mcp_json}")
 
     if reasoning_mode != reasoningMode:
         reasoning_mode = reasoningMode
         logger.info(f"reasoning_mode: {reasoning_mode}")
+
+    # load mcp.env    
+    mcp_env = utils.load_mcp_env()
+
+    if multi_region != multiRegion:
+        multi_region = multiRegion
+        logger.info(f"multi_region: {multi_region}")
+        mcp_env['multi_region'] = multi_region
+
+    if grading_mode != gradingMode:
+        grading_mode = gradingMode
+        logger.info(f"grading_mode: {grading_mode}")            
+        mcp_env['grading_mode'] = grading_mode
+        
+    # update mcp.env    
+    utils.save_mcp_env(mcp_env)
+    logger.info(f"mcp.env updated: {mcp_env}")
 
 def clear_chat_history():
     memory_chain = []

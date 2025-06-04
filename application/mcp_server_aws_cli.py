@@ -1,8 +1,6 @@
 import logging
 import sys
-import mcp_basic
 import subprocess
-import json
 
 from mcp.server.fastmcp import FastMCP 
 from typing import List, Optional
