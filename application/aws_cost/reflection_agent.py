@@ -289,7 +289,8 @@ async def run(draft, reflection, status_container, response_container, key_conta
             
             tool_info = []
             for tool in tools:
-                tool_info.append(f"{tool.name}: {tool.description[:100]}")
+                description = tool.description.split('\n')[0]
+                tool_info.append(f"{tool.name}: {description}")
             tool_summary = "\n".join(tool_info)
 
             response_container.info(f"{tool_summary}")
