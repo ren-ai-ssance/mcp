@@ -118,10 +118,6 @@ def retrieve_knowledge_base(query):
 
 [Drug discovery](https://github.com/kyopark2014/mcp/blob/main/drug-discovery.md)와 관련하여, [arXiv](./application/mcp_server_arxiv.py), [ChEMBL](./application/mcp_server_chembl.py), [ClinicalTrials.gov](./application/mcp_server_clinicaltrial.py), [PubMed](./application/mcp_server_pubmed.py)을 지원하고 있습니다.
 
-mcp_server_arxiv.py: Search and retrieve scientific papers from arXiv
-mcp_server_chembl.py: Access chemical and bioactivity data from ChEMBL
-mcp_server_clinicaltrial.py: Search and analyze clinical trials
-mcp_server_pubmed.py: Access biomedical literature from PubMed
 #### MCP Client
 
 MCP client이 하나의 MCP server만 볼 경우에는 아래와 같이 stdio_client와 StdioServerParameters를 이용해 구현할 수 있습니다. MCP server에 대한 정보는 config.json에서 읽어오거나 streamlit에서 사용자가 입력한 정보를 사용할 수 있습니다. load_mcp_server_parameters()에서는 mcp_json을 읽어와서 [StdioServerParameters](https://github.com/langchain-ai/langchain-mcp-adapters)을 구성합니다. config.json의 MCP server에 대한 정보는 AWS CDK로 배포후 생성되는 output에서 가져옵니다.
