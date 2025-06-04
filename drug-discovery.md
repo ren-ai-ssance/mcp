@@ -13,3 +13,7 @@
 - [mcp_server_chembl.py](./application/mcp_server_chembl.py): Access chemical and bioactivity data from ChEMBL
 - [mcp_server_clinicaltrial.py](./application/mcp_server_clinicaltrial.py): Search and analyze clinical trials
 - [mcp_server_pubmed.py](./application/mcp_server_pubmed.py): Access biomedical literature from PubMed
+
+4개의 MCP server 선택 후에 "불면증 치료법은?"라고 질문하면 아래와 같은 결과를 얻을 수 있습니다.
+
+![image](https://github.com/user-attachments/assets/f3f364e0-bc9d-4919-993d-1b82479194ce)
