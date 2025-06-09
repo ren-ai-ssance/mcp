@@ -221,6 +221,9 @@ grading_mode = 'Disable'
 def update(modelName, debugMode, multiRegion, mcp, reasoningMode, gradingMode):    
     global model_name, model_id, model_type, debug_mode, multi_region, reasoning_mode, grading_mode
     global models, mcp_json
+
+    # load mcp.env    
+    mcp_env = utils.load_mcp_env()
     
     if model_name != modelName:
         model_name = modelName
@@ -239,10 +242,7 @@ def update(modelName, debugMode, multiRegion, mcp, reasoningMode, gradingMode):
 
     if reasoning_mode != reasoningMode:
         reasoning_mode = reasoningMode
-        logger.info(f"reasoning_mode: {reasoning_mode}")
-
-    # load mcp.env    
-    mcp_env = utils.load_mcp_env()
+        logger.info(f"reasoning_mode: {reasoning_mode}")    
 
     if multi_region != multiRegion:
         multi_region = multiRegion
