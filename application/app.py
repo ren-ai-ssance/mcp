@@ -217,7 +217,7 @@ with st.sidebar:
             mcp_options = [ 
                 "default", "code interpreter", "aws document", "aws cost", "aws cli", 
                 "use_aws", "aws cloudwatch", "aws storage", "image generation", "aws diagram",
-                "knowledge base", "tavily", "ArXiv", "wikipedia", "pubmed", 
+                "knowledge base", "tavily", "ArXiv", "wikipedia", 
                 "filesystem", "terminal", "text editor", "playwright", "airbnb",
                 "pubmed", "chembl", "clinicaltrial", "arxiv-manual", "tavily-manual",
                 "사용자 설정"
