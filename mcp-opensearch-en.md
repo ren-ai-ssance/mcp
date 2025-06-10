@@ -14,7 +14,7 @@ OpenSearch cluster, either self-managed or Amazon OpenSearch Service
 
 ### Configuration Information for Connection
 
-Configure MCP as follows. Note that OPENSEARCH_INDEX must be included. The Domain endpoint can be found in the [OpenSearch Console](https://us-west-2.console.aws.amazon.com/aos/home?region=us-west-2#opensearch).
+Configure MCP as follows. The Domain endpoint can be found in the [OpenSearch Console](https://us-west-2.console.aws.amazon.com/aos/home?region=us-west-2#opensearch).
 
 ```java
 {
@@ -28,8 +28,7 @@ Configure MCP as follows. Note that OPENSEARCH_INDEX must be included. The Domai
                 "OPENSEARCH_URL": "domain endpoint",
                 "AWS_REGION":"us-west-2",
                 "OPENSEARCH_USERNAME":"username", 
-                "OPENSEARCH_PASSWORD":"password",
-                "OPENSEARCH_INDEX":"index name"
+                "OPENSEARCH_PASSWORD":"password"
             }
         }
     }
