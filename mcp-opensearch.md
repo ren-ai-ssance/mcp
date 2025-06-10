@@ -25,7 +25,7 @@ MCP 설정은 아래와 같이 수행합니다. 이때 OPENSEARCH_INDEX가 반�
                 "opensearch-mcp-server-py"
             ],
             "env": {
-                "OPENSEARCH_URL": "Domain endpoint",
+                "OPENSEARCH_URL": "domain endpoint",
                 "AWS_REGION":"us-west-2",
                 "OPENSEARCH_USERNAME":"username", 
                 "OPENSEARCH_PASSWORD":"password",
