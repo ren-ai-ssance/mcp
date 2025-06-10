@@ -38,6 +38,6 @@ MCP 설정은 아래와 같이 수행합니다. 이때 OPENSEARCH_INDEX가 반�
 
 ## 실행 결과
 
-현재 지원되는 tool에는 ListIndexTool, IndexMappingTool, SearchIndexTool, GetShardsToo이 있습니다.
+현재 지원되는 tool에는 ListIndexTool, IndexMappingTool, SearchIndexTool, GetShardsTool이 있습니다.
 
 ![mcp-opensearch](https://github.com/user-attachments/assets/86eff497-a9dd-4fd3-bf7c-dd7b6a47929f)
