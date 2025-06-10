@@ -40,4 +40,4 @@ Configure MCP as follows. Note that OPENSEARCH_INDEX must be included. The Domai
 
 Currently supported tools include ListIndexTool, IndexMappingTool, SearchIndexTool, and GetShardsTool.
 
-![mcp-opensearch](https://github.com/user-attachments/assets/86eff497-a9dd-4fd3-bf7c-dd7b6a47929f) 
+![mcp-opensearch2_en](https://github.com/user-attachments/assets/535c0288-6df5-4c99-a2df-2387022b33bb)
