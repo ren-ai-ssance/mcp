@@ -1,6 +1,7 @@
 import chat
 import logging
 import sys
+import utils
 
 logging.basicConfig(
     level=logging.INFO,  # Default to INFO level
@@ -10,6 +11,13 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("mcp-cost")
+
+config = utils.load_config()
+print(f"config: {config}")
+
+managed_opensearch_url = config["managed_opensearch_url"] if "managed_opensearch_url" in config else None
+opensearch_username = config["opensearch_username"] if "opensearch_username" in config else None
+opensearch_password = config["opensearch_password"] if "opensearch_password" in config else None
 
 mcp_user_config = {}    
 def load_config(mcp_type):
@@ -364,6 +372,24 @@ def load_config(mcp_type):
                     "args": [
                         "application/mcp_server_use_aws.py"
                     ]
+                }
+            }
+        }
+    
+    elif mcp_type == "opensearch":
+        return {
+            "mcpServers": {
+                "opensearch-mcp-server": {
+                    "command": "uvx",
+                    "args": [
+                        "opensearch-mcp-server-py"
+                    ],
+                    "env": {
+                        "OPENSEARCH_URL": managed_opensearch_url,
+                        "AWS_REGION":"us-west-2",
+                        "OPENSEARCH_USERNAME": opensearch_username,
+                        "OPENSEARCH_PASSWORD": opensearch_password
+                    }
                 }
             }
         }

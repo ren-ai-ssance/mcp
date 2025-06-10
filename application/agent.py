@@ -3,6 +3,7 @@ import sys
 import json
 import traceback
 import chat
+import codecs
 
 from langgraph.prebuilt import ToolNode
 from typing import Literal
@@ -12,11 +13,14 @@ from langgraph.graph.message import add_messages
 from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 
+# UTF-8로 인코딩된 stderr 스트림 생성
+utf8_stderr = codecs.getwriter('utf-8')(sys.stderr.buffer)
+
 logging.basicConfig(
     level=logging.INFO,  
     format='%(filename)s:%(lineno)d | %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stderr)
+        logging.StreamHandler(utf8_stderr)
     ]
 )
 logger = logging.getLogger("agent")
