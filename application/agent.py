@@ -54,12 +54,49 @@ async def call_model(state: State, config):
     status_container = config.get("configurable", {}).get("status_container", None)
     response_container = config.get("configurable", {}).get("response_container", None)
     tools = config.get("configurable", {}).get("tools", None)
-    
+
     if isinstance(last_message, ToolMessage):
         tool_name = last_message.name
         tool_content = last_message.content
         logger.info(f"tool_name: {tool_name}, content: {tool_content[:800]}")
 
+        docs = []
+        if tool_name == "SearchIndexTool":
+            if ":" in tool_content:
+                extracted_json_data = tool_content.split(":", 1)[1].strip()
+                try:
+                    json_data = json.loads(extracted_json_data)
+                    logger.info(f"extracted_json_data: {extracted_json_data[:200]}")
+                except json.JSONDecodeError:
+                    logger.info("JSON parsing error")
+                    json_data = {}
+            else:
+                json_data = {}
+
+            if "hits" in json_data:
+                hits = json_data["hits"]["hits"]
+                if hits:
+                    logger.info(f"hits[0]: {hits[0]}")
+
+                for hit in hits:
+                    text = hit["_source"]["text"]
+                    metadata = hit["_source"]["metadata"]
+
+                    docs.append({
+                        "text": text,
+                        "metadata": metadata
+                    })
+            logger.info(f"docs: {docs}")
+
+            # manupulate the output of tool message
+            messages = state["messages"]
+            messages[-1] = ToolMessage(
+                name=tool_name,
+                tool_call_id=last_message.tool_call_id,
+                content=json.dumps(docs)
+            )
+            state["messages"] = messages
+            
         try:
             json_data = json.loads(tool_content)
             logger.info(f"json_data: {json_data}")
