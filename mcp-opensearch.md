@@ -1,6 +1,6 @@
 # MCP OpenSearch
 
-[Unlocking agentic AI experiences with OpenSearch](https://opensearch.org/blog/unlocking-agentic-ai-experiences-with-opensearch/)와 같이 MCP로 OpenSearch로 접속할 수 있습니다.
+[Unlocking agentic AI experiences with OpenSearch](https://opensearch.org/blog/unlocking-agentic-ai-experiences-with-opensearch/)와 같이 MCP로 OpenSearch를 이용할 수 있습니다.
 
 ## 접속 방법
 
