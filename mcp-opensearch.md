@@ -6,7 +6,7 @@
 
 ### 지원되는 OpenSearch
 
-지원되는 OpenSearch 서버는 아래와 같습니다. 2025.6월 기준으로 OpenSearch Serverless는 미지원으로 보여집니다.
+지원되는 OpenSearch는 아래와 같습니다. 2025.6월 기준으로 OpenSearch Serverless는 미지원으로 보여집니다.
 
 ```text
 OpenSearch cluster, either self-managed or Amazon OpenSearch Service
