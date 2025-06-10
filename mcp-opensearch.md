@@ -14,7 +14,7 @@ OpenSearch cluster, either self-managed or Amazon OpenSearch Service
 
 ### 접속하는 Config 정보
 
-MCP 설정은 아래와 같이 수행합니다. 이때 OPENSEARCH_INDEX가 반드시 포함되어야 합니다. Domain endpoint는 [OpenSearch Console](https://us-west-2.console.aws.amazon.com/aos/home?region=us-west-2#opensearch)에서 확인합니다. 
+MCP 설정은 아래와 같이 수행합니다. Domain endpoint는 [OpenSearch Console](https://us-west-2.console.aws.amazon.com/aos/home?region=us-west-2#opensearch)에서 확인합니다. 
 
 ```java
 {
@@ -28,8 +28,7 @@ MCP 설정은 아래와 같이 수행합니다. 이때 OPENSEARCH_INDEX가 반�
                 "OPENSEARCH_URL": "domain endpoint",
                 "AWS_REGION":"us-west-2",
                 "OPENSEARCH_USERNAME":"username", 
-                "OPENSEARCH_PASSWORD":"password",
-                "OPENSEARCH_INDEX":"index name"
+                "OPENSEARCH_PASSWORD":"password"
             }
         }
     }
