@@ -38,6 +38,7 @@ def get_status_msg(status):
         return "[status]\n" + status
 
 response_msg = []
+references = []
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -59,20 +60,20 @@ async def call_model(state: State, config):
         tool_name = last_message.name
         tool_content = last_message.content
         logger.info(f"tool_name: {tool_name}, content: {tool_content[:800]}")
-
-        docs = []
+        
         if tool_name == "SearchIndexTool":
             if ":" in tool_content:
                 extracted_json_data = tool_content.split(":", 1)[1].strip()
                 try:
                     json_data = json.loads(extracted_json_data)
-                    logger.info(f"extracted_json_data: {extracted_json_data[:200]}")
+                    # logger.info(f"extracted_json_data: {extracted_json_data[:200]}")
                 except json.JSONDecodeError:
                     logger.info("JSON parsing error")
                     json_data = {}
             else:
                 json_data = {}
 
+            content = ""
             if "hits" in json_data:
                 hits = json_data["hits"]["hits"]
                 if hits:
@@ -81,19 +82,27 @@ async def call_model(state: State, config):
                 for hit in hits:
                     text = hit["_source"]["text"]
                     metadata = hit["_source"]["metadata"]
+                    
+                    content += f"{text}\n\n"
 
-                    docs.append({
-                        "text": text,
-                        "metadata": metadata
+                    filename = metadata["name"].split("/")[-1]
+                    # logger.info(f"filename: {filename}")
+                    
+                    ref_content = text.replace("\n", "")
+                    references.append({
+                        "url": metadata["url"], 
+                        "title": filename,
+                        "content": ref_content[:100] + "..." if len(ref_content) > 100 else ref_content
                     })
-            logger.info(f"docs: {docs}")
+                    
+            logger.info(f"content: {content}")
 
             # manupulate the output of tool message
             messages = state["messages"]
             messages[-1] = ToolMessage(
                 name=tool_name,
                 tool_call_id=last_message.tool_call_id,
-                content=json.dumps(docs)
+                content=content
             )
             state["messages"] = messages
             
@@ -336,9 +345,10 @@ def extract_reference(response):
     return references
 
 async def run(question, tools, status_container, response_container, key_container, historyMode):
-    global status_msg, response_msg
+    global status_msg, response_msg, references
     status_msg = []
     response_msg = []
+    references = []
 
     if chat.debug_mode == "Enable":
         status_container.info(get_status_msg("start"))
@@ -368,7 +378,6 @@ async def run(question, tools, status_container, response_container, key_contain
         "messages": [HumanMessage(content=question)]
     }
 
-    references = []
     async for output in app.astream(inputs, config):
         for key, value in output.items():
             logger.info(f"--> key: {key}, value: {value}")
