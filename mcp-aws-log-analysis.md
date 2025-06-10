@@ -161,3 +161,7 @@ async def get_logs(
 실행결과는 아래와 같습니다.
 
 ![image](https://github.com/user-attachments/assets/103fa1a7-1540-4fbe-8ec7-facf5ae88052)
+
+아래는 "agentic-workflow.log 로그의 특징은?"로 입력했을때의 결과입니다.
+
+![image](https://github.com/user-attachments/assets/4c7eb2fc-e7f1-42ab-b5a9-4b689d5095de)
