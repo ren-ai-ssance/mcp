@@ -1,5 +1,7 @@
 # MCP를 이용한 AWS 로그 분석
 
+## Custom MCP
+
 [CloudWatch Logs MCP Server](https://github.com/serkanh/cloudwatch-logs-mcp/blob/main/main.py)을 참조하여 아래와 같이 로그 분석을 수행하였습니다. 상세한 코드는 [mcp_log.py](./application/mcp_log.py)을 참조합니다.
 
 CloudWatch의 로그 그룹을 조회합니다.
@@ -134,3 +136,28 @@ async def get_logs(
 
 
 ![noname](https://github.com/user-attachments/assets/3fcebff9-1442-4d4e-8321-cbe058fd231f)
+
+## AWSLabs MCP
+
+[AWS Labs cloudwatch-logs MCP Server](https://github.com/awslabs/mcp/tree/main/src/cloudwatch-logs-mcp-server)에 따라 아래와 같이 설정할 수 있습니다.
+
+```java
+{
+  "mcpServers": {
+    "awslabs.cloudwatch-logs-mcp-server": {
+      "command": "uvx",
+      "args": [
+        "awslabs.cloudwatch-logs-mcp-server@latest"
+      ],
+      "env": {
+        "AWS_REGION": "us-west-2",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    }
+  }
+}
+```
+
+실행결과는 아래와 같습니다.
+
+![image](https://github.com/user-attachments/assets/103fa1a7-1540-4fbe-8ec7-facf5ae88052)
