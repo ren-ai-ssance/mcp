@@ -88,11 +88,11 @@ async def call_model(state: State, config):
                     filename = metadata["name"].split("/")[-1]
                     # logger.info(f"filename: {filename}")
                     
-                    ref_content = text.replace("\n", "")
+                    content_part = text.replace("\n", "")
                     references.append({
                         "url": metadata["url"], 
                         "title": filename,
-                        "content": ref_content[:100] + "..." if len(ref_content) > 100 else ref_content
+                        "content": content_part[:100] + "..." if len(content_part) > 100 else content_part
                     })
                     
             logger.info(f"content: {content}")
