@@ -23,7 +23,7 @@ logger = logging.getLogger("knowledge_base")
 config = utils.load_config()
 
 # variables
-projectName = config["projectName"] if "projectName" in config else "langgraph-nova"
+projectName = config["projectName"] if "projectName" in config else "mcp-rag"
 
 vectorIndexName = projectName
 knowledge_base_name = projectName
@@ -202,11 +202,15 @@ def initiate_knowledge_base():
     if not knowledge_base_id:
         logger.info(f"creating knowledge base...")  
         for atempt in range(3):
+            tag_name = projectName
             try:
                 response = client.create_knowledge_base(
                     name=knowledge_base_name,
                     description="Knowledge base based on OpenSearch",
                     roleArn=knowledge_base_role,
+                    tags={
+                        tag_name: 'true'
+                    },
                     knowledgeBaseConfiguration={
                         'type': 'VECTOR',
                         'vectorKnowledgeBaseConfiguration': {

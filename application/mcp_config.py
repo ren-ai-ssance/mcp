@@ -19,6 +19,8 @@ managed_opensearch_url = config["managed_opensearch_url"] if "managed_opensearch
 opensearch_username = config["opensearch_username"] if "opensearch_username" in config else None
 opensearch_password = config["opensearch_password"] if "opensearch_password" in config else None
 
+aws_region = config["region"] if "region" in config else "us-west-2"
+
 mcp_user_config = {}    
 def load_config(mcp_type):
     if mcp_type == "default":
@@ -372,6 +374,37 @@ def load_config(mcp_type):
                     "args": [
                         "application/mcp_server_use_aws.py"
                     ]
+                }
+            }
+        }
+    
+    elif mcp_type == "aws_cloudwatch_logs":  # AWS Labs cloudwatch-logs MCP Server
+        return {
+            "mcpServers": {
+                "awslabs.cloudwatch-logs-mcp-server": {
+                    "command": "uvx",
+                    "args": [
+                        "awslabs.cloudwatch-logs-mcp-server@latest"
+                    ],
+                    "env": {
+                        "AWS_REGION": aws_region,
+                        "FASTMCP_LOG_LEVEL": "ERROR"
+                    }
+                }
+            }
+        }
+    
+    elif mcp_type == "aws_knowledge_base":  # AWS Labs cloudwatch-logs MCP Server
+        return {
+            "mcpServers": {
+                "aws_knowledge_base": {
+                    "command": "python",
+                    "args": [
+                        "application/mcp_server_kb.py"
+                    ],
+                    "env": {
+                        "KB_INCLUSION_TAG_KEY": "mcp-rag"
+                    }
                 }
             }
         }
