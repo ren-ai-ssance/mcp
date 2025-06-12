@@ -1,4 +1,6 @@
-# AWS Document MCP Server
+# AWS Document and Diagram MCP Server
+
+## AWS Document
 
 [AWS Documentation MCP Server](https://awslabs.github.io/mcp/servers/aws-documentation-mcp-server/)를 참조합니다. 여기서 얻은 config는 아래와 같습니다.
 
@@ -124,3 +126,7 @@
 
 
 ![image](https://github.com/user-attachments/assets/8e33043f-8ec0-4e81-a789-69221ca5783a)
+
+
+## AWS Diagram
+
