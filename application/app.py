@@ -44,6 +44,8 @@ else:
     environment = "user"
 logger.info(f"environment: {environment}")
 
+os.environ["DEV"] = "true"  # Skip user confirmation of get_user_input
+
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
 
