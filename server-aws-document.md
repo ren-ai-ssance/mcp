@@ -138,7 +138,7 @@ AWS Diagram을 위한 MCP Config는 아래와 같습니다.
             "args": ["awslabs.aws-diagram-mcp-server"],
             "env": {
                 "FASTMCP_LOG_LEVEL": "ERROR"
-            },
+            }
         }
     }
 }
