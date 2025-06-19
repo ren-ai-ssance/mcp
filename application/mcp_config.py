@@ -382,13 +382,13 @@ def load_config(mcp_type):
             }
         }
     
-    elif mcp_type == "aws_cloudwatch_logs":  # AWS Labs cloudwatch-logs MCP Server
+    elif mcp_type == "use_aws":
         return {
             "mcpServers": {
-                "awslabs.cloudwatch-logs-mcp-server": {
-                    "command": "uvx",
+                "use_aws": {
+                    "command": "python",
                     "args": [
-                        "awslabs.cloudwatch-logs-mcp-server@latest"
+                        "application/mcp_server_use_aws.py"
                     ],
                     "env": {
                         "AWS_REGION": aws_region,
