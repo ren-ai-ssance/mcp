@@ -297,7 +297,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     weatherApiSecret.grantRead(ec2Role) 
 
     // Secret
-    const langsmithApiSecret = new secretsmanager.Secret(this, `weather-langsmith-secret-for-${projectName}`, {
+    const langsmithApiSecret = new secretsmanager.Secret(this, `langsmith-secret-for-${projectName}`, {
       description: 'secret for lamgsmith api key', // lamgsmith
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       secretName: `langsmithapikey-${projectName}`,
@@ -308,7 +308,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     });
     langsmithApiSecret.grantRead(ec2Role) 
 
-    const tavilyApiSecret = new secretsmanager.Secret(this, `weather-tavily-secret-for-${projectName}`, {
+    const tavilyApiSecret = new secretsmanager.Secret(this, `tavily-secret-for-${projectName}`, {
       description: 'secret for tavily api key', // tavily
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       secretName: `tavilyapikey-${projectName}`,
@@ -320,7 +320,7 @@ export class CdkMcpRagStack extends cdk.Stack {
     tavilyApiSecret.grantRead(ec2Role) 
 
     const perplexityApiSecret = new secretsmanager.Secret(this, `perflexity-secret-for-${projectName}`, {
-      description: 'secret for perflexity api key', // tavily
+      description: 'secret for perflexity api key', // perplexity
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       secretName: `perplexityapikey-${projectName}`,
       secretObjectValue: {
