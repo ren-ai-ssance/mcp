@@ -219,14 +219,6 @@ def initiate_knowledge_base():
                                 'bedrockEmbeddingModelConfiguration': {
                                     'dimensions': 1024
                                 }
-                            },
-                            'supplementalDataStorageConfiguration': {
-                            'storageLocations': [{
-                                    'type': 'S3',
-                                    's3Location': {
-                                        'uri': f"s3://{s3_bucket}"
-                                    }
-                                }]
                             }
                         }
                     },
@@ -316,7 +308,7 @@ def initiate_knowledge_base():
                     'parsingConfiguration': {
                         'bedrockFoundationModelConfiguration': {
                             'modelArn': parsingModelArn,
-                            'parsingModality': 'MULTIMODAL'
+                            # 'parsingModality': 'MULTIMODAL'
                         },
                         'parsingStrategy': 'BEDROCK_FOUNDATION_MODEL'
                         # 'bedrockDataAutomationConfiguration': {

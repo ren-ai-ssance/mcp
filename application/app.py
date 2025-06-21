@@ -326,7 +326,6 @@ with st.sidebar:
         uploaded_file = st.file_uploader("이미지 요약을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
     elif mode=='RAG' or mode=="Agent" or mode=="Agent (Chat)" or mode=='비용 분석':
         st.subheader("📋 문서 업로드")
-        # print('fileId: ', chat.fileId)
         uploaded_file = st.file_uploader("RAG를 위한 파일을 선택합니다.", type=["pdf", "txt", "py", "md", "csv", "json"], key=chat.fileId)
 
     chat.update(modelName, debugMode, multiRegion, mcp, reasoningMode, gradingMode)
