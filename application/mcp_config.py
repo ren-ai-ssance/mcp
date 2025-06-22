@@ -423,9 +423,7 @@ def load_config(mcp_type):
                     ],
                     "env": {
                         "OPENSEARCH_URL": managed_opensearch_url,
-                        "AWS_REGION":"us-west-2",
-                        "OPENSEARCH_USERNAME": opensearch_username,
-                        "OPENSEARCH_PASSWORD": opensearch_password
+                        "AWS_REGION":"us-west-2"
                     }
                 }
             }
