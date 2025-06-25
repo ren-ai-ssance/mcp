@@ -58,12 +58,6 @@ def get_contents_type(file_name):
         content_type = "no info"    
     return content_type
 
-def status(st, str):
-    st.info(str)
-    
-def stcode(st, code):
-    st.code(code)
-
 def load_config():
     config = None
     
