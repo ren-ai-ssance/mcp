@@ -2036,10 +2036,7 @@ async def run_agent(query, historyMode, st):
                 logger.info(f"tools: {tools}")
 
             status_container = st.empty()
-
-            containers = [] 
-            for i in range(100):
-                containers.append(st.empty())
+            containers = [st.empty() for _ in range(100)]
                         
             result, image_url = await agent.run(query, tools, status_container, containers, historyMode)            
 
