@@ -25,19 +25,6 @@ knowledge_base_name = projectName
 s3_prefix = 'docs'
 doc_prefix = s3_prefix+'/'
 
-def isKorean(text):
-    # check korean
-    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
-    word_kor = pattern_hangul.search(str(text))
-    # print('word_kor: ', word_kor)
-
-    if word_kor and word_kor != 'None':
-        print('Korean: ', word_kor)
-        return True
-    else:
-        print('Not Korean: ', word_kor)
-        return False
-    
 selected_chat = 0
 multi_region = 'Disable'
 def get_chat(models, extended_thinking):
