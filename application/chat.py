@@ -2035,11 +2035,13 @@ async def run_agent(query, historyMode, st):
                 tool_info(tools, st)
                 logger.info(f"tools: {tools}")
 
-            status_container = st.empty()            
-            key_container = st.empty()
-            response_container = st.empty()
+            status_container = st.empty()
+
+            containers = [] 
+            for i in range(100):
+                containers.append(st.empty())
                         
-            result, image_url = await agent.run(query, tools, status_container, response_container, key_container, historyMode)            
+            result, image_url = await agent.run(query, tools, status_container, containers, historyMode)            
 
         if agent.response_msg:
             with st.expander(f"수행 결과"):
