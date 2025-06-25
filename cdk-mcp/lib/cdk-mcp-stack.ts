@@ -680,7 +680,6 @@ export class CdkMcpStack extends cdk.Stack {
       }
     });
     lambdaKnowledgeBase.grantInvoke(new cdk.aws_iam.ServicePrincipal("bedrock.amazonaws.com"));     
-
     
     const userData = ec2.UserData.forLinux();
     const environment = {
