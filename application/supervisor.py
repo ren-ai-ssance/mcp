@@ -10,9 +10,19 @@ from langgraph.prebuilt import ToolNode
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
 from langgraph.graph import START, END, StateGraph
-from langgraph_supervisor import create_supervisor
+from langgraph_supervisor import create_supervisor, create_handoff_tool
 
-logger = utils.CreateLogger('supervisor')
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("supervisor")
 
 ####################### LangGraph #######################
 # Chat Agent Executor
@@ -37,7 +47,10 @@ def create_collaborator(tools, name, st):
         messages = state["messages"]    
 
         last_message = messages[-1]
-        logger.info(f"last_message: {last_message}")
+        logger.info(f"last_message: {last_message.content}")
+
+        if last_message.content:
+            st.info(f"{name}: {last_message.content}")
 
         if last_message.tool_calls:
             for message in last_message.tool_calls:
@@ -74,9 +87,9 @@ def create_collaborator(tools, name, st):
         if chat.isKorean(state["messages"][0].content)==True:
             system = (
                 "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
-                "상황에 맞는 구체적인 세부 정보를 충분히 제공합니다."
-                "모르는 질문을 받으면 솔직히 모른다고 말합니다."
-                "한국어로 답변하세요."
+                f"당신의 역할은 {name}입니다."
+                "당신의 역할에 맞는 답변만을 정확히 제공합니다."
+                "모르는 질문을 받으면 솔직히 모른다고 말합니다."                
             )
         else: 
             system = (            
@@ -195,20 +208,42 @@ def run_langgraph_supervisor(query, st):
             "code_agent", st
         )
 
+        agents = [search_agent, stock_agent, weather_agent, code_agent]
+
+        class State(TypedDict): 
+            messages: Annotated[list, add_messages]
+            remaining_steps: 50
+
         workflow = create_supervisor(
-            [search_agent, stock_agent, weather_agent, code_agent],
+            agents=agents,
+            state_schema=State,
             model=chat.get_chat(extended_thinking="Disable"),
-            # prompt=(
-            #     "You are a team supervisor managing a search expert and a stock expert. "
-            #     "For current events, use search_agent. "
-            #     "For stock problems, use stock_agent."
-            # )
             prompt = (
                 "당신의 이름은 서연이고, 질문에 친근한 방식으로 대답하도록 설계된 대화형 AI입니다."
-                "상황에 맞는 구체적인 세부 정보를 충분히 제공합니다."
+                f"질문에 대해 충분한 정보가 모아질 때까지 다음의 agent를 선택하여 활용합니다. agents: {agents}"
+                "모든 agent의 응답을 모아서, 충분한 정보를 제공합니다."
                 "모르는 질문을 받으면 솔직히 모른다고 말합니다."
-                "한국어로 답변하세요."
-            )
+            ),
+            tools=[
+                create_handoff_tool(
+                    agent_name="search_agent", 
+                    name="assign_to_search_expert", 
+                    description="search internet or RAG to answer all general questions such as restronent"),
+                create_handoff_tool(
+                    agent_name="stock_agent", 
+                    name="assign_to_stock_expert", 
+                    description="retrieve stock trend"),
+                create_handoff_tool(
+                    agent_name="weather_agent", 
+                    name="assign_to_weather_expert", 
+                    description="earn weather informaton"),
+                create_handoff_tool(
+                    agent_name="code_agent", 
+                    name="assign_to_code_expert", 
+                    description="generate a code to solve a complex problem")
+            ],
+            supervisor_name="langgraph_supervisor",
+            output_mode="full_history" # last_message full_history
         )        
         supervisor_agent = workflow.compile(name="superviser")
         isInitiated = True
@@ -225,7 +260,7 @@ def run_langgraph_supervisor(query, st):
     for i in range(length):
         index = length-i-1
         message = result["messages"][index]
-        logger.info(f"message[{index}]: {message}")
+        # logger.info(f"message[{index}]: {message.content}")
 
         stop_reason = ""
         if "stop_reason" in message.response_metadata:

@@ -10,7 +10,7 @@ import info
 import PyPDF2
 import csv
 import utils
-import asyncio
+import agent
 
 from io import BytesIO
 from PIL import Image
@@ -42,7 +42,17 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.store.memory import InMemoryStore
 from multiprocessing import Process, Pipe
 
-logger = utils.CreateLogger("chat")
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("chat")
 
 userId = uuid.uuid4().hex
 map_chain = dict() 
@@ -57,6 +67,66 @@ checkpointers[userId] = checkpointer
 memorystores[userId] = memorystore
 
 reasoning_mode = 'Disable'
+debug_messages = []  # List to store debug messages
+
+def get_debug_messages():
+    global debug_messages
+    messages = debug_messages.copy()
+    debug_messages = []  # Clear messages after returning
+    return messages
+
+def push_debug_messages(type, contents):
+    global debug_messages
+    debug_messages.append({
+        type: contents
+    })
+
+def status_messages(message):
+    # type of message
+    if isinstance(message, AIMessage):
+        logger.info(f"status_messages (AIMessage): {message}")
+    elif isinstance(message, ToolMessage):
+        logger.info(f"status_messages (ToolMessage): {message}")
+    elif isinstance(message, HumanMessage):
+        logger.info(f"status_messages (HumanMessage): {message}")
+
+    if isinstance(message, AIMessage):
+        if message.content:
+            logger.info(f"content: {message.content}")
+            content = message.content
+            if len(content) > 500:
+                content = content[:500] + "..."       
+            push_debug_messages("text", content)
+        if hasattr(message, 'tool_calls') and message.tool_calls:
+            logger.info(f"Tool name: {message.tool_calls[0]['name']}")
+                
+            if 'args' in message.tool_calls[0]:
+                logger.info(f"Tool args: {message.tool_calls[0]['args']}")
+                    
+                args = message.tool_calls[0]['args']
+                if 'code' in args:
+                    logger.info(f"code: {args['code']}")
+                    push_debug_messages("text", args['code'])
+                elif message.tool_calls[0]['args']:
+                    status = f"Tool name: {message.tool_calls[0]['name']}  \nTool args: {message.tool_calls[0]['args']}"
+                    logger.info(f"status: {status}")
+                    push_debug_messages("text", status)
+
+    elif isinstance(message, ToolMessage):
+        if message.name:
+            logger.info(f"Tool name: {message.name}")
+            
+            if message.content:                
+                content = message.content
+                if len(content) > 500:
+                    content = content[:500] + "..."
+                logger.info(f"Tool result: {content}")                
+                status = f"Tool name: {message.name}  \nTool result: {content}"
+            else:
+                status = f"Tool name: {message.name}"
+
+            logger.info(f"status: {status}")
+            push_debug_messages("text", status)
 
 def initiate():
     global userId
@@ -85,15 +155,14 @@ def initiate():
 initiate()
 
 config = utils.load_config()
+print(f"config: {config}")
 
 bedrock_region = config["region"] if "region" in config else "us-west-2"
-
 projectName = config["projectName"] if "projectName" in config else "mcp-rag"
-
 accountId = config["accountId"] if "accountId" in config else None
+
 if accountId is None:
     raise Exception ("No accountId")
-
 region = config["region"] if "region" in config else "us-west-2"
 logger.info(f"region: {region}")
 
@@ -146,10 +215,15 @@ client = boto3.client(
     region_name=bedrock_region
 )  
 
-mcp_config = ""
-def update(modelName, debugMode, multiRegion, mcp, st):    
-    global model_name, model_id, model_type, debug_mode, multi_region
-    global models, mcp_config
+mcp_json = ""
+reasoning_mode = 'Disable'
+grading_mode = 'Disable'
+def update(modelName, debugMode, multiRegion, mcp, reasoningMode, gradingMode):    
+    global model_name, model_id, model_type, debug_mode, multi_region, reasoning_mode, grading_mode
+    global models, mcp_json
+
+    # load mcp.env    
+    mcp_env = utils.load_mcp_env()
     
     if model_name != modelName:
         model_name = modelName
@@ -162,13 +236,27 @@ def update(modelName, debugMode, multiRegion, mcp, st):
     if debug_mode != debugMode:
         debug_mode = debugMode
         logger.info(f"debug_mode: {debug_mode}")
+        
+    mcp_json = mcp
+    logger.info(f"mcp_json: {mcp_json}")
+
+    if reasoning_mode != reasoningMode:
+        reasoning_mode = reasoningMode
+        logger.info(f"reasoning_mode: {reasoning_mode}")    
 
     if multi_region != multiRegion:
         multi_region = multiRegion
         logger.info(f"multi_region: {multi_region}")
+        mcp_env['multi_region'] = multi_region
 
-    mcp_config = mcp
-    logger.info(f"mcp_config: {mcp_config}")
+    if grading_mode != gradingMode:
+        grading_mode = gradingMode
+        logger.info(f"grading_mode: {grading_mode}")            
+        mcp_env['grading_mode'] = grading_mode
+        
+    # update mcp.env    
+    utils.save_mcp_env(mcp_env)
+    logger.info(f"mcp.env updated: {mcp_env}")
 
 def clear_chat_history():
     memory_chain = []
@@ -180,6 +268,72 @@ def save_chat_history(text, msg):
         memory_chain.chat_memory.add_ai_message(msg[:MSG_LENGTH])                          
     else:
         memory_chain.chat_memory.add_ai_message(msg) 
+
+def create_object(key, body):
+    """
+    Create an object in S3 and return the URL. If the file already exists, append the new content.
+    """
+    s3_client = boto3.client(
+        service_name='s3',
+        region_name=bedrock_region
+    )
+    
+    # Content-Type based on file extension
+    content_type = 'application/octet-stream'  # default value
+    if key.endswith('.html'):
+        content_type = 'text/html'
+    elif key.endswith('.md'):
+        content_type = 'text/markdown'
+    
+    s3_client.put_object(
+        Bucket=s3_bucket,
+        Key=key,
+        Body=body,
+        ContentType=content_type
+    )  
+
+def updata_object(key, body, direction):
+    """
+    Create an object in S3 and return the URL. If the file already exists, append the new content.
+    """
+    s3_client = boto3.client(
+        service_name='s3',
+        region_name=bedrock_region
+    )
+    
+    try:
+        # Check if file exists
+        try:
+            response = s3_client.get_object(Bucket=s3_bucket, Key=key)
+            existing_body = response['Body'].read().decode('utf-8')
+            # Append new content to existing content
+
+            if direction == 'append':
+                updated_body = existing_body + '\n' + body
+            else: # prepend
+                updated_body = body + '\n' + existing_body
+        except s3_client.exceptions.NoSuchKey:
+            # File doesn't exist, use new body as is
+            updated_body = body
+            
+        # Content-Type based on file extension
+        content_type = 'application/octet-stream'  # default value
+        if key.endswith('.html'):
+            content_type = 'text/html'
+        elif key.endswith('.md'):
+            content_type = 'text/markdown'
+            
+        # Upload the updated content
+        s3_client.put_object(
+            Bucket=s3_bucket,
+            Key=key,
+            Body=updated_body,
+            ContentType=content_type
+        )
+        
+    except Exception as e:
+        logger.error(f"Error updating object in S3: {str(e)}")
+        raise e
 
 selected_chat = 0
 def get_chat(extended_thinking):
@@ -265,7 +419,7 @@ def print_doc(i, doc):
     logger.info(f"{i}: {text}, metadata:{doc.metadata}")
 
 def translate_text(text):
-    chat = get_chat(extended_thinking="Disable")
+    chat = get_chat(extended_thinking=reasoning_mode)
 
     system = (
         "You are a helpful assistant that translates {input_language} to {output_language} in <article> tags. Put it in <result> tags."
@@ -301,7 +455,7 @@ def translate_text(text):
     return msg[msg.find('<result>')+8:len(msg)-9] # remove <result> tag
     
 def check_grammer(text):
-    chat = get_chat(extended_thinking="Disable")
+    chat = get_chat(extended_thinking=reasoning_mode)
 
     if isKorean(text)==True:
         system = (
@@ -340,17 +494,20 @@ secretsmanager = boto3.client(
     service_name='secretsmanager',
     region_name=bedrock_region
 )
-# try:
-#     get_weather_api_secret = secretsmanager.get_secret_value(
-#         SecretId=f"openweathermap-{projectName}"
-#     )
-#     #print('get_weather_api_secret: ', get_weather_api_secret)
-#     secret = json.loads(get_weather_api_secret['SecretString'])
-#     #print('secret: ', secret)
-#     weather_api_key = secret['weather_api_key']
 
-# except Exception as e:
-#     raise e
+# api key for weather
+weather_api_key = ""
+try:
+    get_weather_api_secret = secretsmanager.get_secret_value(
+        SecretId=f"openweathermap-{projectName}"
+    )
+    #print('get_weather_api_secret: ', get_weather_api_secret)
+    secret = json.loads(get_weather_api_secret['SecretString'])
+    #print('secret: ', secret)
+    weather_api_key = secret['weather_api_key']
+
+except Exception as e:
+    raise e
 
 # api key to use LangSmith
 langsmith_api_key = ""
@@ -415,58 +572,38 @@ except Exception as e:
     logger.info(f"Tavily credential is required: {e}")
     raise e
 
-def get_references(docs):    
-    reference = ""
-    for i, doc in enumerate(docs):
-        page = ""
-        if "page" in doc.metadata:
-            page = doc.metadata['page']
-            #print('page: ', page)            
-        url = ""
-        if "url" in doc.metadata:
-            url = doc.metadata['url']
-            logger.info(f"url: {url}")
-        name = ""
-        if "name" in doc.metadata:
-            name = doc.metadata['name']
-            #print('name: ', name)     
-        
-        sourceType = ""
-        if "from" in doc.metadata:
-            sourceType = doc.metadata['from']
-        else:
-            # if useEnhancedSearch:
-            #     sourceType = "OpenSearch"
-            # else:
-            #     sourceType = "WWW"
-            sourceType = "WWW"
+# api key to use perplexity Search
+perplexity_key = ""
+try:
+    get_perplexity_api_secret = secretsmanager.get_secret_value(
+        SecretId=f"perplexityapikey-{projectName}"
+    )
+    #print('get_perplexity_api_secret: ', get_perplexity_api_secret)
+    secret = json.loads(get_perplexity_api_secret['SecretString'])
+    #print('secret: ', secret)
 
-        #print('sourceType: ', sourceType)        
-        
-        #if len(doc.page_content)>=1000:
-        #    excerpt = ""+doc.page_content[:1000]
-        #else:
-        #    excerpt = ""+doc.page_content
-        excerpt = ""+doc.page_content
-        # print('excerpt: ', excerpt)
-        
-        # for some of unusual case 
-        #excerpt = excerpt.replace('"', '')        
-        #excerpt = ''.join(c for c in excerpt if c not in '"')
-        excerpt = re.sub('"', '', excerpt)
-        excerpt = re.sub('#', '', excerpt)     
-        excerpt = re.sub('\n', '', excerpt)      
-        logger.info(f"excerpt(quotation removed): {excerpt}")
-        
-        if page:                
-            reference += f"{i+1}. {page}page in [{name}]({url})), {excerpt[:30]}...\n"
-        else:
-            reference += f"{i+1}. [{name}]({url}), {excerpt[:30]}...\n"
+    if "perplexity_api_key" in secret:
+        perplexity_key = secret['perplexity_api_key']
+        #print('perplexity_api_key: ', perplexity_api_key)
 
-    if reference: 
-        reference = "\n\n#### 관련 문서\n"+reference
+except Exception as e: 
+    logger.info(f"perplexity credential is required: {e}")
+    raise e
 
-    return reference
+# api key to use firecrawl Search
+firecrawl_key = ""
+try:
+    get_firecrawl_secret = secretsmanager.get_secret_value(
+        SecretId=f"firecrawlapikey-{projectName}"
+    )
+    secret = json.loads(get_firecrawl_secret['SecretString'])
+
+    if "firecrawl_api_key" in secret:
+        firecrawl_key = secret['firecrawl_api_key']
+        # print('firecrawl_api_key: ', firecrawl_key)
+except Exception as e: 
+    logger.info(f"Firecrawl credential is required: {e}")
+    raise e
 
 def tavily_search(query, k):
     docs = []    
@@ -539,14 +676,14 @@ def traslation(chat, text, input_language, output_language):
 
 def extract_thinking_tag(response, st):
     if response.find('<thinking>') != -1:
-        status = response[response.find('<thinking>')+11:response.find('</thinking>')]
+        status = response[response.find('<thinking>')+10:response.find('</thinking>')]
         logger.info(f"gent_thinking: {status}")
         
         if debug_mode=="Enable":
             st.info(status)
 
         if response.find('<thinking>') == 0:
-            msg = response[response.find('</thinking>')+13:]
+            msg = response[response.find('</thinking>')+12:]
         else:
             msg = response[:response.find('<thinking>')]
         logger.info(f"msg: {msg}")
@@ -723,7 +860,7 @@ def grade_documents(question, documents):
 # General Conversation
 #########################################################
 def general_conversation(query):
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     system = (
         "당신의 이름은 서연이고, 질문에 대해 친절하게 답변하는 사려깊은 인공지능 도우미입니다."
@@ -794,7 +931,8 @@ def upload_to_s3(file_bytes, file_name):
         )
         logger.info(f"upload response: {response}")
 
-        url = f"https://{s3_bucket}.s3.amazonaws.com/{s3_key}"
+        #url = f"https://{s3_bucket}.s3.amazonaws.com/{s3_key}"
+        url = path+'/'+s3_image_prefix+'/'+parse.quote(file_name)
         return url
     
     except Exception as e:
@@ -863,7 +1001,7 @@ def load_csv_document(s3_file_name):
     return docs
 
 def get_summary(docs):    
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     text = ""
     for doc in docs:
@@ -957,7 +1095,7 @@ def summary_of_code(code, mode):
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
     # print('prompt: ', prompt)
     
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     chain = prompt | llm    
     try: 
@@ -977,7 +1115,7 @@ def summary_of_code(code, mode):
     return summary
 
 def summary_image(img_base64, instruction):      
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
 
     if instruction:
         logger.info(f"instruction: {instruction}")
@@ -1018,7 +1156,7 @@ def summary_image(img_base64, instruction):
     return extracted_text
 
 def extract_text(img_base64):    
-    multimodal = get_chat(extended_thinking="Disable")
+    multimodal = get_chat(extended_thinking=reasoning_mode)
     query = "텍스트를 추출해서 markdown 포맷으로 변환하세요. <result> tag를 붙여주세요."
     
     extracted_text = ""
@@ -1270,7 +1408,7 @@ def get_image_summarization(object_name, prompt, st):
 ############################################################# 
 def get_rag_prompt(text):
     # print("###### get_rag_prompt ######")
-    llm = get_chat(extended_thinking="Disable")
+    llm = get_chat(extended_thinking=reasoning_mode)
     # print('model_type: ', model_type)
     
     if model_type == "nova":
@@ -1363,7 +1501,23 @@ def retrieve_knowledge_base(query):
         err_msg = traceback.format_exc()
         logger.info(f"error message: {err_msg}")       
 
-    return payload['response'], []      
+    return payload['response']
+
+def get_reference_docs(docs):    
+    reference_docs = []
+    for doc in docs:
+        reference = doc.get("reference")
+        reference_docs.append(
+            Document(
+                page_content=doc.get("contents"),
+                metadata={
+                    'name': reference.get("title"),
+                    'url': reference.get("url"),
+                    'from': reference.get("from")
+                },
+            )
+    )     
+    return reference_docs
 
 def run_rag_with_knowledge_base(query, st):
     global reference_docs, contentList
@@ -1376,8 +1530,10 @@ def run_rag_with_knowledge_base(query, st):
 
     relevant_context = retrieve_knowledge_base(query)    
     logger.info(f"relevant_context: {relevant_context}")
-    st.info(f"RAG 검색을 완료했습니다.")
-    st.info(f"{relevant_context}")
+    
+    # change format to document
+    reference_docs = get_reference_docs(json.loads(relevant_context))
+    st.info(f"{len(reference_docs)}개의 관련된 문서를 얻었습니다.")
 
     rag_chain = get_rag_prompt(query)
                        
@@ -1393,33 +1549,65 @@ def run_rag_with_knowledge_base(query, st):
 
         msg = result.content        
         if msg.find('<result>')!=-1:
-            msg = msg[msg.find('<result>')+8:msg.find('</result>')]
-        
+            msg = msg[msg.find('<result>')+8:msg.find('</result>')]        
+               
     except Exception:
         err_msg = traceback.format_exc()
         logger.info(f"error message: {err_msg}")                    
         raise Exception ("Not able to request to LLM")
     
+    if reference_docs:
+        logger.info(f"reference_docs: {reference_docs}")
+        ref = "\n\n### Reference\n"
+        for i, reference in enumerate(reference_docs):
+            ref += f"{i+1}. [{reference.metadata['name']}]({reference.metadata['url']}), {reference.page_content[:100]}...\n"    
+        logger.info(f"ref: {ref}")
+        msg += ref
+    
     return msg, reference_docs
    
-####################### Bedrock Agent #######################
-# Bedrock Agent (Multi agent collaboration)
-############################################################# 
-
+####################### Agent #######################
+# Agent 
+#####################################################
 def create_agent(tools, historyMode):
     tool_node = ToolNode(tools)
 
-    chatModel = get_chat(extended_thinking="Disable")
+    chatModel = get_chat(extended_thinking=reasoning_mode)
     model = chatModel.bind_tools(tools)
 
     class State(TypedDict):
         messages: Annotated[list, add_messages]
+        image_url: list
 
     def call_model(state: State, config):
         logger.info(f"###### call_model ######")
         logger.info(f"state: {state['messages']}")
 
-        logger.info(f"last message: {state['messages'][-1].content}")
+        last_message = state['messages'][-1].content
+        logger.info(f"last message: {last_message}")
+        
+        # get image_url from state
+        image_url = state['image_url'] if 'image_url' in state else []
+        if isinstance(last_message, str) and (last_message.strip().startswith('{') or last_message.strip().startswith('[')):
+            try:                 
+                tool_result = json.loads(last_message)
+                if "path" in tool_result:
+                    logger.info(f"path: {tool_result['path']}")
+
+                    path = tool_result['path']
+                    if isinstance(path, list):
+                        for p in path:
+                            logger.info(f"image: {p}")
+                            #if p.startswith('http') or p.startswith('https'):
+                            image_url.append(p)
+                    else:
+                        logger.info(f"image: {path}")
+                        #if path.startswith('http') or path.startswith('https'):
+                        image_url.append(path)
+            except json.JSONDecodeError:
+                tool_result = last_message
+        if image_url:
+            logger.info(f"image_url: {image_url}")
 
         if isKorean(state["messages"][0].content)==True:
             system = (
@@ -1434,79 +1622,42 @@ def create_agent(tools, historyMode):
                 "If you don't know the answer, just say that you don't know, don't try to make up an answer."
             )
 
-        for attempt in range(3):   
-            logger.info(f"attempt: {attempt}")
-            try:
-                prompt = ChatPromptTemplate.from_messages(
-                    [
-                        ("system", system),
-                        MessagesPlaceholder(variable_name="messages"),
-                    ]
-                )
-                chain = prompt | model
-                    
-                response = chain.invoke(state["messages"])
-                # logger.info(f"call_model response: {response}")
-                logger.info(f"call_model: {response.content}")
+        try:
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", system),
+                    MessagesPlaceholder(variable_name="messages"),
+                ]
+            )
+            chain = prompt | model
+                
+            response = chain.invoke(state["messages"])
+            # logger.info(f"call_model response: {response}")
+            logger.info(f"call_model: {response.content}")
 
-                if isinstance(response.content, list):            
-                    for re in response.content:
-                        if "type" in re:
-                            if re['type'] == 'text':
-                                logger.info(f"--> {re['type']}: {re['text']}")
+        except Exception:
+            response = AIMessage(content="답변을 찾지 못하였습니다.")
 
-                                status = re['text']
-                                logger.info(f"status: {status}")
-                                
-                                status = status.replace('`','')
-                                status = status.replace('\"','')
-                                status = status.replace("\'",'')
-                                
-                                if status.find('<thinking>') != -1:
-                                    logger.info(f"Remove <thinking> tag.")
-                                    status = status[status.find('<thinking>')+11:status.find('</thinking>')]
-                                    logger.info(f"status without tag: {status}")
-                                logger.info(f"call_model: {status}")
+            err_msg = traceback.format_exc()
+            logger.info(f"error message: {err_msg}")
+            # raise Exception ("Not able to request to LLM")
 
-                            elif re['type'] == 'tool_use':                
-                                logger.info(f"--> {re['type']}: {re['name']}, {re['input']}")
-                            else:
-                                logger.info(re)
-                        else: # answer
-                            logger.info(response.content)
-                break
-            except Exception:
-                response = AIMessage(content="답변을 찾지 못하였습니다.")
-
-                err_msg = traceback.format_exc()
-                logger.info(f"error message: {err_msg}")
-                # raise Exception ("Not able to request to LLM")
-
-        return {"messages": [response]}
+        return {"messages": [response], "image_url": image_url}
 
     def should_continue(state: State) -> Literal["continue", "end"]:
         logger.info(f"###### should_continue ######")
 
-        logger.info(f"state: {state}")
         messages = state["messages"]    
-
         last_message = messages[-1]
-        logger.info(f"last_message: {last_message}")
-
-        if isinstance(last_message, AIMessage) and last_message.tool_calls:
-            logger.info(f"{last_message.content}")
-
-            for message in last_message.tool_calls:
-                args = message['args']
-                if debug_mode=='Enable': 
-                    if "code" in args:                    
-                        state_msg = f"tool name: {message['name']}"
-                        logger.info(f"state_msg: {state_msg}")
-                        logger.info(f"args: {args}")
-
-            logger.info(f"--- CONTINUE: {last_message.tool_calls[-1]['name']} ---")
-            return "continue"
         
+        if isinstance(last_message, AIMessage) and last_message.tool_calls:
+            tool_name = last_message.tool_calls[-1]['name']
+            logger.info(f"--- CONTINUE: {tool_name} ---")
+
+            if debug_mode == "Enable":
+                status_messages(last_message)
+
+            return "continue"
         else:
             logger.info(f"--- END ---")
             return "end"
@@ -1571,7 +1722,6 @@ def create_agent(tools, historyMode):
 # )
 
 def load_mcp_server_parameters():
-    mcp_json = json.loads(mcp_config)
     logger.info(f"mcp_json: {mcp_json}")
 
     mcpServers = mcp_json.get("mcpServers")
@@ -1590,18 +1740,18 @@ def load_mcp_server_parameters():
                 command = config["command"]
             if "args" in config:
                 args = config["args"]
+            if "env" in config:
+                env = config["env"]
 
             break
 
     return StdioServerParameters(
         command=command,
-        args=args
+        args=args,
+        env=env
     )
 
 def load_multiple_mcp_server_parameters():
-    logger.info(f"mcp_config: {mcp_config}")
-
-    mcp_json = json.loads(mcp_config)
     logger.info(f"mcp_json: {mcp_json}")
 
     mcpServers = mcp_json.get("mcpServers")
@@ -1621,12 +1771,21 @@ def load_multiple_mcp_server_parameters():
                 command = config["command"]
             if "args" in config:
                 args = config["args"]
+            if "env" in config:
+                env = config["env"]
 
-            server_info[server] = {
-                "command": command,
-                "args": args,
-                "transport": "stdio"
-            }
+                server_info[server] = {
+                    "command": command,
+                    "args": args,
+                    "env": env,
+                    "transport": "stdio"
+                }
+            else:
+                server_info[server] = {
+                    "command": command,
+                    "args": args,
+                    "transport": "stdio"
+                }
     logger.info(f"server_info: {server_info}")
 
     return server_info
@@ -1634,7 +1793,7 @@ def load_multiple_mcp_server_parameters():
 def tool_info(tools, st):
     tool_info = ""
     tool_list = []
-    st.info("Tool 정보를 가져옵니다.")
+    # st.info("Tool 정보를 가져옵니다.")
     for tool in tools:
         tool_info += f"name: {tool.name}\n"    
         if hasattr(tool, 'description'):
@@ -1643,18 +1802,121 @@ def tool_info(tools, st):
         tool_list.append(tool.name)
     # st.info(f"{tool_info}")
     st.info(f"Tools: {tool_list}")
-    
+
+def extract_reference(response):
+    references = []
+    for i, re in enumerate(response):
+        logger.info(f"message[{i}]: {re}")
+
+        if i==len(response)-1:
+            break
+
+        if isinstance(re, ToolMessage):            
+            try: 
+                # tavily
+                if isinstance(re.content, str) and "Title:" in re.content and "URL:" in re.content and "Content:" in re.content:
+                    logger.info("Tavily parsing...")                    
+                    items = re.content.split("\n\n")
+                    for i, item in enumerate(items):
+                        logger.info(f"item[{i}]: {item}")
+                        if "Title:" in item and "URL:" in item and "Content:" in item:
+                            try:
+                                # 정규식 대신 문자열 분할 방법 사용
+                                title_part = item.split("Title:")[1].split("URL:")[0].strip()
+                                url_part = item.split("URL:")[1].split("Content:")[0].strip()
+                                content_part = item.split("Content:")[1].strip()
+                                
+                                logger.info(f"title_part: {title_part}")
+                                logger.info(f"url_part: {url_part}")
+                                logger.info(f"content_part: {content_part}")
+                                
+                                references.append({
+                                    "url": url_part,
+                                    "title": title_part,
+                                    "content": content_part[:100] + "..." if len(content_part) > 100 else content_part
+                                })
+                            except Exception as e:
+                                logger.info(f"파싱 오류: {str(e)}")
+                                continue
+                
+                # check json format
+                if isinstance(re.content, str) and (re.content.strip().startswith('{') or re.content.strip().startswith('[')):
+                    tool_result = json.loads(re.content)
+                    logger.info(f"tool_result: {tool_result}")
+                else:
+                    tool_result = re.content
+                    logger.info(f"tool_result (not JSON): {tool_result}")
+
+                # ArXiv
+                if "papers" in tool_result:
+                    logger.info(f"size of papers: {len(tool_result['papers'])}")
+
+                    papers = tool_result['papers']
+                    for paper in papers:
+                        url = paper['url']
+                        title = paper['title']
+                        content = paper['abstract'][:100]
+                        logger.info(f"url: {url}, title: {title}, content: {content}")
+
+                        references.append({
+                            "url": url,
+                            "title": title,
+                            "content": content
+                        })
+                                
+                if isinstance(tool_result, list):
+                    logger.info(f"size of tool_result: {len(tool_result)}")
+                    for i, item in enumerate(tool_result):
+                        logger.info(f'item[{i}]: {item}')
+                        
+                        # RAG
+                        if "reference" in item:
+                            logger.info(f"reference: {item['reference']}")
+
+                            infos = item['reference']
+                            url = infos['url']
+                            title = infos['title']
+                            source = infos['from']
+                            logger.info(f"url: {url}, title: {title}, source: {source}")
+
+                            references.append({
+                                "url": url,
+                                "title": title,
+                                "content": item['contents'][:100]
+                            })
+
+                        # Others               
+                        if isinstance(item, str):
+                            try:
+                                item = json.loads(item)
+
+                                # AWS Document
+                                if "rank_order" in item:
+                                    references.append({
+                                        "url": item['url'],
+                                        "title": item['title'],
+                                        "content": item['context'][:100]
+                                    })
+                            except json.JSONDecodeError:
+                                logger.info(f"JSON parsing error: {item}")
+                                continue
+
+            except:
+                logger.info(f"fail to parsing..")
+                pass
+    return references
+
 async def mcp_rag_agent_multiple(query, historyMode, st):
     server_params = load_multiple_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
-    async with  MultiServerMCPClient(server_params) as client:
-        with st.status("thinking...", expanded=True, state="running") as status:                       
+    async with MultiServerMCPClient(server_params) as client:
+        ref = ""
+        with st.status("thinking...", expanded=True, state="running") as status:
             tools = client.get_tools()
-            logger.info(f"tools: {tools}")
-
             if debug_mode == "Enable":
                 tool_info(tools, st)
+                logger.info(f"tools: {tools}")
 
             # react agent
             # model = get_chat(extended_thinking="Disable")
@@ -1663,22 +1925,52 @@ async def mcp_rag_agent_multiple(query, historyMode, st):
             # langgraph agent
             agent, config = create_agent(tools, historyMode)
 
-            response = await agent.ainvoke({"messages": query}, config)
-            logger.info(f"response: {response}")
+            try:
+                response = await agent.ainvoke({"messages": query}, config)
+                logger.info(f"response: {response}")
 
-            result = response["messages"][-1].content
-            logger.info(f"result: {result}")
+                result = response["messages"][-1].content
+                # logger.info(f"result: {result}")
 
-        st.markdown(result)
+                debug_msgs = get_debug_messages()
+                for msg in debug_msgs:
+                    logger.info(f"debug_msg: {msg}")
+                    if "image" in msg:
+                        st.image(msg["image"])
+                    elif "text" in msg:
+                        st.info(msg["text"])
 
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": result
-        })
+                image_url = response["image_url"] if "image_url" in response else []
+                logger.info(f"image_url: {image_url}")
 
-    return result
+                for image in image_url:
+                    st.image(image)
 
-async def mcp_rag_agent_single(query, st):
+                if model_type == "nova":
+                    result = extract_thinking_tag(result, st) # for nova
+
+                references = extract_reference(response["messages"])                
+                if references:
+                    ref = "\n\n### Reference\n"
+                    for i, reference in enumerate(references):
+                        ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
+                    logger.info(f"ref: {ref}")
+                    result += ref
+
+                st.markdown(result)
+
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": result,
+                    "images": image_url if image_url else []
+                })
+
+                return result
+            except Exception as e:
+                logger.error(f"Error during agent invocation: {str(e)}")
+                raise Exception(f"Agent invocation failed: {str(e)}")
+
+async def mcp_rag_agent_single(query, historyMode, st):
     server_params = load_mcp_server_parameters()
     logger.info(f"server_params: {server_params}")
 
@@ -1698,7 +1990,7 @@ async def mcp_rag_agent_single(query, st):
                 if debug_mode == "Enable":
                     tool_info(tools, st)
 
-                agent = create_agent(tools)
+                agent = create_agent(tools, historyMode)
                 
                 # Run the agent.            
                 agent_response = await agent.ainvoke({"messages": query})                
@@ -1731,9 +2023,30 @@ async def mcp_rag_agent_single(query, st):
             
             return result
 
-def run_agent(query, historyMode, st):
-    result = asyncio.run(mcp_rag_agent_multiple(query, historyMode, st))
-    #result = asyncio.run(mcp_rag_agent_single(query, st))
+async def run_agent(query, historyMode, st):
+    server_params = load_multiple_mcp_server_parameters()
+    logger.info(f"server_params: {server_params}")
 
-    logger.info(f"result: {result}")
-    return result, [], []
+    async with MultiServerMCPClient(server_params) as client:
+        with st.status("thinking...", expanded=True, state="running") as status:
+            tools = client.get_tools()
+
+            if debug_mode == "Enable":
+                tool_info(tools, st)
+                logger.info(f"tools: {tools}")
+
+            status_container = st.empty()            
+            key_container = st.empty()
+            response_container = st.empty()
+                        
+            result, image_url = await agent.run(query, tools, status_container, response_container, key_container, historyMode)            
+
+        if agent.response_msg:
+            with st.expander(f"수행 결과"):
+                response_msg = '\n\n'.join(agent.response_msg)
+                st.markdown(response_msg)
+
+        logger.info(f"result: {result}")       
+        logger.info(f"image_url: {image_url}")
+    
+    return result, image_url

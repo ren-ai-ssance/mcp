@@ -1,18 +1,62 @@
 import streamlit as st 
 import chat
-import utils
 import json
 import knowledge_base as kb
 import cost_analysis as cost
 import supervisor
 import router
 import swarm
+import traceback
+import mcp_config 
+import logging
+import utils
+import sys
+import os
+import pwd 
+import asyncio
+import random
+import string
+import aws_cost.implementation as aws_cost
 
-# logging
-logger = utils.CreateLogger("streamlit")
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("streamlit")
+
+try:
+    user_info = pwd.getpwuid(os.getuid())
+    username = user_info.pw_name
+    home_dir = user_info.pw_dir
+    logger.info(f"Username: {username}")
+    logger.info(f"Home directory: {home_dir}")
+except (ImportError, KeyError):
+    username = "root"
+    logger.info(f"Username: {username}")
+    pass  
+
+if username == "root":
+    environment = "system"
+else:
+    environment = "user"
+logger.info(f"environment: {environment}")
+
+os.environ["DEV"] = "true"  # Skip user confirmation of get_user_input
 
 # title
 st.set_page_config(page_title='MCP', page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
+
+# CSS for adjusting sidebar width
+st.markdown("""
+    <style>
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        width: 400px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 mode_descriptions = {
     "일상적인 대화": [
@@ -22,10 +66,10 @@ mode_descriptions = {
         "Bedrock Knowledge Base를 이용해 구현한 RAG로 필요한 정보를 검색합니다."
     ],
     "Agent": [
-        "Agent를 이용하여 Workflow를 구현합니다."
+        "MCP를 활용한 Agent를 이용합니다. 왼쪽 메뉴에서 필요한 MCP를 선택하세요."
     ],
     "Agent (Chat)": [
-        "Agent를 이용하여 Workflow를 구현합니다. 채팅 히스토리를 이용해 interative한 대화를 즐길 수 있습니다."
+        "MCP를 활용한 Agent를 이용합니다. 채팅 히스토리를 이용해 interative한 대화를 즐길 수 있습니다."
     ],
     "Multi-agent Supervisor (Router)": [
         "Multi-agent Supervisor (Router)에 기반한 대화입니다. 여기에서는 Supervisor/Collaborators의 구조를 가지고 있습니다."
@@ -50,6 +94,91 @@ mode_descriptions = {
     ]
 }
 
+def load_image_generator_config():
+    config = None
+    try:
+        with open("image_generator_config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
+            logger.info(f"loaded image_generator_config: {config}")
+    except FileNotFoundError:
+        config = {"seed_image": ""}
+        with open("image_generator_config.json", "w", encoding="utf-8") as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+        logger.info("Create new image_generator_config.json")
+    except Exception:
+        err_msg = traceback.format_exc()
+        logger.info(f"error message: {err_msg}")    
+    return config
+
+def update_seed_image_url(url):
+    with open("image_generator_config.json", "w", encoding="utf-8") as f:
+        config = {"seed_image": url}
+        json.dump(config, f, ensure_ascii=False, indent=4)
+
+def cost_analysis():
+    st.subheader("📈 Cost Analysis")
+
+    if not cost.visualizations:
+        cost.get_visualiation()
+
+    if 'service_pie' in cost.visualizations:
+        st.plotly_chart(cost.visualizations['service_pie'])
+    if 'daily_trend' in cost.visualizations:
+        st.plotly_chart(cost.visualizations['daily_trend'])
+    if 'region_bar' in cost.visualizations:
+        st.plotly_chart(cost.visualizations['region_bar'])
+
+    with st.status("thinking...", expanded=True, state="running") as status:
+        if not cost.cost_data:
+            st.info("비용 데이터를 가져옵니다.")
+            cost_data = cost.get_cost_analysis()
+            logger.info(f"cost_data: {cost_data}")
+            cost.cost_data = cost_data
+        else:
+            if not cost.insights:        
+                st.info("잠시만 기다리세요. 지난 한달간의 사용량을 분석하고 있습니다...")
+                insights = cost.generate_cost_insights()
+                logger.info(f"insights: {insights}")
+                cost.insights = insights
+            
+            st.markdown(cost.insights)
+            st.session_state.messages.append({"role": "assistant", "content": cost.insights})
+
+def cost_analysis_with_reflection():
+    request_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+
+    template = open(os.path.join(os.path.dirname(__file__), f"aws_cost/report.html")).read()
+    template = template.replace("{request_id}", request_id)
+    template = template.replace("{sharing_url}", chat.path)
+    key = f"artifacts/{request_id}.html"
+    chat.create_object(key, template)
+    
+    report_url = chat.path + "/artifacts/" + request_id + ".html"
+    logger.info(f"report_url: {report_url}")
+    st.info(f"report_url: {report_url}")
+    
+    # show status and response
+    status_container = st.empty()
+    response_container = st.empty()
+    
+    response = aws_cost.run(request_id, status_container, response_container)
+    logger.info(f"response: {response}")
+
+    if aws_cost.response_msg:
+        with st.expander(f"수행 결과"):
+            response_msgs = '\n\n'.join(aws_cost.response_msg)  
+            st.markdown(response_msgs)
+
+    st.write(response)
+
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
+seed_config = load_image_generator_config()
+logger.info(f"seed_config: {seed_config}")
+seed_image_url = seed_config.get("seed_image", "") if seed_config else ""
+logger.info(f"seed_image_url from config: {seed_image_url}")
+
+uploaded_seed_image = None
 with st.sidebar:
     st.title("🔮 Menu")
     
@@ -65,26 +194,111 @@ with st.sidebar:
     
     # radio selection
     mode = st.radio(
-        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi-agent Supervisor (Router)", "LangGraph Supervisor", "LangGraph Swarm", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=0
+        label="원하는 대화 형태를 선택하세요. ",options=["일상적인 대화", "RAG", "Agent", "Agent (Chat)", "Multi-agent Supervisor (Router)", "LangGraph Supervisor", "LangGraph Swarm", "번역하기", "문법 검토하기", "이미지 분석", "비용 분석"], index=2
     )   
     st.info(mode_descriptions[mode][0])
+    
+    # mcp selection
+    mcp = ""
+    if mode=='Agent' or mode=='Agent (Chat)' or mode=='비용 분석':
+        # MCP Config JSON input
+        st.subheader("⚙️ MCP Config")
 
-    # logger.info(f"mode: {mode}")
+        # Change radio to checkbox
+        if environment == "user":        
+            mcp_options = [
+                "default", "code interpreter", "aws document", "aws cost", "aws cli", 
+                "use_aws", "aws cloudwatch", "aws storage", "image generation", "aws diagram",
+                "knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", 
+                "filesystem", "terminal", "text editor", "context7", "puppeteer", 
+                "playwright", "firecrawl", "obsidian", "airbnb", 
+                "pubmed", "chembl", "clinicaltrial", "arxiv-manual", "tavily-manual",                
+                "aws_cloudwatch_logs", "opensearch", "aws_knowledge_base", "사용자 설정"
+            ]
+        else:
+            mcp_options = [ 
+                "default", "code interpreter", "aws document", "aws cost", "aws cli", 
+                "use_aws", "aws cloudwatch", "aws storage", "image generation", "aws diagram",
+                "knowledge base", "tavily", "ArXiv", "wikipedia", 
+                "filesystem", "terminal", "text editor", "playwright", "airbnb",
+                "pubmed", "chembl", "clinicaltrial", "arxiv-manual", "tavily-manual",
+                "aws_cloudwatch_logs", "opensearch", "aws_knowledge_base", "사용자 설정"
+            ]
+        mcp_selections = {}
+        default_selections = ["default", "code interpreter", "use_aws", "tavily"]
+
+        with st.expander("MCP 옵션 선택", expanded=True):            
+            # Create two columns
+            col1, col2 = st.columns(2)
+            
+            # Split options into two groups
+            mid_point = len(mcp_options) // 2
+            first_half = mcp_options[:mid_point]
+            second_half = mcp_options[mid_point:]
+            
+            # Display first group in the first column
+            with col1:
+                for option in first_half:
+                    default_value = option in default_selections
+                    mcp_selections[option] = st.checkbox(option, key=f"mcp_{option}", value=default_value)
+            
+            # Display second group in the second column
+            with col2:
+                for option in second_half:
+                    default_value = option in default_selections
+                    mcp_selections[option] = st.checkbox(option, key=f"mcp_{option}", value=default_value)
+        
+        if not any(mcp_selections.values()):
+            mcp_selections["default"] = True
+
+        if mcp_selections["사용자 설정"]:
+            mcp_info = st.text_area(
+                "MCP 설정을 JSON 형식으로 입력하세요",
+                value=mcp,
+                height=150
+            )
+            logger.info(f"mcp_info: {mcp_info}")
+
+            if mcp_info:
+                mcp_config.mcp_user_config = json.loads(mcp_info)
+                logger.info(f"mcp_user_config: {mcp_config.mcp_user_config}")
+        
+        if mcp_selections["image generation"]:
+            enable_seed = st.checkbox("Seed Image", value=False)
+
+            if enable_seed:
+                st.subheader("🌇 이미지 업로드")
+                uploaded_seed_image = st.file_uploader("이미지 생성을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
+
+                if uploaded_seed_image:
+                    url = chat.upload_to_s3(uploaded_seed_image.getvalue(), uploaded_seed_image.name)
+                    logger.info(f"uploaded url: {url}")
+                    seed_image_url = url
+                    update_seed_image_url(seed_image_url)
+                
+                given_image_url = st.text_input("또는 이미지 URL을 입력하세요", value=seed_image_url, key="seed_image_input")       
+                if given_image_url and given_image_url != seed_image_url:       
+                    logger.info(f"given_image_url: {given_image_url}")
+                    seed_image_url = given_image_url
+                    update_seed_image_url(seed_image_url)                    
+            else:
+                if seed_image_url:
+                    logger.info(f"remove seed_image_url")
+                    update_seed_image_url("") 
+        else:
+            enable_seed = False
+            if seed_image_url:
+                logger.info(f"remove seed_image_url")
+                update_seed_image_url("") 
+
+        mcp = mcp_config.load_selected_config(mcp_selections)
+        # logger.info(f"mcp: {mcp}")
 
     # model selection box
     modelName = st.selectbox(
         '🖊️ 사용 모델을 선택하세요',
-        ('Nova Pro', 'Nova Lite', 'Nova Micro', 'Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.0 Sonnet', 'Claude 3.5 Haiku'), index=4
+        ("Nova Premier", 'Nova Pro', 'Nova Lite', 'Nova Micro', 'Claude 4 Opus', 'Claude 4 Sonnet', 'Claude 3.7 Sonnet', 'Claude 3.5 Sonnet', 'Claude 3.0 Sonnet', 'Claude 3.5 Haiku'), index=7
     )
-
-    uploaded_file = None
-    if mode=='이미지 분석':
-        st.subheader("🌇 이미지 업로드")
-        uploaded_file = st.file_uploader("이미지 요약을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
-    elif mode=='RAG' or mode=="Agent" or mode=="Agent with Knowlege Base":
-        st.subheader("📋 문서 업로드")
-        # print('fileId: ', chat.fileId)
-        uploaded_file = st.file_uploader("RAG를 위한 파일을 선택합니다.", type=["pdf", "txt", "py", "md", "csv", "json"], key=chat.fileId)
 
     # debug checkbox
     select_debugMode = st.checkbox('Debug Mode', value=True)
@@ -96,23 +310,25 @@ with st.sidebar:
     multiRegion = 'Enable' if select_multiRegion else 'Disable'
     #print('multiRegion: ', multiRegion)
 
-    # MCP Config JSON 입력
-    st.subheader("⚙️ MCP Config")
+    # extended thinking of claude 3.7 sonnet
+    select_reasoning = st.checkbox('Reasoning', value=False)
+    reasoningMode = 'Enable' if select_reasoning else 'Disable'
+    # logger.info(f"reasoningMode: {reasoningMode}")
 
-    config = utils.load_config()
-    mcp = json.loads(config["mcp"])
-    logger.info(f"mcp: {mcp}")
-    if mcp:
-        mcp_config = st.text_area(
-            "MCP 설정을 JSON 형식으로 입력하세요",
-            value=mcp,
-            height=150
-        )
-        if mcp_config != mcp:
-            mcp = mcp_config
-            chat.update(modelName, debugMode, multiRegion, mcp, st)
+    # RAG grading
+    select_grading = st.checkbox('Grading', value=False)
+    gradingMode = 'Enable' if select_grading else 'Disable'
+    # logger.info(f"gradingMode: {gradingMode}")
 
-    chat.update(modelName, debugMode, multiRegion, mcp, st)
+    uploaded_file = None
+    if mode=='이미지 분석':
+        st.subheader("🌇 이미지 업로드")
+        uploaded_file = st.file_uploader("이미지 요약을 위한 파일을 선택합니다.", type=["png", "jpg", "jpeg"])
+    elif mode=='RAG' or mode=="Agent" or mode=="Agent (Chat)" or mode=='비용 분석':
+        st.subheader("📋 문서 업로드")
+        uploaded_file = st.file_uploader("RAG를 위한 파일을 선택합니다.", type=["pdf", "txt", "py", "md", "csv", "json"], key=chat.fileId)
+
+    chat.update(modelName, debugMode, multiRegion, mcp, reasoningMode, gradingMode)
 
     st.success(f"Connected to {modelName}", icon="💚")
     clear_button = st.button("대화 초기화", key="clear")
@@ -217,34 +433,12 @@ if uploaded_file is not None and clear_button==False:
         url = chat.upload_to_s3(uploaded_file.getvalue(), file_name)
         logger.info(f"url: {url}")
 
+if seed_image_url and clear_button==False and enable_seed==True:
+    st.image(seed_image_url, caption="이미지 미리보기", use_container_width=True)
+    logger.info(f"preview: {seed_image_url}")
+    
 if clear_button==False and mode == '비용 분석':
-    st.subheader("📈 Cost Analysis")
-
-    if not cost.visualizations:
-        cost.get_visualiation()
-
-    if 'service_pie' in cost.visualizations:
-        st.plotly_chart(cost.visualizations['service_pie'])
-    if 'daily_trend' in cost.visualizations:
-        st.plotly_chart(cost.visualizations['daily_trend'])
-    if 'region_bar' in cost.visualizations:
-        st.plotly_chart(cost.visualizations['region_bar'])
-
-    with st.status("thinking...", expanded=True, state="running") as status:
-        if not cost.cost_data:
-            st.info("비용 데이터를 가져옵니다.")
-            cost_data = cost.get_cost_analysis()
-            logger.info(f"cost_data: {cost_data}")
-            cost.cost_data = cost_data
-        else:
-            if not cost.insights:        
-                st.info("잠시만 기다리세요. 지난 한달간의 사용량을 분석하고 있습니다...")
-                insights = cost.generate_cost_insights()
-                logger.info(f"insights: {insights}")
-                cost.insights = insights
-            
-            st.markdown(cost.insights)
-            st.session_state.messages.append({"role": "assistant", "content": cost.insights})
+    cost_analysis_with_reflection()
 
 # Always show the chat input
 if prompt := st.chat_input("메시지를 입력하세요."):
@@ -277,14 +471,44 @@ if prompt := st.chat_input("메시지를 입력하세요."):
         
         elif mode == 'Agent':
             sessionState = ""
-            response = chat.run_agent(prompt, "Disable", st)
+            chat.references = []
+            chat.image_url = []
+            response, image_url = asyncio.run(chat.run_agent(prompt, "Disable", st))
+
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": response,
+                "images": image_url if image_url else []
+            })
+
+            st.write(response)
+            for url in image_url:
+                    logger.info(f"url: {url}")
+                    file_name = url[url.rfind('/')+1:]
+                    st.image(url, caption=file_name, use_container_width=True)
 
         elif mode == 'Agent (Chat)':
             sessionState = ""
-            response = chat.run_agent(prompt, "Enable", st)
+            chat.references = []
+            chat.image_url = []
+            response, image_url = asyncio.run(chat.run_agent(prompt, "Enable", st))
+
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": response,
+                "images": image_url if image_url else []
+            })
+
+            st.write(response)
+            for url in image_url:
+                logger.info(f"url: {url}")
+                file_name = url[url.rfind('/')+1:]
+                st.image(url, caption=file_name, use_container_width=True)            
 
         elif mode == "Multi-agent Supervisor (Router)":
             sessionState = ""
+            chat.references = []
+            chat.image_url = []
             with st.status("thinking...", expanded=True, state="running") as status:
                 response, image_url, reference_docs = router.run_router_supervisor(prompt, st)
                 st.write(response)
@@ -301,6 +525,8 @@ if prompt := st.chat_input("메시지를 입력하세요."):
 
         elif mode == "LangGraph Supervisor":
             sessionState = ""
+            chat.references = []
+            chat.image_url = []
             with st.status("thinking...", expanded=True, state="running") as status:
                 response, image_url, reference_docs = supervisor.run_langgraph_supervisor(prompt, st)
                 st.write(response)

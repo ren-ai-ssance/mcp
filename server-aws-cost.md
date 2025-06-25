@@ -1,5 +1,13 @@
 # AWS Cost Anaysis MCP Server
 
+아래와 같이 환경을 설정합니다.
+
+```text
+python -m venv .venv
+source .venv/bin/activate
+pip install uv boto3 langgraph langchain langchain-aws mcp 
+```
+
 [Cost Analysis MCP Server](https://awslabs.github.io/mcp/servers/cost-analysis-mcp-server/)에 따라 MCP server를 설정하면 아래와 같습니다.
 
 ```java

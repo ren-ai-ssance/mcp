@@ -14,7 +14,17 @@ from langgraph.graph import START, END, StateGraph
 from langgraph.graph import MessagesState, END
 from langgraph.types import Command        
 
-logger = utils.CreateLogger('router')
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("router")
 
 ####################### LangGraph #######################
 # Chat Agent Executor

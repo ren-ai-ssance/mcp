@@ -9,21 +9,21 @@ from urllib import parse
 from langchain.docstore.document import Document
 from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 
-logger = utils.CreateLogger('knowledge_base')
+import logging
+import sys
+logging.basicConfig(
+    level=logging.INFO,  # Default to INFO level
+    format='%(filename)s:%(lineno)d | %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr)
+    ]
+)
+logger = logging.getLogger("knowledge_base")
 
-try:
-    with open("/home/config.json", "r", encoding="utf-8") as f:
-        config = json.load(f)
-        logger.info(f"config: {config}")
-
-except Exception:
-    logger.info(f"use local configuration")
-    with open("application/config.json", "r", encoding="utf-8") as f:
-        config = json.load(f)
-        logger.info(f"config: {config}")
+config = utils.load_config()
 
 # variables
-projectName = config["projectName"] if "projectName" in config else "langgraph-nova"
+projectName = config["projectName"] if "projectName" in config else "mcp-rag"
 
 vectorIndexName = projectName
 knowledge_base_name = projectName
@@ -34,7 +34,7 @@ s3_bucket = config["s3_bucket"] if "s3_bucket" in config else None
 if s3_bucket is None:
     raise Exception ("No storage!")
 
-parsingModelArn = f"arn:aws:bedrock:{region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
+parsingModelArn = f"arn:aws:bedrock:{region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
 embeddingModelArn = f"arn:aws:bedrock:{region}::foundation-model/amazon.titan-embed-text-v2:0"
 
 collectionArn = config["collectionArn"] if "collectionArn" in config else None
@@ -198,15 +198,19 @@ def initiate_knowledge_base():
     except Exception:
         err_msg = traceback.format_exc()
         logger.info(f"error message: {err_msg}")
-                    
+    
     if not knowledge_base_id:
         logger.info(f"creating knowledge base...")  
-        for atempt in range(20):
+        for atempt in range(3):
+            tag_name = projectName
             try:
                 response = client.create_knowledge_base(
                     name=knowledge_base_name,
                     description="Knowledge base based on OpenSearch",
                     roleArn=knowledge_base_role,
+                    tags={
+                        tag_name: 'true'
+                    },
                     knowledgeBaseConfiguration={
                         'type': 'VECTOR',
                         'vectorKnowledgeBaseConfiguration': {
@@ -229,7 +233,7 @@ def initiate_knowledge_base():
                             },
                             'vectorIndexName': vectorIndexName
                         }
-                    }                
+                    }                    
                 )   
                 logger.info(f"(create_knowledge_base) response: {response}")
             
@@ -303,9 +307,14 @@ def initiate_knowledge_base():
                     },
                     'parsingConfiguration': {
                         'bedrockFoundationModelConfiguration': {
-                            'modelArn': parsingModelArn
+                            'modelArn': parsingModelArn,
+                            # 'parsingModality': 'MULTIMODAL'
                         },
                         'parsingStrategy': 'BEDROCK_FOUNDATION_MODEL'
+                        # 'bedrockDataAutomationConfiguration': {
+                        #     'parsingModality': 'MULTIMODAL'
+                        # },
+                        # 'parsingStrategy': 'BEDROCK_DATA_AUTOMATION'
                     }
                 }
             )

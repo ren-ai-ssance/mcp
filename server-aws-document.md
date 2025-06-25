@@ -1,20 +1,20 @@
-# AWS Document MCP Server
+# AWS Document and Diagram MCP Server
+
+## AWS Document
 
 [AWS Documentation MCP Server](https://awslabs.github.io/mcp/servers/aws-documentation-mcp-server/)를 참조합니다. 여기서 얻은 config는 아래와 같습니다.
 
 ```java
 {
-  "mcpServers": {
-    "awslabs.aws-documentation-mcp-server": {
-        "command": "uvx",
-        "args": ["awslabs.aws-documentation-mcp-server@latest"],
-        "env": {
-          "FASTMCP_LOG_LEVEL": "ERROR"
-        },
-        "disabled": false,
-        "autoApprove": []
+    "mcpServers": {
+        "awslabs.aws-documentation-mcp-server": {
+            "command": "uvx",
+            "args": ["awslabs.aws-documentation-mcp-server@latest"],
+            "env": {
+                "FASTMCP_LOG_LEVEL": "ERROR"
+            }
+        }
     }
-  }
 }
 ```
 
@@ -124,3 +124,47 @@
 
 
 ![image](https://github.com/user-attachments/assets/8e33043f-8ec0-4e81-a789-69221ca5783a)
+
+
+## AWS Diagram
+
+AWS Diagram을 위한 MCP Config는 아래와 같습니다.
+
+```java
+{
+    "mcpServers": {
+        "awslabs.aws-diagram-mcp-server": {
+            "command": "uvx",
+            "args": ["awslabs.aws-diagram-mcp-server"],
+            "env": {
+                "FASTMCP_LOG_LEVEL": "ERROR"
+            }
+        }
+    }
+}
+```
+
+이때의 결과의 예는 아래와 같습니다.
+
+![image](https://github.com/user-attachments/assets/86663cd0-1413-4689-ae96-8e0f354f9987)
+
+AWS Diagram이 사용한 코드는 아래와 같습니다.
+
+```python
+from diagrams import Diagram, Edge
+from diagrams.aws.mobile import APIGateway
+from diagrams.aws.compute import Lambda
+from diagrams.aws.database import Dynamodb
+from diagrams.aws.general import User
+
+with Diagram("AWS Serverless Architecture", show=False, direction="LR"):
+    user = User("User")
+    api = APIGateway("API Gateway")
+    lambda_func = Lambda("Lambda Function")
+    db = Dynamodb("DynamoDB")
+
+    user >> api >> lambda_func >> db
+```
+
+
+

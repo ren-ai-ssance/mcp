@@ -1,6 +1,6 @@
-# MCP로 RAG Application 구현하기
+# MCP Application 구현하기
 
-MCP(Model Context Protocal)은 생성형 AI application이 외부 데이터를 활용하는 주요한 인터페이스로 빠르게 확산되고 있습니다. 2024년 11월에 Anthropic의 오픈소스 프로젝트로 시작되었고, 현재 Cursor뿐 아니라 OpenAI에서도 지원하고 있습니다. 여기에서는 [MCP with LangChain](https://github.com/langchain-ai/langchain-mcp-adapters)을 이용하여 LangGraph로 만든 application이 MCP를 활용하는 방법에 대해 설명합니다. 여기서 구현한 RAG는 Amazon의 완전관리형 RAG 서비스인 Knowledge base로 구현되었으므로, 문서의 텍스트 추출, 동기화, chunking과 같은 작업을 손쉽게 수행할 수 있으며, 멀티모달을 이용해 이미지/표를 분석할 수 있습니다. 여기에서는 MCP server에서 RAG에 손쉽게 접근할 수 있도록 AWS Lambda를 이용해 API를 구성하였습니다.
+MCP(Model Context Protocol)은 생성형 AI application이 외부 데이터를 활용하는 주요한 인터페이스로 빠르게 확산되고 있습니다. 2024년 11월에 Anthropic의 오픈소스 프로젝트로 시작되었고, 현재 Cursor뿐 아니라 OpenAI에서도 지원하고 있습니다. 여기에서는 [MCP with LangChain](https://github.com/langchain-ai/langchain-mcp-adapters)을 이용하여 LangGraph로 만든 application이 MCP를 활용하는 방법에 대해 설명합니다. 여기서 구현한 RAG는 Amazon의 완전관리형 RAG 서비스인 Knowledge base로 구현되었으므로, 문서의 텍스트 추출, 동기화, chunking과 같은 작업을 손쉽게 수행할 수 있으며, 멀티모달을 이용해 이미지/표를 분석할 수 있습니다. 여기에서는 MCP server에서 RAG에 손쉽게 접근할 수 있도록 AWS Lambda를 이용해 API를 구성하였습니다.
 
 
 아래 architecture는 AWS 환경에서 MCP를 포함한 Agent를 구성하는것을 보여줍니다. Agent는 MCP server/client 구조를 활용하여 외부의 데이터 소스를 활용할 수 있습니다. MCP client는 MCP server와 JSON-RPC 프로토콜에 기반하여 stdio/SSE로 통신을 수행합니다. Stdio 사용시 MCP Server는 python, java와 같은 코드로 구성이 되고, client에서 요청이 오면 RAG나 인터넷등을 이용해 데이터를 수집하거나 전달하는 역할을 수행합니다. SSE로 할 경우에 MCP client와 server는 IP로 통신을 하게 됩니다. 여기서는 Streamlit을 이용해 application의 UI를 구성하고, 사용자는 ALB - CloudFront를 이용해 HTTPS 방식으로 브라우저를 통해 application을 이용합니다. 또한, 여기에서는 커스터마이징이 유리한 LangGraph를 이용해 MCP 기반의 application을 개발하는것을 설명합니다. 
@@ -116,6 +116,8 @@ def retrieve_knowledge_base(query):
     payload = json.load(output['Payload'])
     return payload['response'], []
 ```
+
+[Drug discovery](https://github.com/kyopark2014/mcp/blob/main/drug-discovery.md)와 관련하여, [arXiv](./application/mcp_server_arxiv.py), [ChEMBL](./application/mcp_server_chembl.py), [ClinicalTrials.gov](./application/mcp_server_clinicaltrial.py), [PubMed](./application/mcp_server_pubmed.py)을 지원하고 있습니다.
 
 #### MCP Client
 
@@ -330,7 +332,7 @@ def create_agent(tools):
 }
 ```
 
-## 실행하기
+### 실행하기
 
 Output의 environmentformcprag의 내용을 복사하여 application/config.json을 생성합니다. "aws configure"로 credential이 설정되어 있어야합니다. 만약 visual studio code 사용자라면 config.json 파일은 아래 명령어를 사용합니다.
 
@@ -338,13 +340,17 @@ Output의 environmentformcprag의 내용을 복사하여 application/config.json
 code application/config.json
 ```
 
-아래와 같이 필요한 패키지를 설치합니다.
+venv로 환경을 구성하면 편리합니다. 아래와 같이 환경을 설정합니다.
 
 ```text
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate
-pip install streamlit streamlit_chat 
-pip install boto3 langchain_aws langchain langchain_community langgraph 
+```
+
+이후 다운로드 받은 github 폴더로 이동한 후에 아래와 같이 필요한 패키지를 추가로 설치 합니다.
+
+```text
+pip install -r requirements.txt
 ```
 
 [deployment.md](./deployment.md)에 따라 AWS CDK로 Lambda, Knowledge base, Opensearch Serverless와 보안에 필요한 IAM Role을 설치합니다. 이후 아래와 같은 명령어로 streamlit을 실행합니다. 
@@ -352,6 +358,38 @@ pip install boto3 langchain_aws langchain langchain_community langgraph
 ```text
 streamlit run application/app.py
 ```
+
+
+### EC2에 배포하기
+
+EC2가 private subnet에 있으므로 Session Manger로 접속합니다. 이때 설치는 ec2-user로 진행되었으므로 아래와 같이 code를 업데이트합니다.
+
+```text
+sudo runuser -l ec2-user -c 'cd /home/ec2-user/mcp && git pull'
+```
+
+이제 아래와 같이 docker를 빌드합니다.
+
+```text
+sudo runuser -l ec2-user -c "cd mcp && docker build -t streamlit-app ."
+```
+
+빌드가 완료되면 "sudo docker ps"로 docker id를 확인후에 "sudo docker kill" 명령어로 종료합니다.
+
+![noname](https://github.com/user-attachments/assets/4afb2af8-d092-4aaa-813a-65975375f7d4)
+
+이후 아래와 같이 다시 실행합니다.
+
+```text
+sudo runuser -l ec2-user -c 'docker run -d -p 8501:8501 streamlit-app'
+```
+
+만약 console에서 debugging할 경우에는 -d 옵션없이 아래와 같이 실행합니다.
+
+```text
+sudo runuser -l ec2-user -c 'docker run -p 8501:8501 streamlit-app'
+```
+
 
 ### MCP Inspector
 
@@ -366,6 +404,197 @@ pip install 'mcp[cli]'
 ```text
 mcp dev mcp-server.py
 ```
+
+### AWS Cost Analysis
+
+MCP tool로서 아래와 같이 AWS cost 정보를 가져와서 분석할 수 있습니다.
+
+```python
+from datetime import datetime, timedelta
+import pandas as pd
+
+def get_cost_analysis(days: str=30):
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=days)    
+    ce = boto3.client('ce')
+    service_response = ce.get_cost_and_usage(
+        TimePeriod={
+            'Start': start_date.strftime('%Y-%m-%d'),
+            'End': end_date.strftime('%Y-%m-%d')
+        },
+        Granularity='MONTHLY',
+        Metrics=['UnblendedCost'],
+        GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
+    )        
+    service_costs = pd.DataFrame([
+        {
+            'SERVICE': group['Keys'][0],
+            'cost': float(group['Metrics']['UnblendedCost']['Amount'])
+        }
+        for group in service_response['ResultsByTime'][0]['Groups']
+    ])
+        
+    # region cost
+    region_response = ce.get_cost_and_usage(
+        TimePeriod={
+            'Start': start_date.strftime('%Y-%m-%d'),
+            'End': end_date.strftime('%Y-%m-%d')
+        },
+        Granularity='MONTHLY',
+        Metrics=['UnblendedCost'],
+        GroupBy=[{'Type': 'DIMENSION', 'Key': 'REGION'}]
+    )
+    region_costs = pd.DataFrame([
+        {
+            'REGION': group['Keys'][0],
+            'cost': float(group['Metrics']['UnblendedCost']['Amount'])
+        }
+        for group in region_response['ResultsByTime'][0]['Groups']
+    ])
+        
+    # Daily Cost
+    daily_response = ce.get_cost_and_usage(
+        TimePeriod={
+            'Start': start_date.strftime('%Y-%m-%d'),
+            'End': end_date.strftime('%Y-%m-%d')
+        },
+        Granularity='DAILY',
+        Metrics=['UnblendedCost'],
+        GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
+    )    
+    daily_costs = []
+    for time_period in daily_response['ResultsByTime']:
+        date = time_period['TimePeriod']['Start']
+        for group in time_period['Groups']:
+            daily_costs.append({
+                'date': date,
+                'SERVICE': group['Keys'][0],
+                'cost': float(group['Metrics']['UnblendedCost']['Amount'])
+            })    
+    daily_costs_df = pd.DataFrame(daily_costs)
+        
+    return {
+        'service_costs': service_costs,
+        'region_costs': region_costs,
+        'daily_costs': daily_costs_df
+    }
+```
+
+cost의 상기 3가지 결과를 그래프로 사용하기 위해서는 아래 패키지 설치가 필요합니다.
+
+```text
+pip install -U kaleido
+```
+
+### MCP Image Generation
+
+[mcp_server_image_generation.py](./application/mcp_server_image_generation.py)과 같이 mcp_generate_image와 mcp_generate_image_with_colors을 tool로 등록합니다. 
+
+MCP config는 아래와 같이 설정합니다. [mcp_config.py](./application/mcp_config.py)을 참조합니다.
+
+```java
+{
+    "mcpServers": {
+        "imageGeneration": {
+            "command": "python",
+            "args": [
+                "application/mcp_server_image_generation.py"
+            ]
+        }
+    }
+}
+```
+
+이후 [mcp_nova_canvas.py](./application/mcp_nova_canvas.py)와 같이 이미지를 생성합니다.
+
+```python
+async def mcp_generate_image(ctx, prompt, negative_prompt, filename, width, height, quality, cfg_scale, seed, number_of_images):
+    """Generate an image using Amazon Nova Canvas with text prompt."""
+    
+    response = await generate_image_with_text(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        filename=filename,
+        width=width,
+        height=height,
+        quality=quality,
+        cfg_scale=cfg_scale,
+        seed=seed,
+        number_of_images=number_of_images
+    )
+
+    return {
+        "url": [f'{path}' for path in response.paths]
+    } 
+```
+
+MCP의 image_generation로 부터 얻은 결과는 아래와 같이 표시합니다. 상세한 내용은 [chat.py](./application/chat.py)을 참고하세요.
+
+```python
+def show_status_message(response, st):
+    image_url = []
+    for i, re in enumerate(response):
+        logger.info(f"message[{i}]: {re}")
+        if i==len(response)-1:
+            break
+        if isinstance(re, ToolMessage):
+          tool_result = json.loads(re.content)
+          logger.info(f"tool_result: {tool_result}")
+
+          if "url" in tool_result:
+              st.info(f"URL: {tool_result['url']}")
+
+              urls = tool_result['url']
+              for url in urls:
+                  image_url.append(url)
+                  st.image(url)
+    return image_url
+```
+
+### MCP AWS Diagram
+
+[AWS Diagram MCP Server](https://awslabs.github.io/mcp/servers/aws-diagram-mcp-server/)을 이용하면 AWS Diagram을 그릴 수 있습니다. 상세한 내용은 [mcp_config.py](./application/mcp_config.py)을 참조합니다.
+
+이때 사용하는 MCP Config는 아래와 같습니다.
+
+```python
+{
+    "mcpServers": {
+        "awslabs.aws-diagram-mcp-server": {
+            "command": "uvx",
+            "args": ["awslabs.aws-diagram-mcp-server"],
+            "env": {
+                "FASTMCP_LOG_LEVEL": "ERROR"
+            },
+        }
+    }
+}
+```
+
+Diagram을 그리기 위해서는 [Graphviz](https://www.graphviz.org/download/)를 따라서 graphviz를 설치합니다. Mac에서는 아래 명령어를 사용합니다.
+
+```text
+brew install graphviz
+```
+
+### MCP AWS Documentation
+
+[AWS Documentation MCP Server](https://awslabs.github.io/mcp/servers/aws-documentation-mcp-server/)을 이용하여 AWS 문서들을 조회할 수 있습니다. 이때 사용하는 MCP config는 아래와 같습니다. 상세한 내용은 [mcp_config.py](./application/mcp_config.py)을 참조합니다.
+
+```java
+{
+    "mcpServers": {
+        "awslabs.aws-documentation-mcp-server": {
+            "command": "uvx",
+            "args": ["awslabs.aws-documentation-mcp-server@latest"],
+            "env": {
+                "FASTMCP_LOG_LEVEL": "ERROR"
+            }
+        }
+    }
+}
+```
+
 
 ## 실행 결과
 
@@ -447,7 +676,40 @@ mcp dev mcp-server.py
 
 <img src="https://github.com/user-attachments/assets/8275bf94-2f46-475d-9eea-02568e70199b" width="650">
 
+### AWS Cost Analysis
 
+"지난 한달간의 AWS 비용을 요약해주세요." 입력후에 결과를 확인합니다.
+
+<img src="https://github.com/user-attachments/assets/5794def3-47fd-498f-8074-0d970bee1c99" width="650">
+
+
+### 이미지 생성
+
+왼쪽 메뉴에서 Agent를 선택하고, MCP config로 "image generation"을 선택한 후에 "노을이 지는 아름다운 강변을 달리기하는 사람을 그려주세요."라고 입력 후에 결과를 확인합니다.
+
+<img src="https://github.com/user-attachments/assets/a4147b0f-86d2-4042-83bb-9c9b61e51a2f" width="650">
+
+### AWS Architecture 그리기
+
+메뉴에서 "Agent(Chat)"를 선택하고 MCP로 "aws diagram"를 고른 후, "Amazon S3로 web hosting을 하기 위한 architecture를 추천해주세요."와 "Cognito를 이용해 인증할수 있도록 해주세요."으로 순차적으로 명령을 하면 아래와 같은 결과를 얻을 수 있습니다.
+
+![noname](https://github.com/user-attachments/assets/04191a61-746f-4852-ad2a-e77b6af7cedc)
+
+### Code Interpreter의 활용
+
+"strawberry의 r의 갯수는?"로 질문하면 아래와 같이 Tools 리스트에서 "repl_coder"가 선택되어 활용됩니다.
+
+<img src="https://github.com/user-attachments/assets/2575d4b1-8871-4677-a982-82d60ec6036a" width="650">
+
+### Storage
+
+Tool에서 "aws storage"를 선택하고, "내 s3 전체 사용량은?"이라고 질문합니다. 이때의 결과는 아래와 같습니다. 
+
+<img src="https://github.com/user-attachments/assets/a9e41d68-6a2a-4cda-a264-58cc3124f51d" width="650">
+
+"내 aws strorage 사용량은?"이라고 질문하면, S3, EFS, EBS의 용량을 확인하여 아래와 같이 답변할 수 있습니다.
+
+<img src="https://github.com/user-attachments/assets/4c390cee-fd91-487e-ba0d-8b99fd7389ae" width="650">
 
 ## Reference 
 
@@ -486,3 +748,5 @@ mcp dev mcp-server.py
 [Cursor AI 말고, 나만의 #MCP 에이전트 앱 만들어 보기!](https://www.youtube.com/watch?v=ISrYHGg2C2c)
 
 [The Top 7 MCP-Supported AI Frameworks](https://medium.com/@amosgyamfi/the-top-7-mcp-supported-ai-frameworks-a8e5030c87ab)
+
+[Drug Discovery Agent based on Amazon Bedrock](https://github.com/hsr87/drug-discovery-agent)
