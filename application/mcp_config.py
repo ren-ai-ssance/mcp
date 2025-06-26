@@ -179,14 +179,14 @@ def load_config(mcp_type):
                 }
             }
         }
-    
-    elif mcp_type == "aws_rag":
+        
+    elif mcp_type == "knowledge_base_lambda":
         return {
             "mcpServers": {
-                "aws_storage": {
+                "knowledge_base_lambda": {
                     "command": "python",
                     "args": [
-                        "application/mcp_server_rag.py"
+                        "application/mcp_server_lambda_knowledge_base.py"
                     ]
                 }
             }
@@ -413,22 +413,6 @@ def load_config(mcp_type):
             }
         }
     
-    elif mcp_type == "opensearch":
-        return {
-            "mcpServers": {
-                "opensearch-mcp-server": {
-                    "command": "uvx",
-                    "args": [
-                        "opensearch-mcp-server-py"
-                    ],
-                    "env": {
-                        "OPENSEARCH_URL": managed_opensearch_url,
-                        "AWS_REGION":"us-west-2"
-                    }
-                }
-            }
-        }
-    
     elif mcp_type == "사용자 설정":
         return mcp_user_config
 
@@ -457,7 +441,7 @@ def load_selected_config(mcp_selections: dict[str, bool]):
         elif server == "aws storage":
             config = load_config('aws_storage')
         elif server == "knowledge base":
-            config = load_config('aws_rag')
+            config = load_config('knowledge_base_lambda')
         elif server == "code interpreter":
             config = load_config('code_interpreter')
         elif server == "aws cli":

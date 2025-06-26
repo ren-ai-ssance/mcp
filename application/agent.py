@@ -28,6 +28,13 @@ s3_prefix = "docs"
 capture_prefix = "captures"
 
 status_msg = []
+
+index = 0
+def add_notification(container, message):
+    global index
+    container['notification'][index].info(message)
+    index += 1
+
 def get_status_msg(status):
     global status_msg
     status_msg.append(status)
@@ -241,6 +248,8 @@ def get_tool_info(tool_name, tool_content):
         try:
             if isinstance(tool_content, dict):
                 json_data = tool_content
+            elif isinstance(tool_content, list):
+                json_data = tool_content
             else:
                 json_data = json.loads(tool_content)
             
@@ -283,8 +292,8 @@ async def call_model(state: State, config):
     
     image_url = state['image_url'] if 'image_url' in state else []
 
-    status_container = config.get("configurable", {}).get("status_container", None)
-    response_container = config.get("configurable", {}).get("response_container", None)
+    containers = config.get("configurable", {}).get("containers", None)
+    
     tools = config.get("configurable", {}).get("tools", None)
     system_prompt = config.get("configurable", {}).get("system_prompt", None)
     
@@ -294,7 +303,7 @@ async def call_model(state: State, config):
         logger.info(f"tool_name: {tool_name}, content: {tool_content[:800]}")
 
         if chat.debug_mode == "Enable":
-            response_container.info(f"{tool_name}: {str(tool_content)}")
+            add_notification(containers, f"{tool_name}: {str(tool_content)}")
             response_msg.append(f"{tool_name}: {str(tool_content)}")
 
         global references
@@ -309,7 +318,7 @@ async def call_model(state: State, config):
             logger.info(f"urls: {urls}")
 
             if chat.debug_mode == "Enable":
-                response_container.info(f"Added path to image_url: {urls}")
+                add_notification(containers, f"Added path to image_url: {urls}")
                 response_msg.append(f"Added path to image_url: {urls}")
 
         if content:  # manupulate the output of tool message
@@ -321,15 +330,11 @@ async def call_model(state: State, config):
             )
             state["messages"] = messages
 
-        if chat.debug_mode == "Enable":
-            response_container.info(f"{tool_name}: {tool_content[:800]}")
-            response_msg.append(f"{tool_name}: {tool_content[:800]}")
-
     if isinstance(last_message, AIMessage) and last_message.content:
         if chat.debug_mode == "Enable":
-            status_container.info(get_status_msg(f"{last_message.name}"))
-            response_container.info(f"{last_message.content[:800]}")
-            response_msg.append(last_message.content[:800])    
+            containers['status'].info(get_status_msg(f"{last_message.name}"))
+            add_notification(containers, f"{last_message.content}")
+            response_msg.append(last_message.content)    
     
     if system_prompt:
         system = system_prompt
@@ -362,7 +367,7 @@ async def call_model(state: State, config):
         err_msg = traceback.format_exc()
         logger.info(f"error message: {err_msg}")
 
-    return {"messages": [response], "image_url": image_url}
+    return {"messages": [response], "image_url": image_url, "index": index}
 
 async def should_continue(state: State, config) -> Literal["continue", "end"]:
     logger.info(f"###### should_continue ######")
@@ -370,9 +375,7 @@ async def should_continue(state: State, config) -> Literal["continue", "end"]:
     messages = state["messages"]    
     last_message = messages[-1]
 
-    status_container = config.get("configurable", {}).get("status_container", None)
-    response_container = config.get("configurable", {}).get("response_container", None)
-    key_container = config.get("configurable", {}).get("key_container", None)
+    containers = config.get("configurable", {}).get("containers", None)
     
     if isinstance(last_message, AIMessage) and last_message.tool_calls:
         tool_name = last_message.tool_calls[-1]['name']
@@ -383,24 +386,24 @@ async def should_continue(state: State, config) -> Literal["continue", "end"]:
         if last_message.content:
             logger.info(f"last_message: {last_message.content}")
             if chat.debug_mode == "Enable":
-                response_container.info(f"{last_message.content}")
+                add_notification(containers, f"{last_message.content}")
                 response_msg.append(last_message.content)
 
         logger.info(f"tool_name: {tool_name}, tool_args: {tool_args}")
         if chat.debug_mode == "Enable":
-            key_container.info(f"{tool_name}: {tool_args}")
+            add_notification(containers, f"{tool_name}: {tool_args}")
         
         if chat.debug_mode == "Enable":
-            status_container.info(get_status_msg(f"{tool_name}"))
+            containers['status'].info(get_status_msg(f"{tool_name}"))
             if "code" in tool_args:
                 logger.info(f"code: {tool_args['code']}")
-                response_container.code(tool_args['code'])
+                add_notification(containers, f"{tool_args['code']}")
                 response_msg.append(f"{tool_args['code']}")
 
         return "continue"
     else:
         if chat.debug_mode == "Enable":
-            status_container.info(get_status_msg("end)"))
+            containers['status'].info(get_status_msg("end)"))
 
         logger.info(f"--- END ---")
         return "end"
@@ -462,8 +465,6 @@ def extract_reference(response):
                 else:
                     tool_result = re.content
                     # logger.info(f"tool_result (not JSON): {tool_result[:200]}")
-
-                
                                 
                 if isinstance(tool_result, list):
                     logger.info(f"size of tool_result: {len(tool_result)}")
@@ -507,7 +508,7 @@ def extract_reference(response):
                 pass
     return references
 
-async def run(question, tools, status_container, response_container, key_container, historyMode):
+async def run(question, tools, containers, historyMode):
     global status_msg, response_msg, references, image_urls
     status_msg = []
     response_msg = []
@@ -515,46 +516,49 @@ async def run(question, tools, status_container, response_container, key_contain
     image_urls = []
 
     if chat.debug_mode == "Enable":
-        status_container.info(get_status_msg("(start"))
+        containers["status"].info(get_status_msg("(start"))
 
     if historyMode == "Enable":
         app = buildChatAgentWithHistory(tools)
         config = {
             "recursion_limit": 50,
             "configurable": {"thread_id": chat.userId},
-            "status_container": status_container,
-            "response_container": response_container,
-            "key_container": key_container,
+            "containers": containers,
             "tools": tools
         }
     else:
         app = buildChatAgent(tools)
         config = {
             "recursion_limit": 50,
-            "status_container": status_container,
-            "response_container": response_container,
-            "key_container": key_container,
+            "containers": containers,
             "tools": tools
         }
     
     inputs = {
         "messages": [HumanMessage(content=question)]
     }
+    
+    global index
+    index = 0
 
     value = result = None
+    final_output = None
     async for output in app.astream(inputs, config):
         for key, value in output.items():
             logger.info(f"--> key: {key}, value: {value}")
 
-            if key == "messages":
+            if key == "messages" or key == "agent":
                 if isinstance(value, dict) and "messages" in value:
                     message = value["messages"]
+                    final_output = value
                 elif isinstance(value, list):
                     value = {"messages": value, "image_url": []}
                     message = value["messages"]
+                    final_output = value
                 else:
                     value = {"messages": [value], "image_url": []}
                     message = value["messages"]
+                    final_output = value
 
                 refs = extract_reference(message)
                 if refs:
@@ -562,11 +566,12 @@ async def run(question, tools, status_container, response_container, key_contain
                         references.append(r)
                         logger.info(f"r: {r}")
                 
-    if value and "messages" in value and len(value["messages"]) > 0:
-        result = value["messages"][-1].content
+    if final_output and "messages" in final_output and len(final_output["messages"]) > 0:
+        result = final_output["messages"][-1].content
     else:
         result = "답변을 찾지 못하였습니다."
 
+    logger.info(f"result: {final_output}")
     logger.info(f"references: {references}")
     if references:
         ref = "\n\n### Reference\n"
@@ -574,29 +579,24 @@ async def run(question, tools, status_container, response_container, key_contain
             ref += f"{i+1}. [{reference['title']}]({reference['url']}), {reference['content']}...\n"    
         result += ref
 
-    image_url = value["image_url"] if value and "image_url" in value else []
+    image_url = final_output["image_url"] if final_output and "image_url" in final_output else []
 
     return result, image_url
 
-async def run_task(question, tools, system_prompt, status_container, response_container, key_container, historyMode, previous_status_msg, previous_response_msg):
-    global status_msg, response_msg
+async def run_task(question, tools, system_prompt, containers, historyMode, previous_status_msg, previous_response_msg):
+    global status_msg, response_msg, references, image_urls
     status_msg = previous_status_msg
     response_msg = previous_response_msg
-    global references
-    references = []
-    image_urls = []
 
     if chat.debug_mode == "Enable":
-        status_container.info(get_status_msg("(start"))
+        containers["status"].info(get_status_msg("(start"))
 
     if historyMode == "Enable":
         app = buildChatAgentWithHistory(tools)
         config = {
             "recursion_limit": 50,
             "configurable": {"thread_id": chat.userId},
-            "status_container": status_container,
-            "response_container": response_container,
-            "key_container": key_container,
+            "containers": containers,
             "tools": tools,
             "system_prompt": system_prompt
         }
@@ -604,9 +604,7 @@ async def run_task(question, tools, system_prompt, status_container, response_co
         app = buildChatAgent(tools)
         config = {
             "recursion_limit": 50,
-            "status_container": status_container,
-            "response_container": response_container,
-            "key_container": key_container,
+            "containers": containers,
             "tools": tools,
             "system_prompt": system_prompt
         }
@@ -621,15 +619,18 @@ async def run_task(question, tools, system_prompt, status_container, response_co
         for key, value in output.items():
             logger.info(f"--> key: {key}, value: {value}")
             
-            if key == "messages":
+            if key == "messages" or key == "agent":
                 if isinstance(value, dict) and "messages" in value:
                     message = value["messages"]
+                    final_output = value
                 elif isinstance(value, list):
                     value = {"messages": value, "image_url": []}
                     message = value["messages"]
+                    final_output = value
                 else:
                     value = {"messages": [value], "image_url": []}
                     message = value["messages"]
+                    final_output = value
 
                 refs = extract_reference(message)
                 if refs:
@@ -637,8 +638,8 @@ async def run_task(question, tools, system_prompt, status_container, response_co
                         references.append(r)
                         logger.info(f"r: {r}")
                 
-    if value and "messages" in value and len(value["messages"]) > 0:
-        result = value["messages"][-1].content
+    if final_output and "messages" in final_output and len(final_output["messages"]) > 0:
+        result = final_output["messages"][-1].content
     else:
         result = "답변을 찾지 못하였습니다."
 

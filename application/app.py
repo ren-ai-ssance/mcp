@@ -212,8 +212,7 @@ with st.sidebar:
                 "knowledge base", "tavily", "perplexity", "ArXiv", "wikipedia", 
                 "filesystem", "terminal", "text editor", "context7", "puppeteer", 
                 "playwright", "firecrawl", "obsidian", "airbnb", 
-                "pubmed", "chembl", "clinicaltrial", "arxiv-manual", "tavily-manual",                
-                "aws_cloudwatch_logs", "opensearch", "aws_knowledge_base", "사용자 설정"
+                "pubmed", "chembl", "clinicaltrial", "arxiv-manual", "tavily-manual", "사용자 설정"
             ]
         else:
             mcp_options = [ 
@@ -221,8 +220,7 @@ with st.sidebar:
                 "use_aws", "aws cloudwatch", "aws storage", "image generation", "aws diagram",
                 "knowledge base", "tavily", "ArXiv", "wikipedia", 
                 "filesystem", "terminal", "text editor", "playwright", "airbnb",
-                "pubmed", "chembl", "clinicaltrial", "arxiv-manual", "tavily-manual",
-                "aws_cloudwatch_logs", "opensearch", "aws_knowledge_base", "사용자 설정"
+                "pubmed", "chembl", "clinicaltrial", "arxiv-manual", "tavily-manual", "사용자 설정"
             ]
         mcp_selections = {}
         default_selections = ["default", "code interpreter", "use_aws", "tavily"]
