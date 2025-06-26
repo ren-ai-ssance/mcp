@@ -28,8 +28,8 @@ s3_prefix = "docs"
 capture_prefix = "captures"
 
 status_msg = []
-index = 0
 
+index = 0
 def add_notification(container, message):
     global index
     container['notification'][index].info(message)
